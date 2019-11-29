@@ -51,13 +51,13 @@ class Token(Serializable):
         self._options[key] = value
 
     def solve(self, name=None):
-        '''Solve for abbreviation given a certain name. Ex: center could return C'''
+        """Solve for abbreviation given a certain name. Ex: center could return C"""
         if name is None:
             return self.default
         return self._options.get(name)
 
     def parse(self, value):
-        '''Get metatada (origin) for given value in name. Ex: L could return left'''
+        """Get metatada (origin) for given value in name. Ex: L could return left"""
         for k, v in six.iteritems(self._options):
             if v == value:
                 return k
@@ -99,13 +99,13 @@ class TokenNumber(Token):
         self._isNumber = True
 
     def solve(self, number):
-        '''Solve for number with given padding parameter.
-            Ex: 1 could return 001 with padding 3'''
+        """Solve for number with given padding parameter.
+            Ex: 1 could return 001 with padding 3"""
         numberStr = str(number).zfill(self.padding)
         return '{}{}{}'.format(self.prefix, numberStr, self.suffix)
 
     def parse(self, value):
-        '''Get metatada (number) for given value in name. Ex: v0025 could return 25'''
+        """Get metatada (number) for given value in name. Ex: v0025 could return 25"""
         if value.isdigit():
             return int(value)
         else:
@@ -187,11 +187,11 @@ class Rule(Serializable):
         return True
 
     def solve(self, **values):
-        '''Build the name string with given values and return it'''
+        """Build the name string with given values and return it"""
         return self._pattern.format(**values)
 
     def parse(self, name):
-        '''Build and return dictionary with keys as tokens and values as given names'''
+        """Build and return dictionary with keys as tokens and values as given names"""
         retval = dict()
         splitName = name.split('_')
         for i, f in enumerate(self.fields):
@@ -383,7 +383,7 @@ def solve(*args, **kwargs):
 
 def getRepo():
     env_repo = os.environ.get(NAMING_REPO_ENV)
-    local_repo = os.path.join(os.path.expanduser("~"), ".CGXTools", "naming")
+    local_repo = os.path.join(os.path.expanduser("~"), ".NXATools", "naming")
     return env_repo or local_repo
 
 
