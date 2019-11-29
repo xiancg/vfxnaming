@@ -11,26 +11,26 @@ import tempfile
 class Test_Solve:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.resetTokens()
-        n.addToken('whatAffects')
-        n.addTokenNumber('digits')
-        n.addToken(
+        n.reset_tokens()
+        n.add_token('whatAffects')
+        n.add_token_number('digits')
+        n.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.addToken(
+        n.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.addToken(
+        n.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.resetRules()
-        n.addRule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
+        n.reset_rules()
+        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
 
     def test_explicit(self):
         name = 'natural_ambient_chars_001_LGT'
@@ -67,26 +67,26 @@ class Test_Solve:
 class Test_Parse:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.resetTokens()
-        n.addToken('whatAffects')
-        n.addTokenNumber('digits')
-        n.addToken(
+        n.reset_tokens()
+        n.add_token('whatAffects')
+        n.add_token_number('digits')
+        n.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.addToken(
+        n.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.addToken(
+        n.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.resetRules()
-        n.addRule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
+        n.reset_rules()
+        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
 
     def test_parsing(self):
         name = 'dramatic_bounce_chars_001_LGT'
@@ -101,181 +101,181 @@ class Test_Parse:
 class Test_Token:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.resetTokens()
+        n.reset_tokens()
 
     def test_add(self):
-        result = n.addToken('whatAffects')
+        result = n.add_token('whatAffects')
         assert isinstance(result, Token) is True
 
-        result = n.addToken(
+        result = n.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
         assert isinstance(result, Token) is True
 
-    def test_resetTokens(self):
-        result = n.resetTokens()
+    def test_reset_tokens(self):
+        result = n.reset_tokens()
         assert result is True
 
-    def test_removeToken(self):
-        n.addToken('test')
-        result = n.removeToken('test')
+    def test_remove_token(self):
+        n.add_token('test')
+        result = n.remove_token('test')
         assert result is True
 
-        result = n.removeToken('test2')
+        result = n.remove_token('test2')
         assert result is False
 
 
 class Test_Rule:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.resetRules()
+        n.reset_rules()
 
     def test_add(self):
-        result = n.addRule(
+        result = n.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
         assert isinstance(result, Rule) is True
 
-    def test_resetRules(self):
-        result = n.resetRules()
+    def test_reset_rules(self):
+        result = n.reset_rules()
         assert result is True
 
-    def test_removeRule(self):
-        n.addRule('test', 'category', 'function', 'digits', 'type')
-        result = n.removeRule('test')
+    def test_remove_rule(self):
+        n.add_rule('test', 'category', 'function', 'digits', 'type')
+        result = n.remove_rule('test')
         assert result is True
 
-        result = n.removeRule('test2')
+        result = n.remove_rule('test2')
         assert result is False
 
     def test_active(self):
         # pattern = '{category}_{function}_{digits}_{type}'
-        n.addRule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
-        n.addRule('test', 'category', 'function', 'digits', 'type')
-        n.setActiveRule('test')
-        result = n.getActiveRule()
+        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
+        n.add_rule('test', 'category', 'function', 'digits', 'type')
+        n.set_active_rule('test')
+        result = n.get_active_rule()
         assert result is not None
 
 
 class Test_Serialization:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.resetRules()
-        n.resetTokens()
+        n.reset_rules()
+        n.reset_tokens()
 
     def test_tokens(self):
-        token1 = n.addToken(
+        token1 = n.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        token2 = n.Token.fromData(token1.data())
+        token2 = n.Token.from_data(token1.data())
         assert token1.data() == token2.data()
 
     def test_rules(self):
-        rule1 = n.addRule(
+        rule1 = n.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
-        rule2 = n.Rule.fromData(rule1.data())
+        rule2 = n.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
     def test_validation(self):
-        token = n.addToken(
+        token = n.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        rule = n.addRule(
+        rule = n.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
-        assert n.Rule.fromData(token.data()) is None
-        assert n.Token.fromData(rule.data()) is None
+        assert n.Rule.from_data(token.data()) is None
+        assert n.Token.from_data(rule.data()) is None
 
     def test_save_load_rule(self):
-        n.addRule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
+        n.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
         filepath = tempfile.mktemp()
-        n.saveRule('test', filepath)
+        n.save_rule('test', filepath)
 
-        n.resetRules()
-        n.loadRule(filepath)
-        assert n.hasRule('test') is True
+        n.reset_rules()
+        n.load_rule(filepath)
+        assert n.has_rule('test') is True
 
     def test_save_load_token(self):
-        n.addToken(
+        n.add_token(
             'test', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
         filepath = tempfile.mktemp()
-        n.saveToken('test', filepath)
+        n.save_token('test', filepath)
 
-        n.resetTokens()
-        n.loadToken(filepath)
-        assert n.hasToken('test') is True
+        n.reset_tokens()
+        n.load_token(filepath)
+        assert n.has_token('test') is True
 
     def test_save_load_session(self):
-        n.addToken('whatAffects')
-        n.addTokenNumber('digits')
-        n.addToken(
+        n.add_token('whatAffects')
+        n.add_token_number('digits')
+        n.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.addToken(
+        n.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.addToken(
+        n.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.addRule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
-        n.addRule('test', 'category', 'function')
-        n.setActiveRule('lights')
+        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
+        n.add_rule('test', 'category', 'function')
+        n.set_active_rule('lights')
 
         repo = tempfile.mkdtemp()
-        n.saveSession(repo)
+        n.save_session(repo)
 
-        n.resetRules()
-        n.resetTokens()
+        n.reset_rules()
+        n.reset_tokens()
 
-        n.loadSession(repo)
-        assert n.hasToken('whatAffects') is True
-        assert n.hasToken('digits') is True
-        assert n.hasToken('category') is True
-        assert n.hasToken('function') is True
-        assert n.hasToken('type') is True
-        assert n.hasRule('lights') is True
-        assert n.hasRule('test') is True
-        assert n.getActiveRule().name == 'lights'
+        n.load_session(repo)
+        assert n.has_token('whatAffects') is True
+        assert n.has_token('digits') is True
+        assert n.has_token('category') is True
+        assert n.has_token('function') is True
+        assert n.has_token('type') is True
+        assert n.has_rule('lights') is True
+        assert n.has_rule('test') is True
+        assert n.get_active_rule().name == 'lights'
 
 
 class Test_TokenNumber:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.resetTokens()
-        n.addToken('whatAffects')
-        n.addTokenNumber('number')
-        n.addToken(
+        n.reset_tokens()
+        n.add_token('whatAffects')
+        n.add_token_number('number')
+        n.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.addToken(
+        n.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.addToken('type', lighting='LGT', default='LGT')
-        n.addRule('lights', 'category', 'function', 'whatAffects', 'number', 'type')
+        n.add_token('type', lighting='LGT', default='LGT')
+        n.add_rule('lights', 'category', 'function', 'whatAffects', 'number', 'type')
 
     def test_explicitSolve(self):
         name = 'natural_ambient_chars_024_LGT'

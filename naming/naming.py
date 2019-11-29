@@ -25,7 +25,7 @@ class Serializable(object):
         return retval
 
     @classmethod
-    def fromData(cls, data):
+    def from_data(cls, data):
         if data.get("_Serializable_classname") != cls.__name__:
             return None
         del data["_Serializable_classname"]
@@ -47,7 +47,7 @@ class Token(Serializable):
         self._default = None
         self._options = dict()
 
-    def addOption(self, key, value):
+    def add_option(self, key, value):
         self._options[key] = value
 
     def solve(self, name=None):
@@ -89,14 +89,14 @@ class Token(Serializable):
         return copy.deepcopy(self._options)
 
     @property
-    def isNumber(self):
+    def is_number(self):
         return False
 
 
 class TokenNumber(Token):
     def __init__(self, name):
         super(TokenNumber, self).__init__(name)
-        self._isNumber = True
+        self._is_number = True
 
     def solve(self, number):
         """Solve for number with given padding parameter.
@@ -109,31 +109,31 @@ class TokenNumber(Token):
         if value.isdigit():
             return int(value)
         else:
-            prefixIndex = 0
+            prefix_index = 0
             for each in value[::1]:
-                if each.isdigit() and prefixIndex == 0:
-                    prefixIndex = -1
+                if each.isdigit() and prefix_index == 0:
+                    prefix_index = -1
                     break
                 if not each.isdigit():
-                    prefixIndex += 1
+                    prefix_index += 1
                 else:
                     break
-            suffixIndex = 0
+            suffix_index = 0
             for each in value[::-1]:
-                if each.isdigit() and suffixIndex == 0:
-                    suffixIndex = -1
+                if each.isdigit() and suffix_index == 0:
+                    suffix_index = -1
                     break
                 if not each.isdigit():
-                    suffixIndex += 1
+                    suffix_index += 1
                 else:
                     break
 
-            if prefixIndex == -1 and suffixIndex >= 0:
-                return int(value[:-suffixIndex])
-            elif prefixIndex >= 0 and suffixIndex == -1:
-                return int(value[prefixIndex:])
-            elif prefixIndex >= 0 and suffixIndex >= 0:
-                return int(value[prefixIndex:-suffixIndex])
+            if prefix_index == -1 and suffix_index >= 0:
+                return int(value[:-suffix_index])
+            elif prefix_index >= 0 and suffix_index == -1:
+                return int(value[prefix_index:])
+            elif prefix_index >= 0 and suffix_index >= 0:
+                return int(value[prefix_index:-suffix_index])
 
     @property
     def padding(self):
@@ -171,7 +171,7 @@ class TokenNumber(Token):
         return True
 
     @property
-    def isNumber(self):
+    def is_number(self):
         return True
 
 
@@ -180,9 +180,9 @@ class Rule(Serializable):
         super(Rule, self).__init__()
         self.name = name
         self._fields = list()
-        self.addFields(fields)
+        self.add_fields(fields)
 
-    def addFields(self, tokenNames):
+    def add_fields(self, tokenNames):
         self._fields.extend(tokenNames)
         return True
 
@@ -193,17 +193,17 @@ class Rule(Serializable):
     def parse(self, name):
         """Build and return dictionary with keys as tokens and values as given names"""
         retval = dict()
-        splitName = name.split('_')
+        split_name = name.split('_')
         for i, f in enumerate(self.fields):
-            namePart = splitName[i]
+            name_part = split_name[i]
             token = _tokens[f]
             if token.required:
-                if token.isNumber:
-                    retval[f] = token.parse(namePart)
+                if token.is_number:
+                    retval[f] = token.parse(name_part)
                 else:
-                    retval[f] = namePart
+                    retval[f] = name_part
                 continue
-            retval[f] = token.parse(namePart)
+            retval[f] = token.parse(name_part)
         return retval
 
     @property
@@ -223,49 +223,49 @@ class Rule(Serializable):
         self._name = n
 
 
-def addRule(name, *fields):
+def add_rule(name, *fields):
     rule = Rule(name, fields)
     _rules[name] = rule
-    if getActiveRule() is None:
-        setActiveRule(name)
+    if get_active_rule() is None:
+        set_active_rule(name)
     return rule
 
 
-def removeRule(name):
-    if hasRule(name):
+def remove_rule(name):
+    if has_rule(name):
         del _rules[name]
         return True
     return False
 
 
-def hasRule(name):
+def has_rule(name):
     return name in _rules.keys()
 
 
-def resetRules():
+def reset_rules():
     _rules.clear()
     _rules['_active'] = None
     return True
 
 
-def getActiveRule():
+def get_active_rule():
     name = _rules['_active']
     return _rules.get(name)
 
 
-def setActiveRule(name):
-    if hasRule(name):
+def set_active_rule(name):
+    if has_rule(name):
         _rules['_active'] = name
         return True
     return False
 
 
-def getRule(name):
+def get_rule(name):
     return _rules.get(name)
 
 
-def saveRule(name, filepath):
-    rule = getRule(name)
+def save_rule(name, filepath):
+    rule = get_rule(name)
     if not rule:
         return False
     with open(filepath, "w") as fp:
@@ -273,7 +273,7 @@ def saveRule(name, filepath):
     return True
 
 
-def loadRule(filepath):
+def load_rule(filepath):
     if not os.path.isfile(filepath):
         return False
     try:
@@ -281,44 +281,44 @@ def loadRule(filepath):
             data = json.load(fp)
     except Exception:
         return False
-    rule = Rule.fromData(data)
+    rule = Rule.from_data(data)
     _rules[rule.name] = rule
     return True
 
 
-def addToken(name, **kwargs):
+def add_token(name, **kwargs):
     token = Token(name)
     for k, v in six.iteritems(kwargs):
         if k == "default":
             token.default = v
             continue
-        token.addOption(k, v)
+        token.add_option(k, v)
     _tokens[name] = token
     return token
 
 
-def removeToken(name):
-    if hasToken(name):
+def remove_token(name):
+    if has_token(name):
         del _tokens[name]
         return True
     return False
 
 
-def hasToken(name):
+def has_token(name):
     return name in _tokens.keys()
 
 
-def resetTokens():
+def reset_tokens():
     _tokens.clear()
     return True
 
 
-def getToken(name):
+def get_token(name):
     return _tokens.get(name)
 
 
-def saveToken(name, filepath):
-    token = getToken(name)
+def save_token(name, filepath):
+    token = get_token(name)
     if not token:
         return False
     with open(filepath, "w") as fp:
@@ -326,7 +326,7 @@ def saveToken(name, filepath):
     return True
 
 
-def loadToken(filepath):
+def load_token(filepath):
     if not os.path.isfile(filepath):
         return False
     try:
@@ -335,30 +335,30 @@ def loadToken(filepath):
     except Exception:
         return False
     if data.get("_Serializable_classname") == 'TokenNumber':
-        token = TokenNumber.fromData(data)
+        token = TokenNumber.from_data(data)
     else:
-        token = Token.fromData(data)
+        token = Token.from_data(data)
     _tokens[token.name] = token
     return True
 
 
-def addTokenNumber(name, prefix='', padding=3, suffix=''):
+def add_token_number(name, prefix='', padding=3, suffix=''):
     token = TokenNumber(name)
-    token.addOption('prefix', prefix)
-    token.addOption('padding', padding)
-    token.addOption('suffix', suffix)
+    token.add_option('prefix', prefix)
+    token.add_option('padding', padding)
+    token.add_option('suffix', suffix)
     _tokens[name] = token
     return token
 
 
 def parse(name):
-    rule = getActiveRule()
+    rule = get_active_rule()
     return rule.parse(name)
 
 
 def solve(*args, **kwargs):
     values = dict()
-    rule = getActiveRule()
+    rule = get_active_rule()
     i = 0
     for f in rule.fields:
         token = _tokens[f]
@@ -381,49 +381,49 @@ def solve(*args, **kwargs):
     return rule.solve(**values)
 
 
-def getRepo():
+def get_repo():
     env_repo = os.environ.get(NAMING_REPO_ENV)
     local_repo = os.path.join(os.path.expanduser("~"), ".NXATools", "naming")
     return env_repo or local_repo
 
 
-def saveSession(repo=None):
-    repo = repo or getRepo()
+def save_session(repo=None):
+    repo = repo or get_repo()
     if not os.path.exists(repo):
         os.mkdir(repo)
     # tokens and rules
     for name, token in six.iteritems(_tokens):
         filepath = os.path.join(repo, name + ".token")
-        saveToken(name, filepath)
+        save_token(name, filepath)
     for name, rule in six.iteritems(_rules):
         if not isinstance(rule, Rule):
             continue
         filepath = os.path.join(repo, name + ".rule")
-        saveRule(name, filepath)
+        save_rule(name, filepath)
     # extra configuration
-    active = getActiveRule()
-    config = {"setActiveRule": active.name if active else None}
+    active = get_active_rule()
+    config = {"set_active_rule": active.name if active else None}
     filepath = os.path.join(repo, "naming.conf")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
     return True
 
 
-def loadSession(repo=None):
-    repo = repo or getRepo()
+def load_session(repo=None):
+    repo = repo or get_repo()
     # tokens and rules
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
             if filename.endswith(".token"):
-                loadToken(filepath)
+                load_token(filepath)
             elif filename.endswith(".rule"):
-                loadRule(filepath)
+                load_rule(filepath)
     # extra configuration
     filepath = os.path.join(repo, "naming.conf")
     if os.path.exists(filepath):
         with open(filepath) as fp:
             config = json.load(fp)
         for k, v in six.iteritems(config):
-            globals()[k](v)  # executes setActiveRule and sets it
+            globals()[k](v)  # executes set_active_rule and sets it
     return True
