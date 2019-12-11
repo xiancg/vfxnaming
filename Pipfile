@@ -8,6 +8,10 @@ pytest = "*"
 pytest-cov = "*"
 pytest-datafiles = "*"
 flake8 = "*"
+naming = {editable = true,path = "."}
 
 [packages]
 six = "*"
+
+[pipenv]
+allow_prereleases = true
