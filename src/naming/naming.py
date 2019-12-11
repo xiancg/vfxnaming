@@ -98,19 +98,22 @@ class Token(Serializable):
         return copy.deepcopy(self._options)
 
 
-class TokenNumber(Token):
+class TokenNumber(Serializable):
     def __init__(self, name):
-        super(TokenNumber, self).__init__(name)
+        super(TokenNumber, self).__init__()
+        self._name = name
         self._default = 1
+        self._options = {"prefix": "", "suffix": "", "padding": 3}
 
     def solve(self, number):
         """Solve for number with given padding parameter.
-            Ex: 1 could return 001 with padding 3"""
+            e.g.: 1 could return 001 with padding 3
+        """
         numberStr = str(number).zfill(self.padding)
         return '{}{}{}'.format(self.prefix, numberStr, self.suffix)
 
     def parse(self, value):
-        """Get metatada (number) for given value in name. Ex: v0025 will return 25"""
+        """Get metatada (number) for given value in name. e.g.: v0025 will return 25"""
         if value.isdigit():
             return int(value)
         else:
@@ -136,8 +139,24 @@ class TokenNumber(Token):
                 return int(value[prefix_index:-suffix_index])
 
     @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, n):
+        self._name = n
+
+    @property
+    def default(self):
+        return self._default
+
+    @property
+    def required(self):
+        return True
+
+    @property
     def padding(self):
-        return self._options['padding']
+        return self._options.get('padding')
 
     @padding.setter
     def padding(self, p):
@@ -147,27 +166,25 @@ class TokenNumber(Token):
 
     @property
     def prefix(self):
-        return self._options['prefix']
+        return self._options.get('prefix')
 
     @prefix.setter
     def prefix(self, p):
+        # ! Check for non digit and string type
         self._options['prefix'] = p
 
     @property
     def suffix(self):
-        return self._options['suffix']
+        return self._options.get('suffix')
 
     @suffix.setter
     def suffix(self, s):
+        # ! Check for string type
         self._options['suffix'] = s
 
     @property
-    def default(self):
-        return self._default
-
-    @property
-    def required(self):
-        return True
+    def options(self):
+        return copy.deepcopy(self._options)
 
 
 class Rule(Serializable):
@@ -331,11 +348,11 @@ def load_token(filepath):
     return True
 
 
-def add_token_number(name, prefix='', padding=3, suffix=''):
+def add_token_number(name, prefix=str(), suffix=str(), padding=3):
     token = TokenNumber(name)
-    token.add_option('prefix', prefix)
-    token.add_option('padding', padding)
-    token.add_option('suffix', suffix)
+    token.prefix = prefix
+    token.suffix = suffix
+    token.padding = padding
     _tokens[name] = token
     return token
 
