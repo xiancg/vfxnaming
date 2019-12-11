@@ -51,16 +51,25 @@ class Token(Serializable):
         self._options[key] = value
 
     def solve(self, name=None):
-        """Solve for abbreviation given a certain name. Ex: center could return C"""
+        """Solve for abbreviation given a certain name. e.g.: center could return C"""
         if name is None:
             return self.default
         return self._options.get(name)
 
     def parse(self, value):
-        """Get metatada (origin) for given value in name. Ex: L could return left"""
-        for k, v in six.iteritems(self._options):
-            if v == value:
-                return k
+        """Get metatada (origin) for given value in name. e.g.: L could return left
+
+        Args:
+            ``value`` (str): Name part to be parsed to the token origin
+
+        Returns:
+            [str]: Token origin for given value or value itself if no match is found.
+        """
+        if len(self._options) >= 1:
+            for k, v in six.iteritems(self._options):
+                if v == value:
+                    return k
+        return value
 
     @property
     def required(self):
@@ -88,15 +97,11 @@ class Token(Serializable):
     def options(self):
         return copy.deepcopy(self._options)
 
-    @property
-    def is_number(self):
-        return False
-
 
 class TokenNumber(Token):
     def __init__(self, name):
         super(TokenNumber, self).__init__(name)
-        self._is_number = True
+        self._default = 1
 
     def solve(self, number):
         """Solve for number with given padding parameter.
@@ -105,7 +110,7 @@ class TokenNumber(Token):
         return '{}{}{}'.format(self.prefix, numberStr, self.suffix)
 
     def parse(self, value):
-        """Get metatada (number) for given value in name. Ex: v0025 could return 25"""
+        """Get metatada (number) for given value in name. Ex: v0025 will return 25"""
         if value.isdigit():
             return int(value)
         else:
@@ -114,19 +119,14 @@ class TokenNumber(Token):
                 if each.isdigit() and prefix_index == 0:
                     prefix_index = -1
                     break
-                if not each.isdigit():
-                    prefix_index += 1
-                else:
-                    break
+                prefix_index += 1
+
             suffix_index = 0
             for each in value[::-1]:
                 if each.isdigit() and suffix_index == 0:
                     suffix_index = -1
                     break
-                if not each.isdigit():
-                    suffix_index += 1
-                else:
-                    break
+                suffix_index += 1
 
             if prefix_index == -1 and suffix_index >= 0:
                 return int(value[:-suffix_index])
@@ -163,15 +163,10 @@ class TokenNumber(Token):
 
     @property
     def default(self):
-        self._default = 1
         return self._default
 
     @property
     def required(self):
-        return True
-
-    @property
-    def is_number(self):
         return True
 
 
@@ -197,12 +192,6 @@ class Rule(Serializable):
         for i, f in enumerate(self.fields):
             name_part = split_name[i]
             token = _tokens[f]
-            if token.required:
-                if token.is_number:
-                    retval[f] = token.parse(name_part)
-                else:
-                    retval[f] = name_part
-                continue
             retval[f] = token.parse(name_part)
         return retval
 
