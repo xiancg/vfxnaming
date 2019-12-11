@@ -1,4 +1,4 @@
 [run]
 omit =
         *__init__.py*
-        naming/logger.py
+        *logger.py*
