@@ -7,6 +7,7 @@ from __future__ import absolute_import, print_function
 import copy
 import os
 import json
+from collections import OrderedDict
 
 import six
 
@@ -15,6 +16,7 @@ import six
 NAMING_REPO_ENV = "NAMING_REPO"
 _rules = {'_active': None}
 _tokens = dict()
+_separators = dict()
 
 
 class Serializable(object):
@@ -52,9 +54,20 @@ class Token(Serializable):
 
     def solve(self, name=None):
         """Solve for abbreviation given a certain name. e.g.: center could return C"""
-        if name is None:
+        if self.required and name:
+            return name
+        elif self.required and name is None:
+            raise Exception("Token {} is required. name parameter must be passed.".format(self.name))
+        elif not self.required and name:
+            if name not in self._options.keys():
+                raise Exception(
+                    "name '{}' not found in Token '{}'. Options: {}".format(
+                        name, self.name, ', '.join(self._options.keys())
+                        )
+                    )
+            return self._options.get(name)
+        elif not self.required and not name:
             return self.default
-        return self._options.get(name)
 
     def parse(self, value):
         """Get metatada (origin) for given value in name. e.g.: L could return left
@@ -187,6 +200,43 @@ class TokenNumber(Serializable):
         return copy.deepcopy(self._options)
 
 
+class Separator(Serializable):
+    def __init__(self, name):
+        super(Separator, self).__init__()
+        self._name = name
+        self._allowed_symbols = ['_', '-', '.']
+        self._symbol = '_'
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, n):
+        self._name = n
+
+    @property
+    def symbol(self):
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self, s):
+        if s in self._allowed_symbols:
+            self._symbol = s
+
+    @property
+    def allowed_symbols(self):
+        return self._allowed_symbols
+
+    def add_allowed_symbol(self, s):
+        if s not in self._allowed_symbols:
+            self._allowed_symbols.append(s)
+
+    def remove_allowed_symbol(self, s):
+        if s in self._allowed_symbols:
+            self._allowed_symbols.remove(s)
+
+
 class Rule(Serializable):
     def __init__(self, name, fields):
         super(Rule, self).__init__()
@@ -200,7 +250,16 @@ class Rule(Serializable):
 
     def solve(self, **values):
         """Build the name string with given values and return it"""
-        return self._pattern.format(**values)
+        result = str()
+        try:
+            result = self.pattern.format(**values)
+        except KeyError:
+            symbols_dict = dict()
+            for name, separator in six.iteritems(_separators):
+                symbols_dict[name] = separator.symbol
+            values.update(symbols_dict)
+            result = self.pattern.format(**values)
+        return result
 
     def parse(self, name):
         """Build and return dictionary with keys as tokens and values as given names"""
@@ -213,8 +272,8 @@ class Rule(Serializable):
         return retval
 
     @property
-    def _pattern(self):
-        return '{' + '}_{'.join(self.fields) + '}'
+    def pattern(self):
+        return '{' + '}{'.join(self.fields) + '}'
 
     @property
     def fields(self):
@@ -357,6 +416,13 @@ def add_token_number(name, prefix=str(), suffix=str(), padding=3):
     return token
 
 
+def add_separator(name, symbol='_'):
+    separator = Separator(name)
+    separator.symbol = symbol
+    _separators[name] = separator
+    return separator
+
+
 def parse(name):
     rule = get_active_rule()
     return rule.parse(name)
@@ -367,30 +433,27 @@ def solve(*args, **kwargs):
     rule = get_active_rule()
     i = 0
     for f in rule.fields:
-        token = _tokens[f]
-        if isinstance(token, TokenNumber):
+        separator = _separators.get(f)
+        if separator:
+            continue
+        token = _tokens.get(f)
+        if token:
+            # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:
                 values[f] = token.solve(kwargs.get(f))
                 continue
-            values[f] = token.solve(args[i])
-            i += 1
-            continue
-        if token.required:
-            if kwargs.get(f) is not None:
-                values[f] = kwargs.get(f)
+            elif token.required and kwargs.get(f) is None and len(args) == 0:
+                raise Exception("Token {} is required.")
+            elif not token.required and kwargs.get(f) is None:
+                values[f] = token.solve()
                 continue
+            # Implicitly passed as positional argument
             try:
-                values[f] = args[i]
-            except IndexError:
-                raise IndexError("Missing argument for field '{}'".format(f))
-            i += 1
-            continue
-        values[f] = token.solve(kwargs.get(f))
-
-        if kwargs.get(f) is not None:
-            values[f] = token.solve(kwargs.get(f))
-            continue
-
+                values[f] = token.solve(args[i])
+                i += 1
+                continue
+            except IndexError as why:
+                raise IndexError("Missing argument for field '{}'\n{}".format(f, why))
     return rule.solve(**values)
 
 
