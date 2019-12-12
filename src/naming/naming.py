@@ -107,7 +107,7 @@ class TokenNumber(Serializable):
 
     def solve(self, number):
         """Solve for number with given padding parameter.
-            e.g.: 1 could return 001 with padding 3
+            e.g.: 1 with padding 3, will return 001
         """
         numberStr = str(number).zfill(self.padding)
         return '{}{}{}'.format(self.prefix, numberStr, self.suffix)
@@ -370,19 +370,26 @@ def solve(*args, **kwargs):
         token = _tokens[f]
         if isinstance(token, TokenNumber):
             if kwargs.get(f) is not None:
-                values[f] = token.solve(kwargs[f])
+                values[f] = token.solve(kwargs.get(f))
                 continue
             values[f] = token.solve(args[i])
             i += 1
             continue
         if token.required:
             if kwargs.get(f) is not None:
-                values[f] = kwargs[f]
+                values[f] = kwargs.get(f)
                 continue
-            values[f] = args[i]
+            try:
+                values[f] = args[i]
+            except IndexError:
+                raise IndexError("Missing argument for field '{}'".format(f))
             i += 1
             continue
         values[f] = token.solve(kwargs.get(f))
+
+        if kwargs.get(f) is not None:
+            values[f] = token.solve(kwargs.get(f))
+            continue
 
     return rule.solve(**values)
 
