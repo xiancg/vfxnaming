@@ -428,6 +428,17 @@ def add_separator(name, symbol='_'):
     return separator
 
 
+def remove_separator(name):
+    if has_separator(name):
+        del _separators[name]
+        return True
+    return False
+
+
+def has_separator(name):
+    return name in _separators.keys()
+
+
 def parse(name):
     rule = get_active_rule()
     return rule.parse(name)

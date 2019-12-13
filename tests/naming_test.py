@@ -121,8 +121,9 @@ class Test_Parse:
         assert parsed['digits'] == 1
         assert parsed['type'] == 'lighting'
 
-    def test_parsing_without_separators_returns_none(self):
+    def test_parsing_without_separators(self):
         n.reset_rules()
+        n.remove_separator('underscore')
         n.add_rule(
             'lights',
             'category', 'function', 'whatAffects', 'digits', 'type'
