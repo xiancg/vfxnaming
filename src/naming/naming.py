@@ -33,10 +33,7 @@ class Serializable(object):
         if data.get("_Serializable_version") is not None:
             del data["_Serializable_version"]
 
-        if cls.__name__ == 'Rule':
-            this = cls(None, [None])
-        else:
-            this = cls(None)
+        this = cls(None)
         this.__dict__.update(data)
         return this
 
@@ -237,14 +234,13 @@ class Separator(Serializable):
 
 
 class Rule(Serializable):
-    def __init__(self, name, fields):
+    def __init__(self, name):
         super(Rule, self).__init__()
         self.name = name
         self._fields = list()
-        self.add_fields(fields)
 
-    def add_fields(self, tokenNames):
-        self._fields.extend(tokenNames)
+    def add_fields(self, token_names):
+        self._fields.extend(token_names)
         return True
 
     def solve(self, **values):
@@ -269,7 +265,7 @@ class Rule(Serializable):
             retval = dict()
             for i, f in enumerate(self.fields):
                 name_part = name_parts[i]
-                token = _tokens.get(f)
+                token = get_token(f)
                 if not token:
                     continue
                 retval[f] = token.parse(name_part)
@@ -284,6 +280,10 @@ class Rule(Serializable):
     def fields(self):
         return tuple(self._fields)
 
+    @fields.setter
+    def fields(self, f):
+        self._fields = f
+
     @property
     def name(self):
         return self._name
@@ -294,7 +294,8 @@ class Rule(Serializable):
 
 
 def add_rule(name, *fields):
-    rule = Rule(name, fields)
+    rule = Rule(name)
+    rule.fields = fields
     _rules[name] = rule
     if get_active_rule() is None:
         set_active_rule(name)
@@ -367,6 +368,15 @@ def add_token(name, **kwargs):
     return token
 
 
+def add_token_number(name, prefix=str(), suffix=str(), padding=3):
+    token = TokenNumber(name)
+    token.prefix = prefix
+    token.suffix = suffix
+    token.padding = padding
+    _tokens[name] = token
+    return token
+
+
 def remove_token(name):
     if has_token(name):
         del _tokens[name]
@@ -404,21 +414,10 @@ def load_token(filepath):
             data = json.load(fp)
     except Exception:
         return False
-    if data.get("_Serializable_classname") == 'TokenNumber':
-        token = TokenNumber.from_data(data)
-    else:
-        token = Token.from_data(data)
+    class_name = data.get("_Serializable_classname")
+    token = eval("{}.from_data(data)".format(class_name))
     _tokens[token.name] = token
     return True
-
-
-def add_token_number(name, prefix=str(), suffix=str(), padding=3):
-    token = TokenNumber(name)
-    token.prefix = prefix
-    token.suffix = suffix
-    token.padding = padding
-    _tokens[name] = token
-    return token
 
 
 def add_separator(name, symbol='_'):
@@ -439,6 +438,38 @@ def has_separator(name):
     return name in _separators.keys()
 
 
+def reset_separators():
+    _separators.clear()
+    return True
+
+
+def get_separator(name):
+    return _separators.get(name)
+
+
+def save_separator(name, filepath):
+    token = get_separator(name)
+    if not token:
+        return False
+    with open(filepath, "w") as fp:
+        json.dump(token.data(), fp)
+    return True
+
+
+def load_separator(filepath):
+    if not os.path.isfile(filepath):
+        return False
+    try:
+        with open(filepath) as fp:
+            data = json.load(fp)
+    except Exception:
+        return False
+    class_name = data.get("_Serializable_classname")
+    separator = eval("{}.from_data(data)".format(class_name))
+    _separators[separator.name] = separator
+    return True
+
+
 def parse(name):
     rule = get_active_rule()
     return rule.parse(name)
@@ -449,10 +480,10 @@ def solve(*args, **kwargs):
     rule = get_active_rule()
     i = 0
     for f in rule.fields:
-        separator = _separators.get(f)
+        separator = get_separator(f)
         if separator:
             continue
-        token = _tokens.get(f)
+        token = get_token(f)
         if token:
             # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:
@@ -483,15 +514,22 @@ def save_session(repo=None):
     repo = repo or get_repo()
     if not os.path.exists(repo):
         os.mkdir(repo)
-    # tokens and rules
+    # save tokens
     for name, token in six.iteritems(_tokens):
         filepath = os.path.join(repo, name + ".token")
         save_token(name, filepath)
+    # save rules
     for name, rule in six.iteritems(_rules):
         if not isinstance(rule, Rule):
             continue
         filepath = os.path.join(repo, name + ".rule")
         save_rule(name, filepath)
+    # save separators
+    for name, separator in six.iteritems(_separators):
+        if not isinstance(separator, Separator):
+            continue
+        filepath = os.path.join(repo, name + ".separator")
+        save_separator(name, filepath)
     # extra configuration
     active = get_active_rule()
     config = {"set_active_rule": active.name if active else None}
@@ -503,7 +541,7 @@ def save_session(repo=None):
 
 def load_session(repo=None):
     repo = repo or get_repo()
-    # tokens and rules
+    # tokens, rules and separators
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
@@ -511,6 +549,8 @@ def load_session(repo=None):
                 load_token(filepath)
             elif filename.endswith(".rule"):
                 load_rule(filepath)
+            elif filename.endswith(".separator"):
+                load_separator(filepath)
     # extra configuration
     filepath = os.path.join(repo, "naming.conf")
     if os.path.exists(filepath):

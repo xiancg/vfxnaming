@@ -123,7 +123,7 @@ class Test_Parse:
 
     def test_parsing_without_separators(self):
         n.reset_rules()
-        n.remove_separator('underscore')
+        n.reset_separators()
         n.add_rule(
             'lights',
             'category', 'function', 'whatAffects', 'digits', 'type'
@@ -199,6 +199,7 @@ class Test_Serialization:
     def setup(self):
         n.reset_rules()
         n.reset_tokens()
+        n.reset_separators()
 
     def test_tokens(self):
         token1 = n.add_token(
@@ -217,6 +218,11 @@ class Test_Serialization:
         rule2 = n.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
+    def test_separators(self):
+        separator1 = n.add_separator('underscore', '_')
+        separator2 = n.Separator.from_data(separator1.data())
+        assert separator1.data() == separator2.data()
+
     def test_validation(self):
         token = n.add_token(
             'function', key='key',
@@ -227,8 +233,13 @@ class Test_Serialization:
         rule = n.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
+        token_number = n.add_token_number('digits')
+        separator = n.add_separator('dot', '.')
+
         assert n.Rule.from_data(token.data()) is None
         assert n.Token.from_data(rule.data()) is None
+        assert n.TokenNumber.from_data(separator.data()) is None
+        assert n.Separator.from_data(token_number.data()) is None
 
     def test_save_load_rule(self):
         n.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
@@ -252,6 +263,24 @@ class Test_Serialization:
         n.reset_tokens()
         n.load_token(filepath)
         assert n.has_token('test') is True
+
+    def test_save_load_token_number(self):
+        n.add_token_number('test')
+        filepath = tempfile.mktemp()
+        n.save_token('test', filepath)
+
+        n.reset_tokens()
+        n.load_token(filepath)
+        assert n.has_token('test') is True
+
+    def test_save_load_separator(self):
+        n.add_separator('test')
+        filepath = tempfile.mktemp()
+        n.save_separator('test', filepath)
+
+        n.reset_separators()
+        n.load_separator(filepath)
+        assert n.has_separator('test') is True
 
     def test_save_load_session(self):
         n.add_token('whatAffects')
