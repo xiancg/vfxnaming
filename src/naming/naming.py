@@ -7,6 +7,7 @@ from __future__ import absolute_import, print_function
 import copy
 import os
 import json
+import re
 from collections import OrderedDict
 
 import six
@@ -263,11 +264,15 @@ class Rule(Serializable):
 
     def parse(self, name):
         """Build and return dictionary with keys as tokens and values as given names"""
+        delimiters = [value.symbol for key, value in six.iteritems(_separators)]
+        regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
+        name_parts = re.split(regex_pattern, name)
         retval = dict()
-        split_name = name.split('_')
         for i, f in enumerate(self.fields):
-            name_part = split_name[i]
-            token = _tokens[f]
+            name_part = name_parts[i]
+            token = _tokens.get(f)
+            if not token:
+                continue
             retval[f] = token.parse(name_part)
         return retval
 
