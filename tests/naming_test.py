@@ -60,9 +60,7 @@ class Test_Solve:
 
     def test_missing_not_required_token(self):
         with pytest.raises(IndexError) as exception:
-            n.solve(
-                category='natural', whatAffects='chars', digits=1, type='lighting'
-            )
+            n.solve('chars')
         assert str(exception.value).startswith("Missing argument for field") is True
 
     def test_defaults(self):
