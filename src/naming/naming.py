@@ -8,11 +8,9 @@ import copy
 import os
 import json
 import re
-from collections import OrderedDict
 
 import six
 
-# TODO: Add separator functionality
 
 NAMING_REPO_ENV = "NAMING_REPO"
 _rules = {'_active': None}
@@ -251,7 +249,7 @@ class Rule(Serializable):
 
     def solve(self, **values):
         """Build the name string with given values and return it"""
-        result = str()
+        result = None
         try:
             result = self.pattern.format(**values)
         except KeyError:
@@ -265,16 +263,18 @@ class Rule(Serializable):
     def parse(self, name):
         """Build and return dictionary with keys as tokens and values as given names"""
         delimiters = [value.symbol for key, value in six.iteritems(_separators)]
-        regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
-        name_parts = re.split(regex_pattern, name)
-        retval = dict()
-        for i, f in enumerate(self.fields):
-            name_part = name_parts[i]
-            token = _tokens.get(f)
-            if not token:
-                continue
-            retval[f] = token.parse(name_part)
-        return retval
+        if len(delimiters) >= 1:
+            regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
+            name_parts = re.split(regex_pattern, name)
+            retval = dict()
+            for i, f in enumerate(self.fields):
+                name_part = name_parts[i]
+                token = _tokens.get(f)
+                if not token:
+                    continue
+                retval[f] = token.parse(name_part)
+            return retval
+        return None
 
     @property
     def pattern(self):

@@ -104,6 +104,8 @@ class Test_Parse:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
+
+    def test_parsing_with_separators(self):
         n.add_separator('underscore', '_')
         n.reset_rules()
         n.add_rule(
@@ -111,8 +113,6 @@ class Test_Parse:
             'category', 'underscore', 'function', 'underscore', 'whatAffects',
             'underscore', 'digits', 'underscore', 'type'
         )
-
-    def test_parsing(self):
         name = 'dramatic_bounce_chars_001_LGT'
         parsed = n.parse(name)
         assert parsed['category'] == 'dramatic'
@@ -120,6 +120,16 @@ class Test_Parse:
         assert parsed['whatAffects'] == 'chars'
         assert parsed['digits'] == 1
         assert parsed['type'] == 'lighting'
+
+    def test_parsing_without_separators_returns_none(self):
+        n.reset_rules()
+        n.add_rule(
+            'lights',
+            'category', 'function', 'whatAffects', 'digits', 'type'
+        )
+        name = 'dramatic_bounce_chars_001_LGT'
+        parsed = n.parse(name)
+        assert parsed is None
 
 
 class Test_Token:
@@ -350,15 +360,25 @@ class Test_Separator:
         solved = n.solve('chars', 32)
         assert solved == name
 
-    def test_rule_with_underscores(self):
-        '''
-        n.add_separator('underscore', '')
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'number', 'type')
-        '''
-        pass
-
-    def test_rule_with_underscores_and_dots(self):
-        pass
+    def test_rule_multiple_separators(self):
+        n.add_separator('underscore', '_')
+        n.add_separator('dot', '.')
+        n.add_separator('hyphen', '-')
+        n.add_rule(
+            'lights',
+            'category', 'underscore', 'function', 'dot', 'whatAffects',
+            'hyphen', 'number', 'underscore', 'type'
+        )
+        name = 'natural_custom.chars-032_LGT'
+        solved = n.solve('chars', 32)
+        assert solved == name
 
     def test_rule_without_separators(self):
-        pass
+        n.add_rule(
+            'lights',
+            'category', 'function', 'whatAffects', 'number','type'
+        )
+        name = 'naturalcustomchars032LGT'
+        solved = n.solve('chars', 32)
+        print(solved)
+        assert solved == name
