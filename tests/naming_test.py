@@ -2,7 +2,9 @@
 from __future__ import absolute_import, print_function
 
 from naming import naming as n
-from naming.naming import Token, Rule
+import naming.separators as separators
+import naming.rules as rules
+import naming.tokens as tokens
 
 import pytest
 import tempfile
@@ -11,27 +13,27 @@ import tempfile
 class Test_Solve:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.reset_tokens()
-        n.add_token('whatAffects')
-        n.add_token_number('digits')
-        n.add_token(
+        tokens.reset_tokens()
+        tokens.add_token('whatAffects')
+        tokens.add_token_number('digits')
+        tokens.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.add_token(
+        tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.add_token(
+        tokens.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.add_separator('underscore', '_')
-        n.reset_rules()
-        n.add_rule(
+        separators.add_separator('underscore', '_')
+        rules.reset_rules()
+        rules.add_rule(
             'lights',
             'category', 'underscore', 'function', 'underscore', 'whatAffects',
             'underscore', 'digits', 'underscore', 'type'
@@ -86,29 +88,29 @@ class Test_Solve:
 class Test_Parse:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.reset_tokens()
-        n.add_token('whatAffects')
-        n.add_token_number('digits')
-        n.add_token(
+        tokens.reset_tokens()
+        tokens.add_token('whatAffects')
+        tokens.add_token_number('digits')
+        tokens.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.add_token(
+        tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.add_token(
+        tokens.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
 
     def test_parsing_with_separators(self):
-        n.add_separator('underscore', '_')
-        n.reset_rules()
-        n.add_rule(
+        separators.add_separator('underscore', '_')
+        rules.reset_rules()
+        rules.add_rule(
             'lights',
             'category', 'underscore', 'function', 'underscore', 'whatAffects',
             'underscore', 'digits', 'underscore', 'type'
@@ -122,9 +124,9 @@ class Test_Parse:
         assert parsed['type'] == 'lighting'
 
     def test_parsing_without_separators(self):
-        n.reset_rules()
-        n.reset_separators()
-        n.add_rule(
+        rules.reset_rules()
+        separators.reset_separators()
+        rules.add_rule(
             'lights',
             'category', 'function', 'whatAffects', 'digits', 'type'
         )
@@ -133,341 +135,140 @@ class Test_Parse:
         assert parsed is None
 
 
-class Test_Token:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        n.reset_tokens()
-
-    def test_add(self):
-        result = n.add_token('whatAffects')
-        assert isinstance(result, Token) is True
-
-        result = n.add_token(
-            'category', natural='natural',
-            practical='practical', dramatic='dramatic',
-            volumetric='volumetric', default='natural'
-            )
-        assert isinstance(result, Token) is True
-
-    def test_reset_tokens(self):
-        result = n.reset_tokens()
-        assert result is True
-
-    def test_remove_token(self):
-        n.add_token('test')
-        result = n.remove_token('test')
-        assert result is True
-
-        result = n.remove_token('test2')
-        assert result is False
-
-
-class Test_Rule:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        n.reset_rules()
-
-    def test_add(self):
-        result = n.add_rule(
-            'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
-            )
-        assert isinstance(result, Rule) is True
-
-    def test_reset_rules(self):
-        result = n.reset_rules()
-        assert result is True
-
-    def test_remove_rule(self):
-        n.add_rule('test', 'category', 'function', 'digits', 'type')
-        result = n.remove_rule('test')
-        assert result is True
-
-        result = n.remove_rule('test2')
-        assert result is False
-
-    def test_active(self):
-        # pattern = '{category}_{function}_{digits}_{type}'
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
-        n.add_rule('test', 'category', 'function', 'digits', 'type')
-        n.set_active_rule('test')
-        result = n.get_active_rule()
-        assert result is not None
-
-
 class Test_Serialization:
     @pytest.fixture(autouse=True)
     def setup(self):
-        n.reset_rules()
-        n.reset_tokens()
-        n.reset_separators()
+        rules.reset_rules()
+        tokens.reset_tokens()
+        separators.reset_separators()
 
     def test_tokens(self):
-        token1 = n.add_token(
+        token1 = tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        token2 = n.Token.from_data(token1.data())
+        token2 = tokens.Token.from_data(token1.data())
         assert token1.data() == token2.data()
 
     def test_rules(self):
-        rule1 = n.add_rule(
+        rule1 = rules.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
-        rule2 = n.Rule.from_data(rule1.data())
+        rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
     def test_separators(self):
-        separator1 = n.add_separator('underscore', '_')
-        separator2 = n.Separator.from_data(separator1.data())
+        separator1 = separators.add_separator('underscore', '_')
+        separator2 = separators.Separator.from_data(separator1.data())
         assert separator1.data() == separator2.data()
 
     def test_validation(self):
-        token = n.add_token(
+        token = tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        rule = n.add_rule(
+        rule = rules.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
-        token_number = n.add_token_number('digits')
-        separator = n.add_separator('dot', '.')
+        token_number = tokens.add_token_number('digits')
+        sep = separators.add_separator('dot', '.')
 
-        assert n.Rule.from_data(token.data()) is None
-        assert n.Token.from_data(rule.data()) is None
-        assert n.TokenNumber.from_data(separator.data()) is None
-        assert n.Separator.from_data(token_number.data()) is None
+        assert rules.Rule.from_data(token.data()) is None
+        assert tokens.Token.from_data(rule.data()) is None
+        assert tokens.TokenNumber.from_data(sep.data()) is None
+        assert separators.Separator.from_data(token_number.data()) is None
 
     def test_save_load_rule(self):
-        n.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
+        rules.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
         filepath = tempfile.mktemp()
-        n.save_rule('test', filepath)
+        rules.save_rule('test', filepath)
 
-        n.reset_rules()
-        n.load_rule(filepath)
-        assert n.has_rule('test') is True
+        rules.reset_rules()
+        rules.load_rule(filepath)
+        assert rules.has_rule('test') is True
 
     def test_save_load_token(self):
-        n.add_token(
+        tokens.add_token(
             'test', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
         filepath = tempfile.mktemp()
-        n.save_token('test', filepath)
+        tokens.save_token('test', filepath)
 
-        n.reset_tokens()
-        n.load_token(filepath)
-        assert n.has_token('test') is True
+        tokens.reset_tokens()
+        tokens.load_token(filepath)
+        assert tokens.has_token('test') is True
 
     def test_save_load_token_number(self):
-        n.add_token_number('test')
+        tokens.add_token_number('test')
         filepath = tempfile.mktemp()
-        n.save_token('test', filepath)
+        tokens.save_token('test', filepath)
 
-        n.reset_tokens()
-        n.load_token(filepath)
-        assert n.has_token('test') is True
+        tokens.reset_tokens()
+        tokens.load_token(filepath)
+        assert tokens.has_token('test') is True
 
     def test_save_load_separator(self):
-        n.add_separator('test')
+        separators.add_separator('test')
         filepath = tempfile.mktemp()
-        n.save_separator('test', filepath)
+        separators.save_separator('test', filepath)
 
-        n.reset_separators()
-        n.load_separator(filepath)
-        assert n.has_separator('test') is True
+        separators.reset_separators()
+        separators.load_separator(filepath)
+        assert separators.has_separator('test') is True
 
     def test_save_load_session(self):
-        n.add_token('whatAffects')
-        n.add_token_number('digits')
-        n.add_token(
+        tokens.add_token('whatAffects')
+        tokens.add_token_number('digits')
+        tokens.add_token(
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
             )
-        n.add_token(
+        tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        n.add_token(
+        tokens.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.add_separator('dot', '.')
-        n.add_separator('underscore', '.')
-        n.add_rule(
+        separators.add_separator('dot', '.')
+        separators.add_separator('underscore', '.')
+        rules.add_rule(
             'lights',
             'category', 'dot', 'function', 'dot', 'whatAffects',
             'underscore', 'digits', 'dot', 'type'
         )
-        n.add_rule(
+        rules.add_rule(
             'test', 'category', 'underscore', 'function'
         )
-        n.set_active_rule('lights')
+        rules.set_active_rule('lights')
 
         repo = tempfile.mkdtemp()
-        n.save_session(repo)
+        save_result = n.save_session(repo)
+        assert save_result is True
 
-        n.reset_rules()
-        n.reset_tokens()
-        n.reset_separators()
+        rules.reset_rules()
+        tokens.reset_tokens()
+        separators.reset_separators()
 
         n.load_session(repo)
-        assert n.has_token('whatAffects') is True
-        assert n.has_token('digits') is True
-        assert n.has_token('category') is True
-        assert n.has_token('function') is True
-        assert n.has_token('type') is True
-        assert n.has_rule('lights') is True
-        assert n.has_rule('test') is True
-        assert n.has_separator('underscore') is True
-        assert n.has_separator('dot') is True
-        assert n.get_active_rule().name == 'lights'
-
-
-class Test_TokenNumber:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        n.reset_tokens()
-        n.add_token('whatAffects')
-        n.add_token_number('number')
-        n.add_token(
-            'category', natural='natural',
-            practical='practical', dramatic='dramatic',
-            volumetric='volumetric', default='natural'
-            )
-        n.add_token(
-            'function', key='key',
-            fill='fill', ambient='ambient',
-            bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
-        n.add_token('type', lighting='LGT', default='LGT')
-        n.add_separator('underscore', '_')
-        n.add_rule(
-            'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'number', 'underscore', 'type'
-        )
-
-    def test_explicit_solve(self):
-        name = 'natural_ambient_chars_024_LGT'
-        solved = n.solve(
-            category='natural', function='ambient',
-            whatAffects='chars', number=24, type='lighting'
-            )
-        assert solved == name
-
-    def test_implicit_solve(self):
-        name = 'natural_custom_chars_032_LGT'
-        solved = n.solve('chars', 32)
-        assert solved == name
-
-    def test_prefix_suffix_padding_solve(self):
-        name = 'natural_custom_chars_v0032rt_LGT'
-        n.remove_token('number')
-        n.add_token_number(
-            'number', prefix='v', suffix='rt', padding=4
-        )
-        solved = n.solve('chars', 32)
-        assert solved == name
-
-    def test_prefix_suffix_padding_parse(self):
-        name = 'natural_custom_chars_v0032rt_LGT'
-        n.remove_token('number')
-        n.add_token_number(
-            'number', prefix='v', suffix='rt', padding=4
-        )
-        parsed = n.parse(name)
-        assert parsed['category'] == 'natural'
-        assert parsed['function'] == 'custom'
-        assert parsed['whatAffects'] == 'chars'
-        assert parsed['number'] == 32
-        assert parsed['type'] == 'lighting'
-
-    def test_prefix_only(self):
-        name = 'natural_custom_chars_v0078_LGT'
-        n.remove_token('number')
-        n.add_token_number(
-            'number', prefix='v', padding=4
-        )
-        parsed = n.parse(name)
-        assert parsed['category'] == 'natural'
-        assert parsed['function'] == 'custom'
-        assert parsed['whatAffects'] == 'chars'
-        assert parsed['number'] == 78
-        assert parsed['type'] == 'lighting'
-
-    def test_suffix_only(self):
-        name = 'natural_custom_chars_0062rt_LGT'
-        n.remove_token('number')
-        n.add_token_number(
-            'number', suffix='rt', padding=4
-        )
-        parsed = n.parse(name)
-        assert parsed['category'] == 'natural'
-        assert parsed['function'] == 'custom'
-        assert parsed['whatAffects'] == 'chars'
-        assert parsed['number'] == 62
-        assert parsed['type'] == 'lighting'
-
-
-class Test_Separator:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        n.reset_tokens()
-        n.add_token('whatAffects')
-        n.add_token_number('number')
-        n.add_token(
-            'category', natural='natural',
-            practical='practical', dramatic='dramatic',
-            volumetric='volumetric', default='natural'
-            )
-        n.add_token(
-            'function', key='key',
-            fill='fill', ambient='ambient',
-            bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
-        n.add_token('type', lighting='LGT', default='LGT')
-
-    def test_add_underscore(self):
-        n.add_separator('underscore', '_')
-        n.add_rule(
-            'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'number', 'underscore', 'type'
-        )
-        name = 'natural_custom_chars_032_LGT'
-        solved = n.solve('chars', 32)
-        assert solved == name
-
-    def test_rule_multiple_separators(self):
-        n.add_separator('underscore', '_')
-        n.add_separator('dot', '.')
-        n.add_separator('hyphen', '-')
-        n.add_rule(
-            'lights',
-            'category', 'underscore', 'function', 'dot', 'whatAffects',
-            'hyphen', 'number', 'underscore', 'type'
-        )
-        name = 'natural_custom.chars-032_LGT'
-        solved = n.solve('chars', 32)
-        assert solved == name
-
-    def test_rule_without_separators(self):
-        n.add_rule(
-            'lights',
-            'category', 'function', 'whatAffects', 'number','type'
-        )
-        name = 'naturalcustomchars032LGT'
-        solved = n.solve('chars', 32)
-        print(solved)
-        assert solved == name
+        assert tokens.has_token('whatAffects') is True
+        assert tokens.has_token('digits') is True
+        assert tokens.has_token('category') is True
+        assert tokens.has_token('function') is True
+        assert tokens.has_token('type') is True
+        assert rules.has_rule('lights') is True
+        assert rules.has_rule('test') is True
+        assert separators.has_separator('underscore') is True
+        assert separators.has_separator('dot') is True
+        assert rules.get_active_rule().name == 'lights'
