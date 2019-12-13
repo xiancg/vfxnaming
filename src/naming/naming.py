@@ -131,12 +131,16 @@ class TokenNumber(Serializable):
                 if each.isdigit() and prefix_index == 0:
                     prefix_index = -1
                     break
+                elif each.isdigit() and prefix_index > 0:
+                    break
                 prefix_index += 1
 
             suffix_index = 0
             for each in value[::-1]:
                 if each.isdigit() and suffix_index == 0:
                     suffix_index = -1
+                    break
+                elif each.isdigit() and suffix_index > 0:
                     break
                 suffix_index += 1
 
