@@ -300,8 +300,16 @@ class Test_Serialization:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
-        n.add_rule('test', 'category', 'function')
+        n.add_separator('dot', '.')
+        n.add_separator('underscore', '.')
+        n.add_rule(
+            'lights',
+            'category', 'dot', 'function', 'dot', 'whatAffects',
+            'underscore', 'digits', 'dot', 'type'
+        )
+        n.add_rule(
+            'test', 'category', 'underscore', 'function'
+        )
         n.set_active_rule('lights')
 
         repo = tempfile.mkdtemp()
@@ -309,6 +317,7 @@ class Test_Serialization:
 
         n.reset_rules()
         n.reset_tokens()
+        n.reset_separators()
 
         n.load_session(repo)
         assert n.has_token('whatAffects') is True
@@ -318,6 +327,8 @@ class Test_Serialization:
         assert n.has_token('type') is True
         assert n.has_rule('lights') is True
         assert n.has_rule('test') is True
+        assert n.has_separator('underscore') is True
+        assert n.has_separator('dot') is True
         assert n.get_active_rule().name == 'lights'
 
 

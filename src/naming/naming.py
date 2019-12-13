@@ -526,8 +526,6 @@ def save_session(repo=None):
         save_rule(name, filepath)
     # save separators
     for name, separator in six.iteritems(_separators):
-        if not isinstance(separator, Separator):
-            continue
         filepath = os.path.join(repo, name + ".separator")
         save_separator(name, filepath)
     # extra configuration
