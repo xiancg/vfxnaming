@@ -29,8 +29,13 @@ class Test_Solve:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
+        n.add_separator('underscore', '_')
         n.reset_rules()
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
+        n.add_rule(
+            'lights',
+            'category', 'underscore', 'function', 'underscore', 'whatAffects',
+            'underscore', 'digits', 'underscore', 'type'
+        )
 
     def test_explicit(self):
         name = 'natural_ambient_chars_001_LGT'
@@ -38,11 +43,25 @@ class Test_Solve:
                          whatAffects='chars', digits=1, type='lighting')
         assert solved == name
 
-    def test_noMatchForToken(self):
-        name = 'natural_ambient_chars_001_LGT'
-        solved = n.solve(category='natural', function='sarasa',
-                         whatAffects='chars', digits=1, type='lighting')
-        assert name != solved
+    def test_no_match_for_token(self):
+        with pytest.raises(Exception) as exception:
+            n.solve(
+                category='natural', function='sarasa',
+                whatAffects='chars', digits=1, type='lighting'
+            )
+        assert str(exception.value).startswith("name") is True
+
+    def test_missing_required_token(self):
+        with pytest.raises(Exception) as exception:
+            n.solve(
+                category='natural', function='key', digits=1, type='lighting'
+            )
+        assert str(exception.value).startswith("Token") is True
+
+    def test_missing_not_required_token(self):
+        with pytest.raises(IndexError) as exception:
+            n.solve('chars')
+        assert str(exception.value).startswith("Missing argument for field") is True
 
     def test_defaults(self):
         name = 'natural_custom_chars_001_LGT'
@@ -85,10 +104,15 @@ class Test_Parse:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.reset_rules()
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
 
-    def test_parsing(self):
+    def test_parsing_with_separators(self):
+        n.add_separator('underscore', '_')
+        n.reset_rules()
+        n.add_rule(
+            'lights',
+            'category', 'underscore', 'function', 'underscore', 'whatAffects',
+            'underscore', 'digits', 'underscore', 'type'
+        )
         name = 'dramatic_bounce_chars_001_LGT'
         parsed = n.parse(name)
         assert parsed['category'] == 'dramatic'
@@ -96,6 +120,17 @@ class Test_Parse:
         assert parsed['whatAffects'] == 'chars'
         assert parsed['digits'] == 1
         assert parsed['type'] == 'lighting'
+
+    def test_parsing_without_separators(self):
+        n.reset_rules()
+        n.reset_separators()
+        n.add_rule(
+            'lights',
+            'category', 'function', 'whatAffects', 'digits', 'type'
+        )
+        name = 'dramatic_bounce_chars_001_LGT'
+        parsed = n.parse(name)
+        assert parsed is None
 
 
 class Test_Token:
@@ -164,6 +199,7 @@ class Test_Serialization:
     def setup(self):
         n.reset_rules()
         n.reset_tokens()
+        n.reset_separators()
 
     def test_tokens(self):
         token1 = n.add_token(
@@ -182,6 +218,11 @@ class Test_Serialization:
         rule2 = n.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
+    def test_separators(self):
+        separator1 = n.add_separator('underscore', '_')
+        separator2 = n.Separator.from_data(separator1.data())
+        assert separator1.data() == separator2.data()
+
     def test_validation(self):
         token = n.add_token(
             'function', key='key',
@@ -192,8 +233,13 @@ class Test_Serialization:
         rule = n.add_rule(
             'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
             )
+        token_number = n.add_token_number('digits')
+        separator = n.add_separator('dot', '.')
+
         assert n.Rule.from_data(token.data()) is None
         assert n.Token.from_data(rule.data()) is None
+        assert n.TokenNumber.from_data(separator.data()) is None
+        assert n.Separator.from_data(token_number.data()) is None
 
     def test_save_load_rule(self):
         n.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
@@ -218,6 +264,24 @@ class Test_Serialization:
         n.load_token(filepath)
         assert n.has_token('test') is True
 
+    def test_save_load_token_number(self):
+        n.add_token_number('test')
+        filepath = tempfile.mktemp()
+        n.save_token('test', filepath)
+
+        n.reset_tokens()
+        n.load_token(filepath)
+        assert n.has_token('test') is True
+
+    def test_save_load_separator(self):
+        n.add_separator('test')
+        filepath = tempfile.mktemp()
+        n.save_separator('test', filepath)
+
+        n.reset_separators()
+        n.load_separator(filepath)
+        assert n.has_separator('test') is True
+
     def test_save_load_session(self):
         n.add_token('whatAffects')
         n.add_token_number('digits')
@@ -236,8 +300,16 @@ class Test_Serialization:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
-        n.add_rule('test', 'category', 'function')
+        n.add_separator('dot', '.')
+        n.add_separator('underscore', '.')
+        n.add_rule(
+            'lights',
+            'category', 'dot', 'function', 'dot', 'whatAffects',
+            'underscore', 'digits', 'dot', 'type'
+        )
+        n.add_rule(
+            'test', 'category', 'underscore', 'function'
+        )
         n.set_active_rule('lights')
 
         repo = tempfile.mkdtemp()
@@ -245,6 +317,7 @@ class Test_Serialization:
 
         n.reset_rules()
         n.reset_tokens()
+        n.reset_separators()
 
         n.load_session(repo)
         assert n.has_token('whatAffects') is True
@@ -254,6 +327,8 @@ class Test_Serialization:
         assert n.has_token('type') is True
         assert n.has_rule('lights') is True
         assert n.has_rule('test') is True
+        assert n.has_separator('underscore') is True
+        assert n.has_separator('dot') is True
         assert n.get_active_rule().name == 'lights'
 
 
@@ -275,9 +350,14 @@ class Test_TokenNumber:
             kick='kick', default='custom'
             )
         n.add_token('type', lighting='LGT', default='LGT')
-        n.add_rule('lights', 'category', 'function', 'whatAffects', 'number', 'type')
+        n.add_separator('underscore', '_')
+        n.add_rule(
+            'lights',
+            'category', 'underscore', 'function', 'underscore', 'whatAffects',
+            'underscore', 'number', 'underscore', 'type'
+        )
 
-    def test_explicitSolve(self):
+    def test_explicit_solve(self):
         name = 'natural_ambient_chars_024_LGT'
         solved = n.solve(
             category='natural', function='ambient',
@@ -285,7 +365,109 @@ class Test_TokenNumber:
             )
         assert solved == name
 
-    def test_implicitSolve(self):
+    def test_implicit_solve(self):
         name = 'natural_custom_chars_032_LGT'
         solved = n.solve('chars', 32)
+        assert solved == name
+
+    def test_prefix_suffix_padding_solve(self):
+        name = 'natural_custom_chars_v0032rt_LGT'
+        n.remove_token('number')
+        n.add_token_number(
+            'number', prefix='v', suffix='rt', padding=4
+        )
+        solved = n.solve('chars', 32)
+        assert solved == name
+
+    def test_prefix_suffix_padding_parse(self):
+        name = 'natural_custom_chars_v0032rt_LGT'
+        n.remove_token('number')
+        n.add_token_number(
+            'number', prefix='v', suffix='rt', padding=4
+        )
+        parsed = n.parse(name)
+        assert parsed['category'] == 'natural'
+        assert parsed['function'] == 'custom'
+        assert parsed['whatAffects'] == 'chars'
+        assert parsed['number'] == 32
+        assert parsed['type'] == 'lighting'
+
+    def test_prefix_only(self):
+        name = 'natural_custom_chars_v0078_LGT'
+        n.remove_token('number')
+        n.add_token_number(
+            'number', prefix='v', padding=4
+        )
+        parsed = n.parse(name)
+        assert parsed['category'] == 'natural'
+        assert parsed['function'] == 'custom'
+        assert parsed['whatAffects'] == 'chars'
+        assert parsed['number'] == 78
+        assert parsed['type'] == 'lighting'
+
+    def test_suffix_only(self):
+        name = 'natural_custom_chars_0062rt_LGT'
+        n.remove_token('number')
+        n.add_token_number(
+            'number', suffix='rt', padding=4
+        )
+        parsed = n.parse(name)
+        assert parsed['category'] == 'natural'
+        assert parsed['function'] == 'custom'
+        assert parsed['whatAffects'] == 'chars'
+        assert parsed['number'] == 62
+        assert parsed['type'] == 'lighting'
+
+
+class Test_Separator:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        n.reset_tokens()
+        n.add_token('whatAffects')
+        n.add_token_number('number')
+        n.add_token(
+            'category', natural='natural',
+            practical='practical', dramatic='dramatic',
+            volumetric='volumetric', default='natural'
+            )
+        n.add_token(
+            'function', key='key',
+            fill='fill', ambient='ambient',
+            bounce='bounce', rim='rim',
+            kick='kick', default='custom'
+            )
+        n.add_token('type', lighting='LGT', default='LGT')
+
+    def test_add_underscore(self):
+        n.add_separator('underscore', '_')
+        n.add_rule(
+            'lights',
+            'category', 'underscore', 'function', 'underscore', 'whatAffects',
+            'underscore', 'number', 'underscore', 'type'
+        )
+        name = 'natural_custom_chars_032_LGT'
+        solved = n.solve('chars', 32)
+        assert solved == name
+
+    def test_rule_multiple_separators(self):
+        n.add_separator('underscore', '_')
+        n.add_separator('dot', '.')
+        n.add_separator('hyphen', '-')
+        n.add_rule(
+            'lights',
+            'category', 'underscore', 'function', 'dot', 'whatAffects',
+            'hyphen', 'number', 'underscore', 'type'
+        )
+        name = 'natural_custom.chars-032_LGT'
+        solved = n.solve('chars', 32)
+        assert solved == name
+
+    def test_rule_without_separators(self):
+        n.add_rule(
+            'lights',
+            'category', 'function', 'whatAffects', 'number','type'
+        )
+        name = 'naturalcustomchars032LGT'
+        solved = n.solve('chars', 32)
+        print(solved)
         assert solved == name
