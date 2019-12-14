@@ -7,6 +7,7 @@ import os
 from naming.serialize import Serializable
 from naming.separators import get_separators
 from naming.tokens import get_token
+from naming.logger import logger
 
 import six
 

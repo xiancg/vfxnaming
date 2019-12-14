@@ -9,6 +9,7 @@ import json
 import naming.rules as rules
 import naming.tokens as tokens
 import naming.separators as separators
+from naming.logger import logger
 
 import six
 

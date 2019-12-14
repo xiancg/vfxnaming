@@ -5,6 +5,7 @@ import copy
 import json
 import os
 from naming.serialize import Serializable
+from naming.logger import logger
 
 import six
 
