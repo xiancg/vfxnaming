@@ -9,6 +9,7 @@ import json
 import naming.rules as rules
 import naming.tokens as tokens
 import naming.separators as separators
+from naming.logger import logger
 
 import six
 
@@ -51,7 +52,13 @@ def solve(*args, **kwargs):
 
 def get_repo():
     env_repo = os.environ.get(NAMING_REPO_ENV)
-    local_repo = os.path.join(os.path.expanduser("~"), ".NXATools", "naming")
+    userPath = os.path.expanduser("~")
+    module_dir = os.path.split(__file__)[0]
+    config_location = os.path.join(module_dir, "cfg", "config.json")
+    config = dict()
+    with open(config_location) as fp:
+        config = json.load(fp)
+    local_repo = os.path.join(userPath, "." + config["logger_dir_name"], "naming_repo")
     return env_repo or local_repo
 
 

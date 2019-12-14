@@ -2,9 +2,13 @@
 from __future__ import absolute_import, print_function
 
 import naming.rules as rules
+from naming import logger
 
 import pytest
 
+# Debug logging
+logger.init_logger()
+# logger.init_file_logger()
 
 class Test_Rule:
     @pytest.fixture(autouse=True)

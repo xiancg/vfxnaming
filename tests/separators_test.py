@@ -5,9 +5,13 @@ from naming import naming as n
 import naming.separators as separators
 import naming.rules as rules
 import naming.tokens as tokens
+from naming import logger
 
 import pytest
 
+# Debug logging
+logger.init_logger()
+# logger.init_file_logger()
 
 class Test_Separator:
     @pytest.fixture(autouse=True)
