@@ -12,6 +12,3 @@ naming = {editable = true,path = "."}
 
 [packages]
 six = "*"
-
-[pipenv]
-allow_prereleases = true
