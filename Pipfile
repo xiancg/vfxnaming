@@ -9,6 +9,7 @@ pytest-cov = "*"
 pytest-datafiles = "*"
 flake8 = "*"
 naming = {editable = true,path = "."}
+python-coveralls = "*"
 
 [packages]
 six = "*"
