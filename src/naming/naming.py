@@ -47,6 +47,7 @@ def solve(*args, **kwargs):
                 continue
             except IndexError as why:
                 raise IndexError("Missing argument for field '{}'\n{}".format(f, why))
+    logger.debug("Solving rule {} with values {}".format(rule.name, values))
     return rule.solve(**values)
 
 
@@ -59,7 +60,9 @@ def get_repo():
     with open(config_location) as fp:
         config = json.load(fp)
     local_repo = os.path.join(userPath, "." + config["logger_dir_name"], "naming_repo")
-    return env_repo or local_repo
+    result = env_repo or local_repo
+    logger.debug("Repo found: {}".format(result))
+    return result
 
 
 def save_session(repo=None):
@@ -69,21 +72,25 @@ def save_session(repo=None):
     # save tokens
     for name, token in six.iteritems(tokens.get_tokens()):
         filepath = os.path.join(repo, name + ".token")
+        logger.debug("Saving token: {} in {}".format(name, filepath))
         tokens.save_token(name, filepath)
     # save rules
     for name, rule in six.iteritems(rules.get_rules()):
         if not isinstance(rule, rules.Rule):
             continue
         filepath = os.path.join(repo, name + ".rule")
+        logger.debug("Saving rule: {} in {}".format(name, filepath))
         rules.save_rule(name, filepath)
     # save separators
     for name, separator in six.iteritems(separators.get_separators()):
         filepath = os.path.join(repo, name + ".separator")
+        logger.debug("Saving separator: {} in {}".format(name, filepath))
         separators.save_separator(name, filepath)
     # extra configuration
     active = rules.get_active_rule()
     config = {"set_active_rule": active.name if active else None}
     filepath = os.path.join(repo, "naming.conf")
+    logger.debug("Saving active rule: {} in {}".format(active.name, filepath))
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
     return True
@@ -96,14 +103,18 @@ def load_session(repo=None):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
             if filename.endswith(".token"):
+                logger.debug("Loading token: {}".format(filepath))
                 tokens.load_token(filepath)
             elif filename.endswith(".rule"):
+                logger.debug("Loading rule: {}".format(filepath))
                 rules.load_rule(filepath)
             elif filename.endswith(".separator"):
+                logger.debug("Loading separator: {}".format(filepath))
                 separators.load_separator(filepath)
     # extra configuration
     filepath = os.path.join(repo, "naming.conf")
     if os.path.exists(filepath):
+        logger.debug("Loading active rule: {}".format(filepath))
         with open(filepath) as fp:
             config = json.load(fp)
         rules.set_active_rule(config.get('set_active_rule'))

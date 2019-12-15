@@ -28,8 +28,10 @@ class Rule(Serializable):
         """Build the name string with given values and return it"""
         result = None
         try:
+            # Try to solve with given values
             result = self.pattern.format(**values)
         except KeyError:
+            # If KeyError, then separators are part of the rule and need to be added
             symbols_dict = dict()
             for name, separator in six.iteritems(get_separators()):
                 symbols_dict[name] = separator.symbol
@@ -41,6 +43,7 @@ class Rule(Serializable):
         """Build and return dictionary with keys as tokens and values as given names"""
         delimiters = [value.symbol for key, value in six.iteritems(get_separators())]
         if len(delimiters) >= 1:
+            logger.debug("Parsing with these separators: {}".format(', '.join(delimiters)))
             regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
             name_parts = re.split(regex_pattern, name)
             retval = dict()
@@ -51,6 +54,10 @@ class Rule(Serializable):
                     continue
                 retval[f] = token.parse(name_part)
             return retval
+        logger.warning(
+            "No separators used for rule {}, parsing is not possible.".format(
+                self.name)
+            )
         return None
 
     @property
@@ -80,6 +87,7 @@ def add_rule(name, *fields):
     _rules[name] = rule
     if get_active_rule() is None:
         set_active_rule(name)
+        logger.debug("No active rule found, setting this one as active: {}".format(name))
     return rule
 
 
@@ -101,7 +109,7 @@ def reset_rules():
 
 
 def get_active_rule():
-    name = _rules['_active']
+    name = _rules.get('_active')
     return _rules.get(name)
 
 

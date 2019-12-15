@@ -1,8 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function
 
-from naming.logger import logger
-
 import copy
 
 
@@ -15,6 +13,7 @@ class Serializable(object):
 
     @classmethod
     def from_data(cls, data):
+        # Validation
         if data.get("_Serializable_classname") != cls.__name__:
             return None
         del data["_Serializable_classname"]
