@@ -236,6 +236,7 @@ def load_token(filepath):
     except Exception:
         return False
     class_name = data.get("_Serializable_classname")
+    logger.debug("Loading token type: {}".format(class_name))
     token = eval("{}.from_data(data)".format(class_name))
     _tokens[token.name] = token
     return True

@@ -4,7 +4,6 @@ from __future__ import absolute_import, print_function
 import json
 import os
 from naming.serialize import Serializable
-from naming.logger import logger
 
 _separators = dict()
 
@@ -94,7 +93,6 @@ def load_separator(filepath):
             data = json.load(fp)
     except Exception:
         return False
-    class_name = data.get("_Serializable_classname")
-    separator = eval("{}.from_data(data)".format(class_name))
+    separator = Separator.from_data(data)
     _separators[separator.name] = separator
     return True
