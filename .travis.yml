@@ -10,3 +10,5 @@ script:
     - tox -e py27ci
     - tox -e py37ci
     - tox -e flake8
+after_success:
+    - coveralls
