@@ -1,17 +1,18 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function
 
-from naming import naming as n
-import naming.separators as separators
-import naming.rules as rules
-import naming.tokens as tokens
-from naming import logger
+from cgx_naming import naming as n
+import cgx_naming.separators as separators
+import cgx_naming.rules as rules
+import cgx_naming.tokens as tokens
+from cgx_naming import logger
 
 import pytest
 
 # Debug logging
 logger.init_logger()
 # logger.init_file_logger()
+
 
 class Test_Separator:
     @pytest.fixture(autouse=True)

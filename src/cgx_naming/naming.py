@@ -1,6 +1,6 @@
 # coding=utf-8
 # MIT License
-# Copyright (c) 2017 Cesar Saez
+# Copyright (c) 2017 Cesar Saez and modified by Chris Granados- Xian
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -20,10 +20,10 @@ from __future__ import absolute_import, print_function
 
 import os
 import json
-import naming.rules as rules
-import naming.tokens as tokens
-import naming.separators as separators
-from naming.logger import logger
+import cgx_naming.rules as rules
+import cgx_naming.tokens as tokens
+import cgx_naming.separators as separators
+from cgx_naming.logger import logger
 
 import six
 

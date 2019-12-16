@@ -1,5 +1,5 @@
 Separators module
-================
+==================
 
-.. automodule:: naming.separators
+.. automodule:: cgx_naming.separators
    :members:

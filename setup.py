@@ -9,16 +9,17 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='naming',
-    version='1.0.0',
+    name='cgx_naming',
+    version='1.0.0-alpha',
     description='Naming conventions library',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/xiancg/naming',
+    url='https://github.com/xiancg/cgx_naming',
+    download_url='https://github.com/xiancg/cgx_naming/archive/1.0.0-alpha.tar.gz',
     author='Cesar Saez, Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.7'

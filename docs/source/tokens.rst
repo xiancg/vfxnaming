@@ -1,5 +1,5 @@
 Tokens module
 ================
 
-.. automodule:: naming.tokens
+.. automodule:: cgx_naming.tokens
    :members:

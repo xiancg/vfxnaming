@@ -4,10 +4,10 @@ from __future__ import absolute_import, print_function
 import re
 import json
 import os
-from naming.serialize import Serializable
-from naming.separators import get_separators
-from naming.tokens import get_token
-from naming.logger import logger
+from cgx_naming.serialize import Serializable
+from cgx_naming.separators import get_separators
+from cgx_naming.tokens import get_token
+from cgx_naming.logger import logger
 
 import six
 
@@ -116,7 +116,7 @@ def add_rule(name, *fields):
         name (str): Name that best describes the rule, this will be used as a way
         to invoke the Rule object.
 
-        *fields: Each argument following the name is treated as a field for the
+        fields: Each argument following the name is treated as a field for the
         new Rule
 
     Returns:

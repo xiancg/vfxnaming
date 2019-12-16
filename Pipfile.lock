@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d1412fec088907a849f2e2a5419f245e60905db7b95f8f6ba80ec9abf8104bad"
+            "sha256": "bd358bd5fd48e2d985c5f74225250ce822042cd9a01850915f2aa3b69297ddbf"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -66,6 +66,10 @@
                 "sha256:25b64c7da4cd7479594d035c08c2d809eb4aab3a26e5a990ea98cc450c320f1f"
             ],
             "version": "==2019.11.28"
+        },
+        "cgx-naming": {
+            "editable": true,
+            "path": "."
         },
         "chardet": {
             "hashes": [
@@ -223,10 +227,6 @@
                 "sha256:c833ef592a0324bcc6a60e48440da07645063c453880c9477ceb22490aec1564"
             ],
             "version": "==8.0.2"
-        },
-        "naming": {
-            "editable": true,
-            "path": "."
         },
         "packaging": {
             "hashes": [

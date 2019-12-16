@@ -1,5 +1,5 @@
 Rules module
 ================
 
-.. automodule:: naming.rules
+.. automodule:: cgx_naming.rules
    :members:

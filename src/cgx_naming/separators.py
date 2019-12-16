@@ -3,7 +3,7 @@ from __future__ import absolute_import, print_function
 
 import json
 import os
-from naming.serialize import Serializable
+from cgx_naming.serialize import Serializable
 
 _separators = dict()
 
