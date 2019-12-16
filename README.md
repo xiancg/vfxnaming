@@ -10,7 +10,7 @@ This is completely based on [Copyright (c) 2017 Cesar Saez](https://www.cesarsae
 Why no fork from [Cesar's Repo](https://github.com/csaez/naming)?
 I found myself using and modifying his code to fit my needs. Not only that, but he has an AMAZING video tutorial series on this topic and my code deviated a bit too much from what he shows in the videos.
 
-What's different from Cesar's?
+What are the main differences from Cesar's?
 1. Implemented a special Token for numbers with the ability to handle pure digits and version like strings (e.g.: v0025) with padding settings.
 2. Implemented Separators, so not only underscores can be used, but also hyphens, dots, etc, in any combination.
 3. Switched the entire test suite to pytest which is what I use.
