@@ -16,7 +16,7 @@ _rules = {'_active': None}
 
 class Rule(Serializable):
     def __init__(self, name):
-        """Each rule is managed by an instance fo this class. Fields exist for each
+        """Each rule is managed by an instance of this class. Fields exist for each
         Token and Separator used in the rule definition.
 
         Args:
@@ -109,7 +109,8 @@ class Rule(Serializable):
 
 
 def add_rule(name, *fields):
-    """Add rule to current naming session.
+    """Add rule to current naming session. If no active rule is found, it adds
+    the created one as active by default.
 
     Args:
         name (str): Name that best describes the rule, this will be used as a way
@@ -137,7 +138,7 @@ def remove_rule(name):
         name (str): The name of the rule to be removed.
 
     Returns:
-        bool: True if successful, False if a rule given name was not found.
+        bool: True if successful, False if a rule name was not found.
     """
     if has_rule(name):
         del _rules[name]
