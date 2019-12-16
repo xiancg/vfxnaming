@@ -1,5 +1,11 @@
 Naming Conventions Docs
 ========================================
+
+.. image:: https://travis-ci.org/xiancg/naming.svg?branch=master
+    :target: https://travis-ci.org/xiancg/naming
+.. image:: https://readthedocs.org/projects/naming-conventions/badge/?version=latest
+.. image:: https://coveralls.io/repos/github/xiancg/naming/badge.svg?branch=master
+
 A complete suite of tools to manage naming conventions from one or more
 "Rules repositories". Structure naming rules with your own custom tokens
 and separators. Then use the library to solve names following those rules
