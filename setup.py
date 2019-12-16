@@ -27,6 +27,6 @@ setup(
     packages=find_packages(where='src'),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
     extras_require={
-        'dev': ['pytest', 'pytest-cov', 'pytest-datafiles', 'flake8']
+        'dev': ['pytest', 'pytest-cov', 'pytest-datafiles', 'python-coveralls', 'flake8']
     }
 )
