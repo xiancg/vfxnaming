@@ -14,16 +14,48 @@ _tokens = dict()
 
 class Token(Serializable):
     def __init__(self, name):
+        """Tokens are the main parts of a naming rule. Each meaningful part of a name
+        is called a token. A token can be required, meaning fully typed by the user,
+        or can have a set of default options preconfigured.
+        If options are present, then one of them is the default one.
+        Each option follows a {full_name:abbreviation} schema, so that names can be short
+        but meaning can be recovered easily.
+
+        Args:
+            name (str): Name that best describes the Token, this will be used as a way
+            to invoke the Token object.
+        """
         super(Token, self).__init__()
         self._name = name
         self._default = None
         self._options = dict()
 
     def add_option(self, key, value):
+        """Add an option pair to this Token.
+
+        Args:
+            key (str): Full length name of the option
+            value (str): Abbreviation to be used when building the name.
+        """
         self._options[key] = value
 
     def solve(self, name=None):
-        """Solve for abbreviation given a certain name. e.g.: center could return C"""
+        """Solve for abbreviation given a certain name. e.g.: center could return C
+
+        Args:
+            name (str, optional): Key to look for in the options for this Token.
+                Defaults to None, which will return the default value set in the options
+                for this Token.
+
+        Raises:
+            Exception: If Token is required and no value is passed.
+            Exception: If given name is not found in options list.
+
+        Returns:
+            str: If Token is required, the same input value is returned
+            str: If Token has options, the abbreviation for given name is returned
+            str: If nothing is passed and Token has options, default option is returned.
+        """
         if self.required and name:
             return name
         elif self.required and name is None:
@@ -43,10 +75,10 @@ class Token(Serializable):
         """Get metatada (origin) for given value in name. e.g.: L could return left
 
         Args:
-            ``value`` (str): Name part to be parsed to the token origin
+            value (str): Name part to be parsed to the token origin
 
         Returns:
-            [str]: Token origin for given value or value itself if no match is found.
+            str: Token origin for given value or value itself if no match is found.
         """
         if len(self._options) >= 1:
             for k, v in six.iteritems(self._options):
@@ -74,7 +106,9 @@ class Token(Serializable):
 
     @default.setter
     def default(self, d):
-        self._default = d
+        if len(self._options) >= 1:
+            if d in self._options.values():
+                self._default = d
 
     @property
     def options(self):
