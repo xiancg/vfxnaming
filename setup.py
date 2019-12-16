@@ -14,7 +14,7 @@ setup(
     description='Naming conventions library',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://gitlab.com/arcanepipeline/naming-conventions',
+    url='https://github.com/xiancg/naming',
     author='Cesar Saez, Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
@@ -26,7 +26,10 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
+    install_requires=['six'],
     extras_require={
-        'dev': ['pytest', 'pytest-cov', 'pytest-datafiles', 'python-coveralls', 'flake8']
-    }
+        'dev': ['pytest', 'pytest-cov', 'pytest-datafiles', 'python-coveralls', 'flake8'],
+        'docs': ['sphinx', 'sphinx-rtd-theme']
+    },
+    package_data={'': ['cfg/config.json']}
 )
