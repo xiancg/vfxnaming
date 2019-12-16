@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/xiancg/cgx_naming',
-    download_url='https://github.com/xiancg/cgx_naming/archive/1.0.0-alpha.tar.gz',
+    download_url='https://github.com/xiancg/cgx_naming/archive/v1.0.0-alpha.tar.gz',
     author='Cesar Saez, Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
