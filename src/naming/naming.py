@@ -17,11 +17,29 @@ NAMING_REPO_ENV = "NAMING_REPO"
 
 
 def parse(name):
+    """Get metadata from a name string recognized by the currently active rule.
+
+    Args:
+        name (str): Name string e.g.: C_helmet_001_MSH
+
+    Returns:
+        dict: A dictionary with keys as tokens and values as given name parts.
+        e.g.: {'side':'C', 'part':'helmet', 'number': 1, 'type':'MSH'}
+    """
     rule = rules.get_active_rule()
     return rule.parse(name)
 
 
 def solve(*args, **kwargs):
+    """Given arguments are used to build a name following currently active rule.
+
+    Raises:
+        Exception: A required token was passed as None to keyword arguments.
+        IndexError: Missing argument for one field in currently active rule.
+
+    Returns:
+        str: A string with the resulting name.
+    """
     values = dict()
     rule = rules.get_active_rule()
     i = 0
@@ -52,6 +70,13 @@ def solve(*args, **kwargs):
 
 
 def get_repo():
+    """Get repository location from either global environment variable or local user,
+    giving priority to environment variable.
+    Environment varialble name: NAMING_REPO
+
+    Returns:
+        str: Naming repository location
+    """
     env_repo = os.environ.get(NAMING_REPO_ENV)
     userPath = os.path.expanduser("~")
     module_dir = os.path.split(__file__)[0]
@@ -66,9 +91,23 @@ def get_repo():
 
 
 def save_session(repo=None):
+    """Save rules, tokens, separators and config files to the repository.
+
+    Raises:
+        IOError, OSError: Repository directory could not be created.
+
+    Args:
+        repo (str, optional): Absolue path to a repository. Defaults to None.
+
+    Returns:
+        bool: True if saving session operation was successful.
+    """
     repo = repo or get_repo()
     if not os.path.exists(repo):
-        os.mkdir(repo)
+        try:
+            os.mkdir(repo)
+        except (IOError, OSError) as why:
+            raise why
     # save tokens
     for name, token in six.iteritems(tokens.get_tokens()):
         filepath = os.path.join(repo, name + ".token")
@@ -97,7 +136,18 @@ def save_session(repo=None):
 
 
 def load_session(repo=None):
+    """Load rules, tokens, separators and config from a repository.
+
+    Args:
+        repo (str, optional): Absolute path to a repository. Defaults to None.
+
+    Returns:
+        bool: True if loading session operation was successful.
+    """
     repo = repo or get_repo()
+    if not os.path.exists(repo):
+        logger.warning("Given repo directory does not exist: {}".format(repo))
+        return False
     # tokens, rules and separators
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
