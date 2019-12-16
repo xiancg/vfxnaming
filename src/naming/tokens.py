@@ -14,9 +14,8 @@ _tokens = dict()
 
 class Token(Serializable):
     def __init__(self, name):
-        """Tokens are the main parts of a naming rule. Each meaningful part of a name
-        is called a token. A token can be required, meaning fully typed by the user,
-        or can have a set of default options preconfigured.
+        """Tokens are the meaningful parts of a naming rule. A token can be required,
+        meaning fully typed by the user, or can have a set of default options preconfigured.
         If options are present, then one of them is the default one.
         Each option follows a {full_name:abbreviation} schema, so that names can be short
         but meaning can be recovered easily.
@@ -100,6 +99,12 @@ class Token(Serializable):
 
     @property
     def default(self):
+        """If Token has options, one of them will be default. Eitther passed by the user,
+        or simply the first found item in options.
+
+        Returns:
+            str: Default option value
+        """
         if self._default is None and len(self._options) >= 1:
             self._default = self._options.values()[0]
         return self._default
@@ -117,20 +122,42 @@ class Token(Serializable):
 
 class TokenNumber(Serializable):
     def __init__(self, name):
+        """Token for numbers with the ability to handle pure digits and version like strings
+        (e.g.: v0025) with padding settings.
+
+        In TokenNumber, options are limited to prefix, suffix and padding.
+
+        Args:
+            name (str): Name that best describes the TokenNumber, this will be used as a way
+            to invoke the Token object.
+        """
         super(TokenNumber, self).__init__()
         self._name = name
         self._default = 1
         self._options = {"prefix": "", "suffix": "", "padding": 3}
 
     def solve(self, number):
-        """Solve for number with given padding parameter.
-            e.g.: 1 with padding 3, will return 001
+        """Solve for number with prefix, suffix and padding parameter found in the instance
+            options. e.g.: 1 with padding 3, will return 001
+
+        Args:
+            number (int): Number to be solved for.
+
+        Returns:
+            str: The solved string to be used in the name
         """
         numberStr = str(number).zfill(self.padding)
         return '{}{}{}'.format(self.prefix, numberStr, self.suffix)
 
     def parse(self, value):
-        """Get metatada (number) for given value in name. e.g.: v0025 will return 25"""
+        """Get metatada (number) for given value in name. e.g.: v0025 will return 25
+
+        Args:
+            value (str): String value taken from a name with digits in it.
+
+        Returns:
+            int: Number found in the given string.
+        """
         if value.isdigit():
             return int(value)
         else:
@@ -191,8 +218,8 @@ class TokenNumber(Serializable):
 
     @prefix.setter
     def prefix(self, p):
-        # ! Check for non digit and string type
-        self._options['prefix'] = p
+        if type(p) is not str and not p.isdigit():
+            self._options['prefix'] = p
 
     @property
     def suffix(self):
@@ -200,8 +227,8 @@ class TokenNumber(Serializable):
 
     @suffix.setter
     def suffix(self, s):
-        # ! Check for string type
-        self._options['suffix'] = s
+        if type(s) is not str and not s.isdigit():
+            self._options['suffix'] = s
 
     @property
     def options(self):
@@ -209,6 +236,19 @@ class TokenNumber(Serializable):
 
 
 def add_token(name, **kwargs):
+    """Add token to current naming session. If 'default' keyword argument is found,
+    sets it as default for the token instance.
+
+    Args:
+        name (str): Name that best describes the token, this will be used as a way
+        to invoke the Token object.
+
+        *kwargs: Each argument following the name is treated as an options for the
+        new Token. 
+
+    Returns:
+        Token: The Token object instance created for given name and fields.
+    """
     token = Token(name)
     for k, v in six.iteritems(kwargs):
         if k == "default":
@@ -220,6 +260,24 @@ def add_token(name, **kwargs):
 
 
 def add_token_number(name, prefix=str(), suffix=str(), padding=3):
+    """Add token number to current naming session. If 'default' keyword argument is found,
+    sets it as default for the token instance.
+
+    Args:
+        name (str): Name that best describes the token, this will be used as a way
+        to invoke the TokenNumber object.
+
+        prefix (str, optional): Prefix for token number. Useful if you have to use v as prefix
+        for versioning for example.
+
+        suffix (str, optional): Suffix for token number.
+
+        padding (int, optional): Padding a numeric value with this leading number of zeroes.
+        e.g.: 25 with padding 4 would be 0025
+
+    Returns:
+        TokenNumber: The TokenNumber object instance created for given name and fields.
+    """
     token = TokenNumber(name)
     token.prefix = prefix
     token.suffix = suffix
@@ -229,6 +287,14 @@ def add_token_number(name, prefix=str(), suffix=str(), padding=3):
 
 
 def remove_token(name):
+    """Remove Token or TokenNumber from current session.
+
+    Args:
+        name (str): The name of the token to be removed.
+
+    Returns:
+        bool: True if successful, False if a rule name was not found.
+    """
     if has_token(name):
         del _tokens[name]
         return True
@@ -236,23 +302,58 @@ def remove_token(name):
 
 
 def has_token(name):
+    """Test if current session has a token with given name.
+
+    Args:
+        name (str): The name of the token to be looked for.
+
+    Returns:
+        bool: True if rule with given name exists in current session, False otherwise.
+    """
     return name in _tokens.keys()
 
 
 def reset_tokens():
+    """Clears all rules created for current session.
+
+    Returns:
+        bool: True if clearing was successful.
+    """
     _tokens.clear()
     return True
 
 
 def get_token(name):
+    """Gets Token or TokenNumber object with given name.
+
+    Args:
+        name (str): The name of the token to query.
+
+    Returns:
+        Rule: Token object instance for given name.
+    """
     return _tokens.get(name)
 
 
 def get_tokens():
+    """Get all Token and TokenNumber objects for current session.
+
+    Returns:
+        dict: {token_name:token_object}
+    """
     return _tokens
 
 
 def save_token(name, filepath):
+    """Saves given token serialized to specified location.
+
+    Args:
+        name (str): The name of the token to be saved.
+        filepath (str): Path location to save the token.
+
+    Returns:
+        bool: True if successful, False if rule wasn't found in current session.
+    """
     token = get_token(name)
     if not token:
         return False
@@ -262,6 +363,15 @@ def save_token(name, filepath):
 
 
 def load_token(filepath):
+    """Load token from given location and create Token or TokenNumber object in
+    memory to work with it.
+
+    Args:
+        filepath (str): Path to existing .token file location
+
+    Returns:
+        bool: True if successful, False if .token wasn't found.
+    """
     if not os.path.isfile(filepath):
         return False
     try:
