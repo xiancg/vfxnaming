@@ -6,7 +6,7 @@ Session Creation
 
 .. code-block:: python
 
-    import naming as n
+    import cgx_naming as n
 
     n.add_token('whatAffects')
     n.add_token_number('digits')
@@ -43,7 +43,7 @@ the repo location to the load_session function:
 
     .. code-block:: python
 
-        from naming import naming as n
+        import cgx_naming as n
 
         n.load_session()
 
