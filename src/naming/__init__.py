@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import, print_function
 
 from naming.naming import parse, solve, get_repo, save_session, load_session
 from naming.rules import add_rule, remove_rule, has_rule, reset_rules, get_active_rule, set_active_rule, get_rule, get_rules, save_rule, load_rule
