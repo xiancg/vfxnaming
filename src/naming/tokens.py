@@ -106,14 +106,18 @@ class Token(Serializable):
             str: Default option value
         """
         if self._default is None and len(self._options) >= 1:
-            self._default = self._options.values()[0]
+            self._default = list(self._options.values())[0]
         return self._default
 
     @default.setter
     def default(self, d):
         if len(self._options) >= 1:
-            if d in self._options.values():
-                self._default = d
+            self._default = d
+        else:
+            logger.warning(
+                "Default value {} not set because Token {} does not have options.".format(
+                    d, self.name)
+            )
 
     @property
     def options(self):
@@ -217,18 +221,22 @@ class TokenNumber(Serializable):
         return self._options.get('prefix')
 
     @prefix.setter
-    def prefix(self, p):
-        if type(p) is not str and not p.isdigit():
-            self._options['prefix'] = p
+    def prefix(self, this_prefix):
+        if isinstance(this_prefix, str) and not this_prefix.isdigit():
+            self._options['prefix'] = this_prefix
+        else:
+            logger.warning("Given prefix has to be a string: {}".format(this_prefix))
 
     @property
     def suffix(self):
         return self._options.get('suffix')
 
     @suffix.setter
-    def suffix(self, s):
-        if type(s) is not str and not s.isdigit():
-            self._options['suffix'] = s
+    def suffix(self, this_suffix):
+        if isinstance(this_suffix, str) and not this_suffix.isdigit():
+            self._options['suffix'] = this_suffix
+        else:
+            logger.warning("Given suffix has to be a string: {}".format(this_suffix))
 
     @property
     def options(self):
@@ -237,14 +245,14 @@ class TokenNumber(Serializable):
 
 def add_token(name, **kwargs):
     """Add token to current naming session. If 'default' keyword argument is found,
-    sets it as default for the token instance.
+    set it as default for the token instance.
 
     Args:
         name (str): Name that best describes the token, this will be used as a way
         to invoke the Token object.
 
         *kwargs: Each argument following the name is treated as an options for the
-        new Token. 
+        new Token.
 
     Returns:
         Token: The Token object instance created for given name and fields.
@@ -252,16 +260,17 @@ def add_token(name, **kwargs):
     token = Token(name)
     for k, v in six.iteritems(kwargs):
         if k == "default":
-            token.default = v
             continue
         token.add_option(k, v)
+    if "default" in kwargs.keys():
+        token.default = kwargs.get('default')
     _tokens[name] = token
     return token
 
 
 def add_token_number(name, prefix=str(), suffix=str(), padding=3):
     """Add token number to current naming session. If 'default' keyword argument is found,
-    sets it as default for the token instance.
+    set it as default for the token instance.
 
     Args:
         name (str): Name that best describes the token, this will be used as a way
