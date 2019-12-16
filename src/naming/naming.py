@@ -86,6 +86,7 @@ def solve(*args, **kwargs):
 def get_repo():
     """Get repository location from either global environment variable or local user,
     giving priority to environment variable.
+
     Environment varialble name: NAMING_REPO
 
     Returns:
@@ -150,7 +151,8 @@ def save_session(repo=None):
 
 
 def load_session(repo=None):
-    """Load rules, tokens, separators and config from a repository.
+    """Load rules, tokens, separators and config from a repository, and create
+    Python objects in memory to work with them.
 
     Args:
         repo (str, optional): Absolute path to a repository. Defaults to None.
