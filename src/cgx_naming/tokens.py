@@ -269,14 +269,13 @@ def add_token(name, **kwargs):
 
 
 def add_token_number(name, prefix=str(), suffix=str(), padding=3):
-    """Add token number to current naming session. If 'default' keyword argument is found,
-    set it as default for the token instance.
+    """Add token number to current naming session.
 
     Args:
         name (str): Name that best describes the token, this will be used as a way
         to invoke the TokenNumber object.
 
-        prefix (str, optional): Prefix for token number. Useful if you have to use v as prefix
+        prefix (str, optional): Prefix for token number. Useful if you have to use 'v' as prefix
         for versioning for example.
 
         suffix (str, optional): Suffix for token number.
