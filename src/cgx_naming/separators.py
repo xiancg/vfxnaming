@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 
 import json
 import os
+import copy
 from cgx_naming.serialize import Serializable
 
 _separators = dict()
@@ -70,7 +71,7 @@ class Separator(Serializable):
 
     @property
     def allowed_symbols(self):
-        return self._allowed_symbols
+        return copy.deepcopy(self._allowed_symbols)
 
 
 def add_separator(name, symbol='_'):
