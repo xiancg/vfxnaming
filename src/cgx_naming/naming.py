@@ -99,7 +99,7 @@ def get_repo():
     config = dict()
     with open(config_location) as fp:
         config = json.load(fp)
-    local_repo = os.path.join(userPath, "." + config["logger_dir_name"], "naming_repo")
+    local_repo = os.path.join(userPath, "." + config["local_repo_name"], "naming_repo")
     result = env_repo or local_repo
     logger.debug("Repo found: {}".format(result))
     return result
