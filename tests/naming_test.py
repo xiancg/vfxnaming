@@ -9,6 +9,7 @@ from cgx_naming import logger
 
 import pytest
 import tempfile
+import os
 
 # Debug logging
 logger.init_logger()
@@ -88,6 +89,34 @@ class Test_Solve:
         name = 'natural_custom_chars_001_LGT'
         solved = n.solve('chars', 1)
         assert solved == name
+
+
+class Test_TemplateRuleSolve:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        rules.reset_rules()
+        tokens.reset_tokens()
+        separators.reset_separators()
+
+        tokens.add_token('server')
+        tokens.add_token('project')
+        tokens.add_token('CFG', default='CFG')
+        separator = separators.add_separator("slash")
+        separator.use_folder_separators()
+        rules.set_active_rule('config_folder')
+        rules.add_template_rule('config_folder', 'server', 'slash', 'project', 'slash', 'CFG')
+
+    def test_solve_template_rule_implicit(self):
+        test_path = os.path.join("X:\\", "MyProject", "CFG")
+        assert n.solve("X:", "MyProject", "CFG") == test_path
+
+    def test_solve_template_rule_explicit_with_defaults(self):
+        test_path = os.path.join("X:\\", "MyProject", "CFG")
+        assert n.solve(server="X:", project="MyProject") == test_path
+
+    def test_solve_template_rule_explicit_with_args(self):
+        test_path = os.path.join("X:\\", "MyProject", "CFG")
+        assert n.solve("CFG", server="X:", project="MyProject") == test_path
 
 
 class Test_Parse:
