@@ -52,6 +52,15 @@ class Separator(Serializable):
             return True
         return False
 
+    def use_folder_separators(self):
+        """"Convenience function to swap file or object naming separators,
+        by folder structure separators: '\\' and '/'.
+
+        Symbol will be set to '\\' by default
+        """
+        self._allowed_symbols = ["\\", "/"]
+        self._symbol = "\\"
+
     @property
     def name(self):
         return self._name
