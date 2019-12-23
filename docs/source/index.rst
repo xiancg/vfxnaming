@@ -1,10 +1,11 @@
 Naming Conventions Docs
 ========================================
 
-.. image:: https://travis-ci.org/xiancg/naming.svg?branch=master
-    :target: https://travis-ci.org/xiancg/naming
+.. image:: https://travis-ci.org/xiancg/cgx_naming.svg?branch=master
+    :target: https://travis-ci.org/xiancg/cgx_naming
 .. image:: https://readthedocs.org/projects/naming-conventions/badge/?version=latest
-.. image:: https://coveralls.io/repos/github/xiancg/naming/badge.svg?branch=master
+.. image:: https://coveralls.io/repos/github/xiancg/cgx_naming/badge.svg?branch=master
+    :target: https://coveralls.io/github/xiancg/cgx_naming?branch=master
 
 Installation
 -----------
