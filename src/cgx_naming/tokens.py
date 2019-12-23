@@ -111,13 +111,7 @@ class Token(Serializable):
 
     @default.setter
     def default(self, d):
-        if len(self._options) >= 1:
-            self._default = d
-        else:
-            logger.warning(
-                "Default value {} not set because Token {} does not have options.".format(
-                    d, self.name)
-            )
+        self._default = d
 
     @property
     def options(self):
