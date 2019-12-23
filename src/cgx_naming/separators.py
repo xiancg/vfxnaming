@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 import json
 import os
 import copy
+import platform
 from cgx_naming.serialize import Serializable
 
 _separators = dict()
@@ -59,7 +60,15 @@ class Separator(Serializable):
         Symbol will be set to '\\' by default
         """
         self._allowed_symbols = ["\\", "/"]
-        self._symbol = "\\"
+        this_os = platform.system()
+        if this_os == "Windows":
+            self._symbol = "\\"
+        elif this_os == "Linux":
+            self._symbol = "/"
+        elif this_os == "Darwin":
+            self._symbol = "/"
+        else:
+            self._symbol = "/"
 
     @property
     def name(self):

@@ -10,12 +10,12 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='cgx_naming',
-    version='1.1.0-beta',
+    version='1.1.1-beta',
     description='Naming conventions library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/xiancg/cgx_naming',
-    download_url='https://github.com/xiancg/cgx_naming/archive/v1.0.0-alpha.tar.gz',
+    download_url='https://github.com/xiancg/cgx_naming/archive/v1.1.1-beta.tar.gz',
     author='Cesar Saez, Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
