@@ -10,6 +10,7 @@ from cgx_naming import logger
 import pytest
 import tempfile
 import os
+import platform
 
 # Debug logging
 logger.init_logger()
@@ -107,15 +108,24 @@ class Test_TemplateRuleSolve:
         rules.add_template_rule('config_folder', 'server', 'slash', 'project', 'slash', 'CFG')
 
     def test_solve_template_rule_implicit(self):
-        test_path = os.path.join("X:\\", "MyProject", "CFG")
+        if platform.system() == "Windows":
+            test_path = os.path.join("X:\\", "MyProject", "CFG")
+        else:
+            test_path = os.path.join("X", "MyProject", "CFG")
         assert n.solve("X:", "MyProject", "CFG") == test_path
 
     def test_solve_template_rule_explicit_with_defaults(self):
-        test_path = os.path.join("X:\\", "MyProject", "CFG")
+        if platform.system() == "Windows":
+            test_path = os.path.join("X:\\", "MyProject", "CFG")
+        else:
+            test_path = os.path.join("X", "MyProject", "CFG")
         assert n.solve(server="X:", project="MyProject") == test_path
 
     def test_solve_template_rule_explicit_with_args(self):
-        test_path = os.path.join("X:\\", "MyProject", "CFG")
+        if platform.system() == "Windows":
+            test_path = os.path.join("X:\\", "MyProject", "CFG")
+        else:
+            test_path = os.path.join("X", "MyProject", "CFG")
         assert n.solve("CFG", server="X:", project="MyProject") == test_path
 
 
@@ -185,7 +195,11 @@ class Test_TemplateRuleParse:
         rules.add_template_rule('config_folder', 'server', 'slash', 'project', 'slash', 'CFG')
 
     def test_parsing_folder_structure(self):
-        test_path = "X:\\MyProject\\CFG"
+        if platform.system() == "Windows":
+            test_path = "X:\\MyProject\\CFG"
+        else:
+            test_path = "X:/MyProject/CFG"
+        
         parsed = n.parse(test_path)
         assert parsed['server'] == 'X:'
         assert parsed['project'] == 'MyProject'
