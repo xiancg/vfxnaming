@@ -112,21 +112,30 @@ class Test_TemplateRuleSolve:
             test_path = os.path.join("X:\\", "MyProject", "CFG")
         else:
             test_path = os.path.join("X", "MyProject", "CFG")
-        assert n.solve("X:", "MyProject", "CFG") == test_path
+        if platform.system() == "Windows":
+            assert n.solve("X:", "MyProject", "CFG") == test_path
+        else:
+            assert n.solve("X", "MyProject", "CFG") == test_path
 
     def test_solve_template_rule_explicit_with_defaults(self):
         if platform.system() == "Windows":
             test_path = os.path.join("X:\\", "MyProject", "CFG")
         else:
             test_path = os.path.join("X", "MyProject", "CFG")
-        assert n.solve(server="X:", project="MyProject") == test_path
+        if platform.system() == "Windows":
+            assert n.solve(server="X:", project="MyProject") == test_path
+        else:
+            assert n.solve(server="X", project="MyProject") == test_path
 
     def test_solve_template_rule_explicit_with_args(self):
         if platform.system() == "Windows":
             test_path = os.path.join("X:\\", "MyProject", "CFG")
         else:
             test_path = os.path.join("X", "MyProject", "CFG")
-        assert n.solve("CFG", server="X:", project="MyProject") == test_path
+        if platform.system() == "Windows":
+            assert n.solve("CFG", server="X:", project="MyProject") == test_path
+        else:
+            assert n.solve("CFG", server="X", project="MyProject") == test_path
 
 
 class Test_Parse:
@@ -199,7 +208,7 @@ class Test_TemplateRuleParse:
             test_path = "X:\\MyProject\\CFG"
         else:
             test_path = "X:/MyProject/CFG"
-        
+
         parsed = n.parse(test_path)
         assert parsed['server'] == 'X:'
         assert parsed['project'] == 'MyProject'
