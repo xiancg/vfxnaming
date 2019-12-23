@@ -108,6 +108,61 @@ class Rule(Serializable):
         self._name = n
 
 
+class TemplateRule(Rule):
+    """Useful for folder naming.
+    Using \\ as separator (and removing defaults),
+    this rule will assume not passed field values as values themselves. So
+    'harcoded' values, so common in folder structure naming, can also be solved.
+    e.g.: {project_name}\\{CFG} with passed values project_name=my_project, will
+    return my_project\\CFG
+    """
+    def __init__(self, name):
+        super(TemplateRule, self).__init__(name)
+
+    def solve(self, **values):
+        """Given arguments are used to build a name. If no value is specified,
+        the field name itself is used as value.
+
+        Returns:
+            str: A string with the resulting name.
+        """
+        result = None
+        symbols_dict = dict()
+        for name, separator in six.iteritems(get_separators()):
+            symbols_dict[name] = separator.symbol
+        values.update(symbols_dict)
+
+        for f in self.fields:
+            if f not in values.keys():
+                values[f] = f
+
+        result = self.pattern.format(**values)
+        return result
+
+
+def add_template_rule(name, *fields):
+    """Add template rule to current naming session. If no active rule is found, it adds
+    the created one as active by default.
+
+    Args:
+        name (str): Name that best describes the template rule, this will be used as a way
+        to invoke the TemplateRule object.
+
+        fields: Each argument following the name is treated as a field for the
+        new TemplateRule
+
+    Returns:
+        Rule: The TemplateRule object instance created for given name and fields.
+    """
+    rule = TemplateRule(name)
+    rule.fields = fields
+    _rules[name] = rule
+    if get_active_rule() is None:
+        set_active_rule(name)
+        logger.debug("No active rule found, setting this one as active: {}".format(name))
+    return rule
+
+
 def add_rule(name, *fields):
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.

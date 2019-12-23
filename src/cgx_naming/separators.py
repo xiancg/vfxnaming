@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 import json
 import os
 import copy
+import platform
 from cgx_naming.serialize import Serializable
 
 _separators = dict()
@@ -51,6 +52,23 @@ class Separator(Serializable):
             self._allowed_symbols.remove(symbol)
             return True
         return False
+
+    def use_folder_separators(self):
+        """"Convenience function to swap file or object naming separators,
+        by folder structure separators: '\\' and '/'.
+
+        Symbol will be set to '\\' by default
+        """
+        self._allowed_symbols = ["\\", "/"]
+        this_os = platform.system()
+        if this_os == "Windows":
+            self._symbol = "\\"
+        elif this_os == "Linux":
+            self._symbol = "/"
+        elif this_os == "Darwin":
+            self._symbol = "/"
+        else:
+            self._symbol = "/"
 
     @property
     def name(self):
