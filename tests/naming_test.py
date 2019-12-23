@@ -169,6 +169,29 @@ class Test_Parse:
         assert parsed is None
 
 
+class Test_TemplateRuleParse:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        rules.reset_rules()
+        tokens.reset_tokens()
+        separators.reset_separators()
+
+        tokens.add_token('server')
+        tokens.add_token('project')
+        tokens.add_token('CFG', default='CFG')
+        separator = separators.add_separator("slash")
+        separator.use_folder_separators()
+        rules.set_active_rule('config_folder')
+        rules.add_template_rule('config_folder', 'server', 'slash', 'project', 'slash', 'CFG')
+
+    def test_parsing_folder_structure(self):
+        test_path = "X:\\MyProject\\CFG"
+        parsed = n.parse(test_path)
+        assert parsed['server'] == 'X:'
+        assert parsed['project'] == 'MyProject'
+        assert parsed['CFG'] == 'CFG'
+
+
 class Test_Serialization:
     @pytest.fixture(autouse=True)
     def setup(self):
