@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/xiancg/vfxnaming',
-    download_url='https://github.com/xiancg/vfxnaming/archive/v1.1.2-beta.tar.gz',
+    download_url='https://github.com/xiancg/vfxnaming/archive/v1.1.3-beta.tar.gz',
     author='Cesar Saez, Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
