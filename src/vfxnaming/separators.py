@@ -5,7 +5,7 @@ import json
 import os
 import copy
 import platform
-from cgx_naming.serialize import Serializable
+from vfxnaming.serialize import Serializable
 
 _separators = dict()
 

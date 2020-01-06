@@ -1,12 +1,12 @@
 # Naming Conventions Library
 
-[![Build Status](https://travis-ci.org/xiancg/cgx_naming.svg?branch=master)](https://travis-ci.org/xiancg/cgx_naming)
+[![Build Status](https://travis-ci.org/xiancg/vfxnaming.svg?branch=master)](https://travis-ci.org/xiancg/vfxnaming)
 [![Documentation Status](https://readthedocs.org/projects/naming-conventions/badge/?version=latest)](https://naming-conventions.readthedocs.io/en/latest/?badge=latest)
-[![Coverage Status](https://coveralls.io/repos/github/xiancg/cgx_naming/badge.svg?branch=master)](https://coveralls.io/github/xiancg/cgx_naming?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/xiancg/vfxnaming/badge.svg?branch=master)](https://coveralls.io/github/xiancg/vfxnaming?branch=master)
 
 # Installation
 ```python
-pip install cgx_naming
+pip install vfxnaming
 ```
 
 # Documentation

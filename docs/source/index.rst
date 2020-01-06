@@ -1,18 +1,18 @@
 Naming Conventions Docs
 ========================================
 
-.. image:: https://travis-ci.org/xiancg/cgx_naming.svg?branch=master
-    :target: https://travis-ci.org/xiancg/cgx_naming
+.. image:: https://travis-ci.org/xiancg/vfxnaming.svg?branch=master
+    :target: https://travis-ci.org/xiancg/vfxnaming
 .. image:: https://readthedocs.org/projects/naming-conventions/badge/?version=latest
-.. image:: https://coveralls.io/repos/github/xiancg/cgx_naming/badge.svg?branch=master
-    :target: https://coveralls.io/github/xiancg/cgx_naming?branch=master
+.. image:: https://coveralls.io/repos/github/xiancg/vfxnaming/badge.svg?branch=master
+    :target: https://coveralls.io/github/xiancg/vfxnaming?branch=master
 
 Installation
------------
+------------
 
 .. code-block:: python
 
-    pip install cgx_naming
+    pip install vfxnaming
 
 A complete suite of tools to manage naming conventions from one or more
 "Rules repositories". Structure naming rules with your own custom tokens

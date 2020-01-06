@@ -4,8 +4,8 @@ from __future__ import absolute_import, print_function
 import copy
 import json
 import os
-from cgx_naming.serialize import Serializable
-from cgx_naming.logger import logger
+from vfxnaming.serialize import Serializable
+from vfxnaming.logger import logger
 
 import six
 

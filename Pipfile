@@ -8,7 +8,7 @@ pytest = "*"
 pytest-cov = "*"
 pytest-datafiles = "*"
 flake8 = "*"
-cgx_naming = {editable = true,path = "."}
+vfxnaming = {editable = true,path = "."}
 python-coveralls = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"

@@ -1,8 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function
 
-import cgx_naming.rules as rules
-from cgx_naming import logger
+import vfxnaming.rules as rules
+from vfxnaming import logger
 
 import pytest
 

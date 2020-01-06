@@ -1,5 +1,5 @@
 Rules module
 ================
 
-.. automodule:: cgx_naming.rules
+.. automodule:: vfxnaming.rules
    :members:

@@ -4,10 +4,10 @@ from __future__ import absolute_import, print_function
 import re
 import json
 import os
-from cgx_naming.serialize import Serializable
-from cgx_naming.separators import get_separators
-from cgx_naming.tokens import get_token
-from cgx_naming.logger import logger
+from vfxnaming.serialize import Serializable
+from vfxnaming.separators import get_separators
+from vfxnaming.tokens import get_token
+from vfxnaming.logger import logger
 
 import six
 

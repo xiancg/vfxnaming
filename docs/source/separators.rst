@@ -1,5 +1,5 @@
 Separators module
 ==================
 
-.. automodule:: cgx_naming.separators
+.. automodule:: vfxnaming.separators
    :members:

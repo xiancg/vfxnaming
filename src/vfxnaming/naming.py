@@ -20,10 +20,10 @@ from __future__ import absolute_import, print_function
 
 import os
 import json
-import cgx_naming.rules as rules
-import cgx_naming.tokens as tokens
-import cgx_naming.separators as separators
-from cgx_naming.logger import logger
+import vfxnaming.rules as rules
+import vfxnaming.tokens as tokens
+import vfxnaming.separators as separators
+from vfxnaming.logger import logger
 
 import six
 

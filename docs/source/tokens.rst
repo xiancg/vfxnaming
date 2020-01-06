@@ -1,5 +1,5 @@
 Tokens module
 ================
 
-.. automodule:: cgx_naming.tokens
+.. automodule:: vfxnaming.tokens
    :members:

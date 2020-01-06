@@ -1,11 +1,11 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function
 
-from cgx_naming import naming as n
-import cgx_naming.separators as separators
-import cgx_naming.rules as rules
-import cgx_naming.tokens as tokens
-from cgx_naming import logger
+from vfxnaming import naming as n
+import vfxnaming.separators as separators
+import vfxnaming.rules as rules
+import vfxnaming.tokens as tokens
+from vfxnaming import logger
 
 import pytest
 import tempfile
@@ -200,8 +200,8 @@ class Test_TemplateRuleParse:
         tokens.add_token('CFG', default='CFG')
         separator = separators.add_separator("slash")
         separator.use_folder_separators()
-        rules.set_active_rule('config_folder')
         rules.add_template_rule('config_folder', 'server', 'slash', 'project', 'slash', 'CFG')
+        rules.set_active_rule('config_folder')
 
     def test_parsing_folder_structure(self):
         if platform.system() == "Windows":
