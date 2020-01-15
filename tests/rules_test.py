@@ -41,15 +41,3 @@ class Test_Rule:
         rules.set_active_rule('test')
         result = rules.get_active_rule()
         assert result is not None
-
-
-class TemplateRule:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        rules.reset_rules()
-
-    def test_add_template_rule(self):
-        rules.add_template_rule('config_folder', 'server', 'project', 'CFG')
-        rules.set_active_rule('config_folder')
-        result = rules.get_active_rule()
-        assert result is not None
