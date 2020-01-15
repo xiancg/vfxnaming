@@ -8,14 +8,16 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+version_str = '1.1.5-beta'
+
 setup(
     name='vfxnaming',
-    version='1.1.4-beta',
+    version=version_str,
     description='Naming conventions library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/xiancg/vfxnaming',
-    download_url='https://github.com/xiancg/vfxnaming/archive/v1.1.4-beta.tar.gz',
+    download_url='https://github.com/xiancg/vfxnaming/archive/v{}.tar.gz'.format(version_str),
     author='Cesar Saez, Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
