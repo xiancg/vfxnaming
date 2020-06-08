@@ -194,13 +194,14 @@ class Test_RuleWithRepetitions:
         assert result == name
     
     def test_solve_repeated_missing_some(self):
-        with pytest.raises(ParsingError) as exception:
+        with pytest.raises(SolvingError) as exception:
             n.solve(
                 side1="center", side3="right",
                 region2="parotidmasseter",
                 region3="retromandibularfossa"
             )
         assert str(exception.value).startswith("Missing tokens from passed arguments") is True
+
 
 class Test_Serialization:
     @pytest.fixture(autouse=True)
