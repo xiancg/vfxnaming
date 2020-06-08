@@ -73,12 +73,28 @@ class Rule(Serializable):
             logger.debug("Parsing with these separators: {}".format(', '.join(delimiters)))
             regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
             name_parts = re.split(regex_pattern, name)
+            logger.debug("Name parts: {}".format(", ".join(name_parts)))
+
+            repeated_fields = dict()
+            for each in self.fields:
+                if each not in get_separators().keys() and each not in repeated_fields.keys():
+                    if self.fields.count(each) > 1:
+                        repeated_fields[each] = 1
+            if repeated_fields:
+                logger.debug(
+                    "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
+                )
+
             retval = dict()
             for i, f in enumerate(self.fields):
                 name_part = name_parts[i]
                 token = get_token(f)
                 if not token:
                     continue
+                if f in repeated_fields.keys():
+                    counter = repeated_fields.get(f)
+                    repeated_fields[f] = counter + 1
+                    f = "{}{}".format(f, counter)
                 retval[f] = token.parse(name_part)
             return retval
         logger.warning(

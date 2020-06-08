@@ -140,6 +140,43 @@ class Test_Parse:
         assert parsed is None
 
 
+class Test_ParseRuleWithRepetitions:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        rules.reset_rules()
+        separators.reset_separators()
+        tokens.add_token(
+            'side', center='C',
+            left='L', right='R',
+            default='center'
+        )
+        tokens.add_token(
+            'region', orbital="ORBI",
+            parotidmasseter="PAROT", mental="MENT",
+            frontal="FRONT", zygomatic="ZYGO",
+            retromandibularfossa="RETMAND"
+        )
+        separators.add_separator('underscore', '_')
+        separators.add_separator('hyphen', '-')
+        rules.add_rule(
+            "filename",
+            "side", "hyphen", "region", "underscore",
+            "side", "hyphen", "region", "underscore",
+            "side", "hyphen", "region"
+        )
+    
+    def test_rule_with_repeated_tokens(self):
+        name = "C-FRONT_L-ORBI_R-ZYGO"
+        expected = {
+            "side1":"center", "region1":"frontal",
+            "side2":"left", "region2":"orbital",
+            "side3":"right", "region3":"zygomatic"
+        }
+        result = n.parse(name)
+        assert result == expected
+        
+
 class Test_Serialization:
     @pytest.fixture(autouse=True)
     def setup(self):
