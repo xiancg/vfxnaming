@@ -8,7 +8,7 @@ from vfxnaming.serialize import Serializable
 from vfxnaming.separators import get_separators
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
-from vfxnaming.error import ParsingError
+from vfxnaming.error import ParsingError, SolvingError
 
 import six
 
@@ -47,16 +47,24 @@ class Rule(Serializable):
             str: A string with the resulting name.
         """
         result = None
+        separators = get_separators()
+        if separators:
+            has_separators = set(separators.keys()).intersection(self.fields)
+            if len(has_separators) > 0:
+                symbols_dict = dict()
+                for name, separator in six.iteritems(get_separators()):
+                    symbols_dict[name] = separator.symbol
+                values.update(symbols_dict)
         try:
-            # Try to solve with given values
             result = self.pattern.format(**values)
-        except KeyError:
-            # If KeyError, then separators are part of the rule and need to be added
-            symbols_dict = dict()
-            for name, separator in six.iteritems(get_separators()):
-                symbols_dict[name] = separator.symbol
-            values.update(symbols_dict)
-            result = self.pattern.format(**values)
+        except KeyError as why:
+            raise SolvingError(
+                "Arguments passed do not match with naming rule fields '{}'.\n{}".format(
+                    ", ".format(self.fields),
+                    why
+                )
+            )
+
         return result
 
     def parse(self, name):
