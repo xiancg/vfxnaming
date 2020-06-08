@@ -6,6 +6,7 @@ import vfxnaming.separators as separators
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from vfxnaming import logger
+from vfxnaming.error import ParsingError, SolvingError
 
 import pytest
 import tempfile
@@ -51,7 +52,7 @@ class Test_Solve:
         assert solved == name
 
     def test_no_match_for_token(self):
-        with pytest.raises(Exception) as exception:
+        with pytest.raises(SolvingError) as exception:
             n.solve(
                 category='natural', function='sarasa',
                 whatAffects='chars', digits=1, type='lighting'
@@ -59,14 +60,14 @@ class Test_Solve:
         assert str(exception.value).startswith("name") is True
 
     def test_missing_required_token(self):
-        with pytest.raises(Exception) as exception:
+        with pytest.raises(SolvingError) as exception:
             n.solve(
                 category='natural', function='key', digits=1, type='lighting'
             )
         assert str(exception.value).startswith("Token") is True
 
     def test_missing_not_required_token(self):
-        with pytest.raises(IndexError) as exception:
+        with pytest.raises(SolvingError) as exception:
             n.solve('chars')
         assert str(exception.value).startswith("Missing argument for field") is True
 
@@ -140,7 +141,7 @@ class Test_Parse:
         assert parsed is None
 
 
-class Test_ParseRuleWithRepetitions:
+class Test_RuleWithRepetitions:
     @pytest.fixture(autouse=True)
     def setup(self):
         tokens.reset_tokens()
@@ -166,7 +167,7 @@ class Test_ParseRuleWithRepetitions:
             "side", "hyphen", "region"
         )
     
-    def test_rule_with_repeated_tokens(self):
+    def test_parse_repeated_tokens(self):
         name = "C-FRONT_L-ORBI_R-ZYGO"
         expected = {
             "side1":"center", "region1":"frontal",
@@ -175,7 +176,31 @@ class Test_ParseRuleWithRepetitions:
         }
         result = n.parse(name)
         assert result == expected
+
+    def test_parse_repeated_tokens_missing_some(self):
+        name = "C-FRONT_-ORBI_R"
+        with pytest.raises(ParsingError) as exception:
+            n.parse(name)
+        assert str(exception.value).startswith("Missing tokens from passed name") is True
         
+    def test_solve_repeated_tokens(self):
+        name = "C-MENT_L-PAROT_R-RETMAND"
+        result = n.solve(
+            side1="center", side2="left", side3="right",
+            region1="mental", region2="parotidmasseter",
+            region3="retromandibularfossa"
+        )
+
+        assert result == name
+    
+    def test_solve_repeated_missing_some(self):
+        with pytest.raises(ParsingError) as exception:
+            n.solve(
+                side1="center", side3="right",
+                region2="parotidmasseter",
+                region3="retromandibularfossa"
+            )
+        assert str(exception.value).startswith("Missing tokens from passed arguments") is True
 
 class Test_Serialization:
     @pytest.fixture(autouse=True)

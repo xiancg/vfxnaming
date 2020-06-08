@@ -6,6 +6,7 @@ import json
 import os
 from vfxnaming.serialize import Serializable
 from vfxnaming.logger import logger
+from vfxnaming.error import SolvingError
 
 import six
 
@@ -58,10 +59,10 @@ class Token(Serializable):
         if self.required and name:
             return name
         elif self.required and name is None:
-            raise Exception("Token {} is required. name parameter must be passed.".format(self.name))
+            raise SolvingError("Token {} is required. name parameter must be passed.".format(self.name))
         elif not self.required and name:
             if name not in self._options.keys():
-                raise Exception(
+                raise SolvingError(
                     "name '{}' not found in Token '{}'. Options: {}".format(
                         name, self.name, ', '.join(self._options.keys())
                         )

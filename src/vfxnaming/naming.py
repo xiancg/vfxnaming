@@ -24,6 +24,7 @@ import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 import vfxnaming.separators as separators
 from vfxnaming.logger import logger
+from vfxnaming.error import SolvingError
 
 import six
 
@@ -68,7 +69,7 @@ def solve(*args, **kwargs):
                 values[f] = token.solve(kwargs.get(f))
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                raise Exception("Token {} is required.")
+                raise SolvingError("Token {} is required.")
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
                 continue
@@ -78,7 +79,7 @@ def solve(*args, **kwargs):
                 i += 1
                 continue
             except IndexError as why:
-                raise IndexError("Missing argument for field '{}'\n{}".format(f, why))
+                raise SolvingError("Missing argument for field '{}'\n{}".format(f, why))
     logger.debug("Solving rule {} with values {}".format(rule.name, values))
     return rule.solve(**values)
 

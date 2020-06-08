@@ -8,6 +8,7 @@ from vfxnaming.serialize import Serializable
 from vfxnaming.separators import get_separators
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
+from vfxnaming.error import ParsingError
 
 import six
 
@@ -73,6 +74,8 @@ class Rule(Serializable):
             logger.debug("Parsing with these separators: {}".format(', '.join(delimiters)))
             regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
             name_parts = re.split(regex_pattern, name)
+            if len(name_parts) != len(self.fields):
+                raise ParsingError("Missing tokens from passed name. Found {}".format(", ".join(name_parts)))
             logger.debug("Name parts: {}".format(", ".join(name_parts)))
 
             repeated_fields = dict()
@@ -99,8 +102,9 @@ class Rule(Serializable):
             return retval
         logger.warning(
             "No separators used for rule {}, parsing is not possible.".format(
-                self.name)
+                self.name
             )
+        )
         return None
 
     @property
