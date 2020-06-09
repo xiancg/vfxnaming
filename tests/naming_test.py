@@ -150,7 +150,7 @@ class Test_RuleWithRepetitions:
         tokens.add_token(
             'side', center='C',
             left='L', right='R',
-            default='center'
+            default='C'
         )
         tokens.add_token(
             'region', orbital="ORBI",
@@ -194,9 +194,9 @@ class Test_RuleWithRepetitions:
         assert result == name
     
     def test_solve_repeat_one_token(self):
-        name = "C-MENT_C-PAROT_C-RETMAND"
+        name = "L-MENT_L-PAROT_L-RETMAND"
         result = n.solve(
-            side="center",
+            side="left",
             region1="mental", region2="parotidmasseter",
             region3="retromandibularfossa"
         )
@@ -204,13 +204,13 @@ class Test_RuleWithRepetitions:
         assert result == name
 
     def test_solve_repeated_missing_some(self):
-        with pytest.raises(SolvingError) as exception:
-            n.solve(
-                side1="center", side3="right",
-                region2="parotidmasseter",
-                region3="retromandibularfossa"
-            )
-        assert str(exception.value).startswith("Missing tokens from passed arguments") is True
+        name = "C-ORBI_C-PAROT_R-RETMAND"
+        result = n.solve(
+            side1="center", side3="right",
+            region2="parotidmasseter",
+            region3="retromandibularfossa"
+        )
+        assert result == name
 
 
 class Test_Serialization:
