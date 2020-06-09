@@ -43,6 +43,9 @@ class Rule(Serializable):
     def solve(self, **values):
         """Given arguments are used to build a name.
 
+        Raises:
+            SolvingError: Arguments passed do not match with rule fields.
+
         Returns:
             str: A string with the resulting name.
         """
@@ -69,6 +72,10 @@ class Rule(Serializable):
 
     def parse(self, name):
         """Build and return dictionary with keys as tokens and values as given names.
+
+        If your rule uses the same token more than once, the returned dictionary keys
+        will have the token name and an incremental digit next to them so they can be
+        differentiated.
 
         Args:
             name (str): Name string e.g.: C_helmet_001_MSH

@@ -34,6 +34,12 @@ NAMING_REPO_ENV = "NAMING_REPO"
 def parse(name):
     """Get metadata from a name string recognized by the currently active rule.
 
+    -For rules with repeated tokens:
+
+    If your rule uses the same token more than once, the returned dictionary keys
+    will have the token name and an incremental digit next to them so they can be
+    differentiated.
+
     Args:
         name (str): Name string e.g.: C_helmet_001_MSH
 
@@ -47,6 +53,20 @@ def parse(name):
 
 def solve(*args, **kwargs):
     """Given arguments are used to build a name following currently active rule.
+
+    -For rules with repeated tokens:
+
+    If your rule uses the same token more than once, pass arguments with the token
+    name and add an incremental digit
+        i.e.: side1='C', side2='R'
+    
+    If your rule uses the same token more than once, you can also pass a single
+    instance of the argument and it'll be applied to all repetitions.
+        i.e.: side='C'
+
+    If your rule uses the same token more than once, you can ignore one of the repetitions,
+    and the solver will use the default value for that token.
+        i.e.: side1='C', side4='L'
 
     Raises:
         SolvingError: A required token was passed as None to keyword arguments.
