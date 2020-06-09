@@ -55,20 +55,6 @@ def solve(*args, **kwargs):
     Returns:
         str: A string with the resulting name.
     """
-    """
-    Si guardo los digitos directamente en la creacion de los fields, basicamente
-    estoy haciendo algo que el usuario no pidio.
-    Un poco lo estoy haciendo igual pero a escondidas hasta ahora.
-    La cosa es que si el usuario por ejemplo pasa solo un token al solve, en lugar
-    de pasar todas las repeticiones necesarias, estaria bueno que el mismo solver
-    se encargue de asignarlo a todas las repeticiones del field
-
-    Para saber si la regla tiene repeticiones estoy evaluando los fields y asumiendo
-    que el usuario va a pasar todas las repeticiones explicitamente ahora.
-
-    Que tengo que hacer para incluir el escenario que el usuario quiera pasar el valor
-    una sola vez y que se use en todos los fields que matcheen en la regla?
-    """
     rule = rules.get_active_rule()
     # * This accounts for those cases where a token is used more than once in a rule
     repeated_fields = dict()
@@ -85,7 +71,6 @@ def solve(*args, **kwargs):
             fields_with_digits.append(field_digit)
         else:
             fields_with_digits.append(each)
-    print("Fields with digits: ", fields_with_digits)
     values = dict()
     i = 0
     fields_inc = 0
@@ -95,21 +80,31 @@ def solve(*args, **kwargs):
             fields_inc += 1
             continue
         token = tokens.get_token(rule.fields[fields_inc])
-        fields_inc += 1
+        
         if token:
             # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:
                 values[f] = token.solve(kwargs.get(f))
+                fields_inc += 1
+                continue
+            # Explicitly passed as keyword argument without repetitive digits
+            # Use passed argument for all field repetitions
+            elif kwargs.get(rule.fields[fields_inc]) is not None:
+                values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
+                fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
                 raise SolvingError("Token {} is required.")
+            # Not required and not passed as keyword argument
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
+                fields_inc += 1
                 continue
             # Implicitly passed as positional argument
             try:
                 values[f] = token.solve(args[i])
                 i += 1
+                fields_inc += 1
                 continue
             except IndexError as why:
                 raise SolvingError("Missing argument for field '{}'\n{}".format(f, why))
