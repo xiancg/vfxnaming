@@ -107,7 +107,7 @@ class Token(Serializable):
             str: Default option value
         """
         if self._default is None and len(self._options) >= 1:
-            self._default = list(self._options.values())[0]
+            self._default = sorted(list(self._options.values()))[0]
         return self._default
 
     @default.setter

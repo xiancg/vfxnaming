@@ -204,7 +204,7 @@ class Test_RuleWithRepetitions:
         assert result == name
 
     def test_solve_repeated_missing_some(self):
-        name = "C-ORBI_C-PAROT_R-RETMAND"
+        name = "C-FRONT_C-PAROT_R-RETMAND"
         result = n.solve(
             side1="center", side3="right",
             region2="parotidmasseter",
