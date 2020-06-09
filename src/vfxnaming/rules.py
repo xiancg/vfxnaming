@@ -61,10 +61,10 @@ class Rule(Serializable):
         try:
             result = self.pattern.format(**values)
         except KeyError as why:
+            field_names = ", ".join(self.fields)
             raise SolvingError(
-                "Arguments passed do not match with naming rule fields '{}'.\n{}".format(
-                    ", ".format(self.fields),
-                    why
+                "Arguments passed do not match with naming rule fields {}\n{}".format(
+                    field_names, why
                 )
             )
 

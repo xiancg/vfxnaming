@@ -59,7 +59,7 @@ def solve(*args, **kwargs):
     If your rule uses the same token more than once, pass arguments with the token
     name and add an incremental digit
         i.e.: side1='C', side2='R'
-    
+
     If your rule uses the same token more than once, you can also pass a single
     instance of the argument and it'll be applied to all repetitions.
         i.e.: side='C'
@@ -100,7 +100,7 @@ def solve(*args, **kwargs):
             fields_inc += 1
             continue
         token = tokens.get_token(rule.fields[fields_inc])
-        
+
         if token:
             # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:

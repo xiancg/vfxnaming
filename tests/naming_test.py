@@ -159,12 +159,12 @@ class Test_RuleWithRepetitions:
             retromandibularfossa="RETMAND"
         )
         separators.add_separator('underscore', '_')
-        separators.add_separator('dash', '-')
+        separators.add_separator('hyphen', '-')
         rules.add_rule(
             "filename",
-            "side", "dash", "region", "underscore",
-            "side", "dash", "region", "underscore",
-            "side", "dash", "region"
+            "side", "hyphen", "region", "underscore",
+            "side", "hyphen", "region", "underscore",
+            "side", "hyphen", "region"
         )
 
     def test_parse_repeated_tokens(self):
@@ -192,7 +192,7 @@ class Test_RuleWithRepetitions:
         )
 
         assert result == name
-    
+
     def test_solve_repeat_one_token(self):
         name = "L-MENT_L-PAROT_L-RETMAND"
         result = n.solve(
