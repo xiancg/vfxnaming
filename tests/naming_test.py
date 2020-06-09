@@ -159,12 +159,12 @@ class Test_RuleWithRepetitions:
             retromandibularfossa="RETMAND"
         )
         separators.add_separator('underscore', '_')
-        separators.add_separator('hyphen', '-')
+        separators.add_separator('dash', '-')
         rules.add_rule(
             "filename",
-            "side", "hyphen", "region", "underscore",
-            "side", "hyphen", "region", "underscore",
-            "side", "hyphen", "region"
+            "side", "dash", "region", "underscore",
+            "side", "dash", "region", "underscore",
+            "side", "dash", "region"
         )
 
     def test_parse_repeated_tokens(self):

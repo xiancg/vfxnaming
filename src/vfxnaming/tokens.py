@@ -246,7 +246,7 @@ def add_token(name, **kwargs):
         name (str): Name that best describes the token, this will be used as a way
         to invoke the Token object.
 
-        *kwargs: Each argument following the name is treated as an options for the
+        kwargs: Each argument following the name is treated as an option for the
         new Token.
 
     Returns:
