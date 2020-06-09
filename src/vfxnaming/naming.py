@@ -60,7 +60,8 @@ def solve(*args, **kwargs):
     estoy haciendo algo que el usuario no pidio.
     Un poco lo estoy haciendo igual pero a escondidas hasta ahora.
     La cosa es que si el usuario por ejemplo pasa solo un token al solve, en lugar
-    de pasar todas las repeticiones necesarias, estaria bueno que el mismo solver se encargue de asignarlo a todas las repeticiones del field
+    de pasar todas las repeticiones necesarias, estaria bueno que el mismo solver
+    se encargue de asignarlo a todas las repeticiones del field
 
     Para saber si la regla tiene repeticiones estoy evaluando los fields y asumiendo
     que el usuario va a pasar todas las repeticiones explicitamente ahora.
@@ -84,14 +85,17 @@ def solve(*args, **kwargs):
             fields_with_digits.append(field_digit)
         else:
             fields_with_digits.append(each)
-
+    print("Fields with digits: ", fields_with_digits)
     values = dict()
     i = 0
+    fields_inc = 0
     for f in fields_with_digits:
         separator = separators.get_separator(f)
         if separator:
+            fields_inc += 1
             continue
-        token = tokens.get_token(f)
+        token = tokens.get_token(rule.fields[fields_inc])
+        fields_inc += 1
         if token:
             # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:
