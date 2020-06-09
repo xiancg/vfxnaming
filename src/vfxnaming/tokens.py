@@ -48,8 +48,8 @@ class Token(Serializable):
                 for this Token.
 
         Raises:
-            Exception: If Token is required and no value is passed.
-            Exception: If given name is not found in options list.
+            SolvingError: If Token is required and no value is passed.
+            SolvingError: If given name is not found in options list.
 
         Returns:
             str: If Token is required, the same input value is returned

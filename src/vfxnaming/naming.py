@@ -49,16 +49,45 @@ def solve(*args, **kwargs):
     """Given arguments are used to build a name following currently active rule.
 
     Raises:
-        Exception: A required token was passed as None to keyword arguments.
-        IndexError: Missing argument for one field in currently active rule.
+        SolvingError: A required token was passed as None to keyword arguments.
+        SolvingError: Missing argument for one field in currently active rule.
 
     Returns:
         str: A string with the resulting name.
     """
-    values = dict()
+    """
+    Si guardo los digitos directamente en la creacion de los fields, basicamente
+    estoy haciendo algo que el usuario no pidio.
+    Un poco lo estoy haciendo igual pero a escondidas hasta ahora.
+    La cosa es que si el usuario por ejemplo pasa solo un token al solve, en lugar
+    de pasar todas las repeticiones necesarias, estaria bueno que el mismo solver se encargue de asignarlo a todas las repeticiones del field
+
+    Para saber si la regla tiene repeticiones estoy evaluando los fields y asumiendo
+    que el usuario va a pasar todas las repeticiones explicitamente ahora.
+
+    Que tengo que hacer para incluir el escenario que el usuario quiera pasar el valor
+    una sola vez y que se use en todos los fields que matcheen en la regla?
+    """
     rule = rules.get_active_rule()
+    # * This accounts for those cases where a token is used more than once in a rule
+    repeated_fields = dict()
+    for each in rule.fields:
+        if each not in separators.get_separators().keys() and each not in repeated_fields.keys():
+            if rule.fields.count(each) > 1:
+                repeated_fields[each] = 1
+    fields_with_digits = list()
+    for each in rule.fields:
+        if each in repeated_fields.keys():
+            counter = repeated_fields.get(each)
+            repeated_fields[each] = counter + 1
+            field_digit = "{}{}".format(each, counter)
+            fields_with_digits.append(field_digit)
+        else:
+            fields_with_digits.append(each)
+
+    values = dict()
     i = 0
-    for f in rule.fields:
+    for f in fields_with_digits:
         separator = separators.get_separator(f)
         if separator:
             continue

@@ -56,6 +56,7 @@ class Rule(Serializable):
                     symbols_dict[name] = separator.symbol
                 values.update(symbols_dict)
         try:
+            print("Values passed: ", values)
             result = self.pattern.format(**values)
         except KeyError as why:
             raise SolvingError(
@@ -117,7 +118,22 @@ class Rule(Serializable):
 
     @property
     def pattern(self):
-        return '{' + '}{'.join(self.fields) + '}'
+        # * This accounts for those cases where a token is used more than once in a rule
+        repeated_fields = dict()
+        for each in self.fields:
+            if each not in get_separators().keys() and each not in repeated_fields.keys():
+                if self.fields.count(each) > 1:
+                    repeated_fields[each] = 1
+        fields_with_digits = list()
+        for each in self.fields:
+            if each in repeated_fields.keys():
+                counter = repeated_fields.get(each)
+                repeated_fields[each] = counter + 1
+                field_digit = "{}{}".format(each, counter)
+                fields_with_digits.append(field_digit)
+            else:
+                fields_with_digits.append(each)
+        return '{' + '}{'.join(fields_with_digits) + '}'
 
     @property
     def fields(self):

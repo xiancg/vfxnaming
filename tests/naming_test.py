@@ -166,13 +166,13 @@ class Test_RuleWithRepetitions:
             "side", "hyphen", "region", "underscore",
             "side", "hyphen", "region"
         )
-    
+
     def test_parse_repeated_tokens(self):
         name = "C-FRONT_L-ORBI_R-ZYGO"
         expected = {
-            "side1":"center", "region1":"frontal",
-            "side2":"left", "region2":"orbital",
-            "side3":"right", "region3":"zygomatic"
+            "side1": "center", "region1": "frontal",
+            "side2": "left", "region2": "orbital",
+            "side3": "right", "region3": "zygomatic"
         }
         result = n.parse(name)
         assert result == expected
@@ -182,7 +182,7 @@ class Test_RuleWithRepetitions:
         with pytest.raises(ParsingError) as exception:
             n.parse(name)
         assert str(exception.value).startswith("Missing tokens from passed name") is True
-        
+
     def test_solve_repeated_tokens(self):
         name = "C-MENT_L-PAROT_R-RETMAND"
         result = n.solve(
@@ -192,7 +192,7 @@ class Test_RuleWithRepetitions:
         )
 
         assert result == name
-    
+
     def test_solve_repeated_missing_some(self):
         with pytest.raises(SolvingError) as exception:
             n.solve(
