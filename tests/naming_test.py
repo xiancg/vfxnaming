@@ -192,6 +192,16 @@ class Test_RuleWithRepetitions:
         )
 
         assert result == name
+    
+    def test_solve_repeat_one_token(self):
+        name = "C-MENT_C-PAROT_C-RETMAND"
+        result = n.solve(
+            side="center",
+            region1="mental", region2="parotidmasseter",
+            region3="retromandibularfossa"
+        )
+
+        assert result == name
 
     def test_solve_repeated_missing_some(self):
         with pytest.raises(SolvingError) as exception:
