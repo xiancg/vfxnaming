@@ -56,7 +56,6 @@ class Rule(Serializable):
                     symbols_dict[name] = separator.symbol
                 values.update(symbols_dict)
         try:
-            print("Values passed: ", values)
             result = self.pattern.format(**values)
         except KeyError as why:
             raise SolvingError(
