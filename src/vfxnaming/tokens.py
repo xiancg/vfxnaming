@@ -6,6 +6,7 @@ import json
 import os
 from vfxnaming.serialize import Serializable
 from vfxnaming.logger import logger
+from vfxnaming.error import SolvingError
 
 import six
 
@@ -47,8 +48,8 @@ class Token(Serializable):
                 for this Token.
 
         Raises:
-            Exception: If Token is required and no value is passed.
-            Exception: If given name is not found in options list.
+            SolvingError: If Token is required and no value is passed.
+            SolvingError: If given name is not found in options list.
 
         Returns:
             str: If Token is required, the same input value is returned
@@ -58,10 +59,10 @@ class Token(Serializable):
         if self.required and name:
             return name
         elif self.required and name is None:
-            raise Exception("Token {} is required. name parameter must be passed.".format(self.name))
+            raise SolvingError("Token {} is required. name parameter must be passed.".format(self.name))
         elif not self.required and name:
             if name not in self._options.keys():
-                raise Exception(
+                raise SolvingError(
                     "name '{}' not found in Token '{}'. Options: {}".format(
                         name, self.name, ', '.join(self._options.keys())
                         )
@@ -106,7 +107,7 @@ class Token(Serializable):
             str: Default option value
         """
         if self._default is None and len(self._options) >= 1:
-            self._default = list(self._options.values())[0]
+            self._default = sorted(list(self._options.values()))[0]
         return self._default
 
     @default.setter
@@ -245,7 +246,7 @@ def add_token(name, **kwargs):
         name (str): Name that best describes the token, this will be used as a way
         to invoke the Token object.
 
-        *kwargs: Each argument following the name is treated as an options for the
+        kwargs: Each argument following the name is treated as an option for the
         new Token.
 
     Returns:

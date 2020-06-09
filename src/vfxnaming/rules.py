@@ -8,6 +8,7 @@ from vfxnaming.serialize import Serializable
 from vfxnaming.separators import get_separators
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
+from vfxnaming.error import ParsingError, SolvingError
 
 import six
 
@@ -42,24 +43,39 @@ class Rule(Serializable):
     def solve(self, **values):
         """Given arguments are used to build a name.
 
+        Raises:
+            SolvingError: Arguments passed do not match with rule fields.
+
         Returns:
             str: A string with the resulting name.
         """
         result = None
+        separators = get_separators()
+        if separators:
+            has_separators = set(separators.keys()).intersection(self.fields)
+            if len(has_separators) > 0:
+                symbols_dict = dict()
+                for name, separator in six.iteritems(get_separators()):
+                    symbols_dict[name] = separator.symbol
+                values.update(symbols_dict)
         try:
-            # Try to solve with given values
             result = self.pattern.format(**values)
-        except KeyError:
-            # If KeyError, then separators are part of the rule and need to be added
-            symbols_dict = dict()
-            for name, separator in six.iteritems(get_separators()):
-                symbols_dict[name] = separator.symbol
-            values.update(symbols_dict)
-            result = self.pattern.format(**values)
+        except KeyError as why:
+            field_names = ", ".join(self.fields)
+            raise SolvingError(
+                "Arguments passed do not match with naming rule fields {}\n{}".format(
+                    field_names, why
+                )
+            )
+
         return result
 
     def parse(self, name):
         """Build and return dictionary with keys as tokens and values as given names.
+
+        If your rule uses the same token more than once, the returned dictionary keys
+        will have the token name and an incremental digit next to them so they can be
+        differentiated.
 
         Args:
             name (str): Name string e.g.: C_helmet_001_MSH
@@ -73,23 +89,57 @@ class Rule(Serializable):
             logger.debug("Parsing with these separators: {}".format(', '.join(delimiters)))
             regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
             name_parts = re.split(regex_pattern, name)
+            if len(name_parts) != len(self.fields):
+                raise ParsingError("Missing tokens from passed name. Found {}".format(", ".join(name_parts)))
+            logger.debug("Name parts: {}".format(", ".join(name_parts)))
+
+            repeated_fields = dict()
+            for each in self.fields:
+                if each not in get_separators().keys() and each not in repeated_fields.keys():
+                    if self.fields.count(each) > 1:
+                        repeated_fields[each] = 1
+            if repeated_fields:
+                logger.debug(
+                    "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
+                )
+
             retval = dict()
             for i, f in enumerate(self.fields):
                 name_part = name_parts[i]
                 token = get_token(f)
                 if not token:
                     continue
+                if f in repeated_fields.keys():
+                    counter = repeated_fields.get(f)
+                    repeated_fields[f] = counter + 1
+                    f = "{}{}".format(f, counter)
                 retval[f] = token.parse(name_part)
             return retval
         logger.warning(
             "No separators used for rule {}, parsing is not possible.".format(
-                self.name)
+                self.name
             )
+        )
         return None
 
     @property
     def pattern(self):
-        return '{' + '}{'.join(self.fields) + '}'
+        # * This accounts for those cases where a token is used more than once in a rule
+        repeated_fields = dict()
+        for each in self.fields:
+            if each not in get_separators().keys() and each not in repeated_fields.keys():
+                if self.fields.count(each) > 1:
+                    repeated_fields[each] = 1
+        fields_with_digits = list()
+        for each in self.fields:
+            if each in repeated_fields.keys():
+                counter = repeated_fields.get(each)
+                repeated_fields[each] = counter + 1
+                field_digit = "{}{}".format(each, counter)
+                fields_with_digits.append(field_digit)
+            else:
+                fields_with_digits.append(each)
+        return '{' + '}{'.join(fields_with_digits) + '}'
 
     @property
     def fields(self):

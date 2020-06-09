@@ -24,6 +24,7 @@ import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 import vfxnaming.separators as separators
 from vfxnaming.logger import logger
+from vfxnaming.error import SolvingError
 
 import six
 
@@ -32,6 +33,12 @@ NAMING_REPO_ENV = "NAMING_REPO"
 
 def parse(name):
     """Get metadata from a name string recognized by the currently active rule.
+
+    -For rules with repeated tokens:
+
+    If your rule uses the same token more than once, the returned dictionary keys
+    will have the token name and an incremental digit next to them so they can be
+    differentiated.
 
     Args:
         name (str): Name string e.g.: C_helmet_001_MSH
@@ -47,38 +54,80 @@ def parse(name):
 def solve(*args, **kwargs):
     """Given arguments are used to build a name following currently active rule.
 
+    -For rules with repeated tokens:
+
+    If your rule uses the same token more than once, pass arguments with the token
+    name and add an incremental digit
+        i.e.: side1='C', side2='R'
+
+    If your rule uses the same token more than once, you can also pass a single
+    instance of the argument and it'll be applied to all repetitions.
+        i.e.: side='C'
+
+    If your rule uses the same token more than once, you can ignore one of the repetitions,
+    and the solver will use the default value for that token.
+        i.e.: side1='C', side4='L'
+
     Raises:
-        Exception: A required token was passed as None to keyword arguments.
-        IndexError: Missing argument for one field in currently active rule.
+        SolvingError: A required token was passed as None to keyword arguments.
+        SolvingError: Missing argument for one field in currently active rule.
 
     Returns:
         str: A string with the resulting name.
     """
-    values = dict()
     rule = rules.get_active_rule()
+    # * This accounts for those cases where a token is used more than once in a rule
+    repeated_fields = dict()
+    for each in rule.fields:
+        if each not in separators.get_separators().keys() and each not in repeated_fields.keys():
+            if rule.fields.count(each) > 1:
+                repeated_fields[each] = 1
+    fields_with_digits = list()
+    for each in rule.fields:
+        if each in repeated_fields.keys():
+            counter = repeated_fields.get(each)
+            repeated_fields[each] = counter + 1
+            field_digit = "{}{}".format(each, counter)
+            fields_with_digits.append(field_digit)
+        else:
+            fields_with_digits.append(each)
+    values = dict()
     i = 0
-    for f in rule.fields:
+    fields_inc = 0
+    for f in fields_with_digits:
         separator = separators.get_separator(f)
         if separator:
+            fields_inc += 1
             continue
-        token = tokens.get_token(f)
+        token = tokens.get_token(rule.fields[fields_inc])
+
         if token:
             # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:
                 values[f] = token.solve(kwargs.get(f))
+                fields_inc += 1
+                continue
+            # Explicitly passed as keyword argument without repetitive digits
+            # Use passed argument for all field repetitions
+            elif kwargs.get(rule.fields[fields_inc]) is not None:
+                values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
+                fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                raise Exception("Token {} is required.")
+                raise SolvingError("Token {} is required.")
+            # Not required and not passed as keyword argument
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
+                fields_inc += 1
                 continue
             # Implicitly passed as positional argument
             try:
                 values[f] = token.solve(args[i])
                 i += 1
+                fields_inc += 1
                 continue
             except IndexError as why:
-                raise IndexError("Missing argument for field '{}'\n{}".format(f, why))
+                raise SolvingError("Missing argument for field '{}'\n{}".format(f, why))
     logger.debug("Solving rule {} with values {}".format(rule.name, values))
     return rule.solve(**values)
 
