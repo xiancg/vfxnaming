@@ -16,29 +16,32 @@ _rules = {'_active': None}
 
 
 class Rule(Serializable):
-    def __init__(self, name):
-        """Each rule is managed by an instance of this class. Fields exist for each
-        Token and Separator used in the rule definition.
+    """Each rule is managed by an instance of this class. Fields exist for each
+    Token and Separator used in the rule definition.
 
-        Args:
-            name (str): Name that best describes the rule, this will be used as a way
-            to invoke the Rule object.
-        """
+    Args:
+        ``name`` (str): Name that best describes the rule, this will be used as a way
+        to query the Rule object.
+
+        ``pattern`` (str): The template pattern to use, which uses existing Tokens.
+        e.g.: '{side}_{region}_{side}_{region}.png'
+
+        ``anchor``: ([Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH], optional):
+        For parsing, regex matching will look for a match from this Anchor. If a
+        pattern is anchored to the start, it requires the start of a passed path to
+        match the pattern. Defaults to ANCHOR_START.
+    """
+
+    __FIELDS_REGEX = re.compile(r'{(.+?)}')
+    ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
+
+    def __init__(self, name, pattern, anchor=ANCHOR_START):
         super(Rule, self).__init__()
-        self.name = name
-        self._fields = list()
-
-    def add_fields(self, token_names):
-        """Add fields to rule, by appending them to already existing ones.
-
-        Args:
-            token_names (list): List of new field names.
-
-        Returns:
-            bool: True if operation was successful
-        """
-        self._fields.extend(token_names)
-        return True
+        self._name = name
+        self._raw_pattern = pattern
+        self._pattern = self.__init_pattern()
+        self._anchor = anchor
+        self._regex = self.__build_regex()
 
     def solve(self, **values):
         """Given arguments are used to build a name.
@@ -122,32 +125,43 @@ class Rule(Serializable):
         )
         return None
 
+    def __init_pattern(self):
+        # * This accounts for those cases where a token is used more than once in a rule
+        pattern_digits = self._raw_pattern
+        for each in list(set(self.fields)):
+            regex_pattern = re.compile(each)
+            indexes = [match.end() for match in regex_pattern.finditer(pattern_digits)]
+            repetetions = len(indexes)
+            if repetetions > 1:
+                i = 0
+                for match in sorted(indexes, reverse=True):
+                    pattern_digits = "{}{}{}".format(
+                        pattern_digits[:match],
+                        str(repetetions-i),
+                        pattern_digits[match:]
+                    )
+                    i += 1
+        return pattern_digits
+
     @property
     def pattern(self):
-        # * This accounts for those cases where a token is used more than once in a rule
-        repeated_fields = dict()
-        for each in self.fields:
-            if each not in get_separators().keys() and each not in repeated_fields.keys():
-                if self.fields.count(each) > 1:
-                    repeated_fields[each] = 1
-        fields_with_digits = list()
-        for each in self.fields:
-            if each in repeated_fields.keys():
-                counter = repeated_fields.get(each)
-                repeated_fields[each] = counter + 1
-                field_digit = "{}{}".format(each, counter)
-                fields_with_digits.append(field_digit)
-            else:
-                fields_with_digits.append(each)
-        return '{' + '}{'.join(fields_with_digits) + '}'
+        return self._raw_pattern
 
     @property
     def fields(self):
-        return tuple(self._fields)
+        """
+        Returns:
+            [tuple]: Tuple of all Tokens found in this Rule's pattern
+        """
+        return tuple(self.__FIELDS_REGEX.findall(self._raw_pattern))
 
-    @fields.setter
-    def fields(self, f):
-        self._fields = f
+    @property
+    def regex(self):
+        """
+        Returns:
+            [str]: Regular expression used to parse from this Rule
+        """
+        return self._regex
 
     @property
     def name(self):
@@ -158,22 +172,26 @@ class Rule(Serializable):
         self._name = n
 
 
-def add_rule(name, *fields):
+def add_rule(name, pattern, anchor=Rule.ANCHOR_START):
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
 
     Args:
-        name (str): Name that best describes the rule, this will be used as a way
+        ``name`` (str): Name that best describes the rule, this will be used as a way
         to invoke the Rule object.
 
-        fields: Each argument following the name is treated as a field for the
-        new Rule
+        ``pattern`` (str): The template pattern to use, which uses existing Tokens.
+        e.g.: '{side}_{region}_{side}_{region}.png'
+
+        ``anchor``: ([Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH], optional):
+        For parsing, regex matching will look for a match from this Anchor. If a
+        pattern is anchored to the start, it requires the start of a passed path to
+        match the pattern. Defaults to ANCHOR_START.
 
     Returns:
         Rule: The Rule object instance created for given name and fields.
     """
-    rule = Rule(name)
-    rule.fields = fields
+    rule = Rule(name, pattern, anchor)
     _rules[name] = rule
     if get_active_rule() is None:
         set_active_rule(name)
@@ -267,12 +285,13 @@ def get_rules():
     return _rules
 
 
-def save_rule(name, filepath):
+def save_rule(name, directory):
     """Saves given rule serialized to specified location.
 
     Args:
-        name (str): The name of the rule to be saved.
-        filepath (str): Path location to save the rule.
+        ``name`` (str): The name of the rule to be saved.
+
+        ``directory`` (str): Path location to save the rule.
 
     Returns:
         bool: True if successful, False if rule wasn't found in current session.
@@ -280,6 +299,8 @@ def save_rule(name, filepath):
     rule = get_rule(name)
     if not rule:
         return False
+    file_name = "{}.rule".format(name)
+    filepath = os.path.join(directory, file_name)
     with open(filepath, "w") as fp:
         json.dump(rule.data(), fp)
     return True
@@ -301,6 +322,8 @@ def load_rule(filepath):
             data = json.load(fp)
     except Exception:
         return False
-    rule = Rule.from_data(data)
-    _rules[rule.name] = rule
-    return True
+    new_rule = Rule.from_data(data)
+    if new_rule:
+        _rules[new_rule.name] = new_rule
+        return True
+    return False
