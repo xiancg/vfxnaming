@@ -4,6 +4,9 @@ from __future__ import absolute_import, print_function
 import re
 import json
 import os
+import sys
+import functools
+from collections import defaultdict
 from vfxnaming.serialize import Serializable
 from vfxnaming.separators import get_separators
 from vfxnaming.tokens import get_token
@@ -124,6 +127,84 @@ class Rule(Serializable):
             )
         )
         return None
+
+    def __build_regex(self):
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        # Escape non-placeholder components
+        expression = re.sub(
+            r'(?P<placeholder>{(.+?)(:(\\}|.)+?)?})|(?P<other>.+?)',
+            self.__escape,
+            self._pattern
+        )
+        # Replace placeholders with regex pattern
+        expression = re.sub(
+            r'{(?P<placeholder>.+?)(:(?P<expression>(\\}|.)+?))?}',
+            functools.partial(
+                self.__convert, placeholder_count=defaultdict(int)
+            ),
+            expression
+        )
+
+        if self._anchor is not None:
+            if bool(self._anchor & self.ANCHOR_START):
+                expression = '^{0}'.format(expression)
+
+            if bool(self._anchor & self.ANCHOR_END):
+                expression = '{0}$'.format(expression)
+        # Compile expression
+        try:
+            compiled = re.compile(expression)
+        except re.error as error:
+            if any([
+                'bad group name' in str(error),
+                'bad character in group name' in str(error)
+            ]):
+                raise ValueError('Placeholder name contains invalid characters.')
+            else:
+                _, value, traceback = sys.exc_info()
+                message = 'Invalid pattern: {0}'.format(value)
+                if sys.version_info[0] == 3:
+                    raise ValueError(message).with_traceback(traceback)
+                elif sys.version_info[0] == 2:
+                    raise ValueError(message, traceback)
+
+        return compiled
+
+    def __convert(self, match, placeholder_count):
+        """Return a regular expression to represent *match*.
+
+        ``placeholder_count`` should be a ``defaultdict(int)`` that will be used to
+        store counts of unique placeholder names.
+
+        """
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        placeholder_name = match.group('placeholder')
+
+        # The re module does not support duplicate group names. To support
+        # duplicate placeholder names in templates add a unique count to the
+        # regular expression group name and strip it later during parse.
+        placeholder_count[placeholder_name] += 1
+        placeholder_name += '{0:03d}'.format(
+            placeholder_count[placeholder_name]
+        )
+
+        expression = match.group('expression')
+        if expression is None:
+            expression = r'[\w_.\-/:]+'
+
+        # Un-escape potentially escaped characters in expression.
+        expression = expression.replace('{', '{').replace('}', '}')
+
+        return r'(?P<{0}>{1})'.format(placeholder_name, expression)
+
+    def __escape(self, match):
+        """Escape matched 'other' group value."""
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        groups = match.groupdict()
+        if groups['other'] is not None:
+            return re.escape(groups['other'])
+
+        return groups['placeholder']
 
     def __init_pattern(self):
         # * This accounts for those cases where a token is used more than once in a rule

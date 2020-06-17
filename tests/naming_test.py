@@ -41,8 +41,7 @@ class Test_Solve:
         rules.reset_rules()
         rules.add_rule(
             'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'digits', 'underscore', 'type'
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
 
     def test_explicit(self):
