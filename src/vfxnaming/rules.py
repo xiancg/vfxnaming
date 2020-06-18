@@ -44,6 +44,27 @@ class Rule(Serializable):
         self._anchor = anchor
         self._regex = self.__build_regex()
 
+    @classmethod
+    def from_data(cls, data):
+        """Create object instance from give data. Used by Rule,
+        Token, Separator to create object instances from disk saved data.
+
+        Args:
+            data (dict): {attribute:value}
+
+        Returns:
+            Serializable: Object instance for Rule, Token or Separator.
+        """
+        # Validation
+        if data.get("_Serializable_classname") != cls.__name__:
+            return None
+        del data["_Serializable_classname"]
+        if data.get("_Serializable_version") is not None:
+            del data["_Serializable_version"]
+
+        this = cls(data.get("_name"), data.get("_pattern"), data.get("_anchor"))
+        return this
+
     def solve(self, **values):
         """Given arguments are used to build a name.
 
