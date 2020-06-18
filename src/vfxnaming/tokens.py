@@ -347,7 +347,7 @@ def get_tokens():
     return _tokens
 
 
-def save_token(name, filepath):
+def save_token(name, directory):
     """Saves given token serialized to specified location.
 
     Args:
@@ -360,6 +360,8 @@ def save_token(name, filepath):
     token = get_token(name)
     if not token:
         return False
+    file_name = "{}.token".format(name)
+    filepath = os.path.join(directory, file_name)
     with open(filepath, "w") as fp:
         json.dump(token.data(), fp)
     return True

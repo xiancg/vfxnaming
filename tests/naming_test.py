@@ -8,6 +8,7 @@ import vfxnaming.tokens as tokens
 from vfxnaming import logger
 from vfxnaming.error import ParsingError, SolvingError
 
+import os
 import pytest
 import tempfile
 
@@ -263,10 +264,12 @@ class Test_Serialization:
             'test',
             '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
-        filepath = tempfile.mktemp()
-        rules.save_rule('test', filepath)
+        tempdir = tempfile.mkdtemp()
+        rules.save_rule('test', tempdir)
 
         rules.reset_rules()
+        file_name = "{}.rule".format('test')
+        filepath = os.path.join(tempdir, file_name)
         rules.load_rule(filepath)
         assert rules.has_rule('test') is True
 
@@ -277,19 +280,23 @@ class Test_Serialization:
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        filepath = tempfile.mktemp()
-        tokens.save_token('test', filepath)
+        tempdir = tempfile.mkdtemp()
+        tokens.save_token('test', tempdir)
 
         tokens.reset_tokens()
+        file_name = "{}.token".format('test')
+        filepath = os.path.join(tempdir, file_name)
         tokens.load_token(filepath)
         assert tokens.has_token('test') is True
 
     def test_save_load_token_number(self):
         tokens.add_token_number('test')
-        filepath = tempfile.mktemp()
-        tokens.save_token('test', filepath)
+        tempdir = tempfile.mkdtemp()
+        tokens.save_token('test', tempdir)
 
         tokens.reset_tokens()
+        file_name = "{}.token".format('test')
+        filepath = os.path.join(tempdir, file_name)
         tokens.load_token(filepath)
         assert tokens.has_token('test') is True
 

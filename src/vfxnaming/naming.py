@@ -170,16 +170,14 @@ def save_session(repo=None):
             raise why
     # save tokens
     for name, token in six.iteritems(tokens.get_tokens()):
-        filepath = os.path.join(repo, name + ".token")
-        logger.debug("Saving token: {} in {}".format(name, filepath))
-        tokens.save_token(name, filepath)
+        logger.debug("Saving token: '{}' in {}".format(name, repo))
+        tokens.save_token(name, repo)
     # save rules
     for name, rule in six.iteritems(rules.get_rules()):
         if not isinstance(rule, rules.Rule):
             continue
-        filepath = os.path.join(repo, name + ".rule")
-        logger.debug("Saving rule: {} in {}".format(name, filepath))
-        rules.save_rule(name, filepath)
+        logger.debug("Saving rule: '{}' in {}".format(name, repo))
+        rules.save_rule(name, repo)
     # save separators
     for name, separator in six.iteritems(separators.get_separators()):
         filepath = os.path.join(repo, name + ".separator")
