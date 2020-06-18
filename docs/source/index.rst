@@ -15,10 +15,7 @@ Installation
     pip install vfxnaming
 
 A complete suite of tools to manage naming conventions from one or more
-"Rules repositories". Structure naming rules with your own custom tokens
-and separators. Then use the library to solve names following those rules
-so your naming is consistent, and also to parse metadata from exisiting names
-(cus a name is basically a collection of metadata right?)
+"Rules repositories". Structure naming rules with your own custom tokens. Then use the library to solve names following those rules so your naming is consistent, and also to parse metadata from exisiting names (cus a name is basically a collection of metadata, right?)
 
 This is completely based on `Copyright (c) 2017 Cesar Saez <https://www.cesarsaez.me/>`_
 work. I highly recommend his `Website-Blog <https://www.cesarsaez.me/>`_ and
@@ -35,13 +32,14 @@ the video tutorial series on his `YouTube Channel <https://www.youtube.com/chann
     1. Implemented a special Token for numbers with the ability to handle pure
     digits and version like strings (e.g.: v0025) with padding settings.
 
-    2. Implemented Separators, so not only underscores can be used, but also
-    hyphens, dots, etc, in any combination.
+    2. Implemented Separators. Used to be a completely separate object in older versions, but now separators are simply inferred from the regular expressions used.
 
-    3. Switched the entire test suite to pytest which is what I use.
+    3. Switched the entire test suite to pytest which is what I use for standalone stuff.
 
     4. Refactored the code to make it a bit more modular. Which in turn makes it
-    less portable, but it was getting too long otherwise with my modifications.
+    less portable, but it was getting too long otherwise with my modifications. To compensate for portability, it's pip installable now.
+
+The regular expressions logic was taken in part from the work Martin Pengelly-Phillips did on Lucidity. Also tweaked and modified a lot, so don't expect the same Lucidity behaviour.
 
 .. toctree::
    :maxdepth: 3
@@ -55,4 +53,10 @@ the video tutorial series on his `YouTube Channel <https://www.youtube.com/chann
    
    rules
    tokens
-   separators
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Changelog and Roadmap
+
+   changelog
+   roadmap
