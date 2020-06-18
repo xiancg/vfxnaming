@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import functools
+import copy
 from collections import defaultdict
 from vfxnaming.serialize import Serializable
 from vfxnaming.tokens import get_token
@@ -43,6 +44,18 @@ class Rule(Serializable):
         self._pattern = pattern
         self._anchor = anchor
         self._regex = self.__build_regex()
+
+    def data(self):
+        """Collect all data for this object instance.
+
+        Returns:
+            dict: {attribute:value}
+        """
+        retval = copy.deepcopy(self.__dict__)
+        del retval["_regex"]
+        retval["_Serializable_classname"] = type(self).__name__
+        retval["_Serializable_version"] = "1.0"
+        return retval
 
     @classmethod
     def from_data(cls, data):
