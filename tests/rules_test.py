@@ -18,8 +18,9 @@ class Test_Rule:
 
     def test_add(self):
         result = rules.add_rule(
-            'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
-            )
+            'lights',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
         assert isinstance(result, rules.Rule) is True
 
     def test_reset_rules(self):
@@ -27,7 +28,7 @@ class Test_Rule:
         assert result is True
 
     def test_remove_rule(self):
-        rules.add_rule('test', 'category', 'function', 'digits', 'type')
+        rules.add_rule('test', '{category}_{function}_{digits}_{type}')
         result = rules.remove_rule('test')
         assert result is True
 
@@ -36,8 +37,11 @@ class Test_Rule:
 
     def test_active(self):
         # pattern = '{category}_{function}_{digits}_{type}'
-        rules.add_rule('lights', 'category', 'function', 'whatAffects', 'digits', 'type')
-        rules.add_rule('test', 'category', 'function', 'digits', 'type')
+        rules.add_rule(
+            'lights',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
+        rules.add_rule('test', '{category}_{function}_{digits}_{type}')
         rules.set_active_rule('test')
         result = rules.get_active_rule()
         assert result is not None
