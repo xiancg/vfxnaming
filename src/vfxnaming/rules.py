@@ -6,7 +6,6 @@ import json
 import os
 import sys
 import functools
-import copy
 from collections import defaultdict
 from vfxnaming.serialize import Serializable
 from vfxnaming.tokens import get_token
@@ -51,8 +50,10 @@ class Rule(Serializable):
         Returns:
             dict: {attribute:value}
         """
-        retval = copy.deepcopy(self.__dict__)
-        del retval["_regex"]
+        retval = dict()
+        retval["_name"] = self._name
+        retval["_pattern"] = self._pattern
+        retval["_anchor"] = self._anchor
         retval["_Serializable_classname"] = type(self).__name__
         retval["_Serializable_version"] = "1.0"
         return retval
