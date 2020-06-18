@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function
 
 from vfxnaming import naming as n
-import vfxnaming.separators as separators
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from vfxnaming import logger
@@ -47,7 +46,6 @@ class Test_TokenNumber:
     @pytest.fixture(autouse=True)
     def setup(self):
         rules.reset_rules()
-        separators.reset_separators()
         tokens.reset_tokens()
         tokens.add_token('whatAffects')
         tokens.add_token_number('number')
@@ -63,7 +61,6 @@ class Test_TokenNumber:
             kick='kick', default='custom'
             )
         tokens.add_token('type', lighting='LGT', default='LGT')
-        separators.add_separator('underscore', '_')
         rules.add_rule(
             'lights',
             '{category}_{function}_{whatAffects}_{number}_{type}'

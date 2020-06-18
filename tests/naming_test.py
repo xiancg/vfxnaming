@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function
 
 from vfxnaming import naming as n
-import vfxnaming.separators as separators
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from vfxnaming import logger
@@ -38,7 +37,6 @@ class Test_Solve:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        separators.add_separator('underscore', '_')
         rules.reset_rules()
         rules.add_rule(
             'lights',
@@ -114,7 +112,6 @@ class Test_Parse:
             )
 
     def test_parsing_with_separators(self):
-        separators.add_separator('underscore', '_')
         rules.reset_rules()
         rules.add_rule(
             'lights',
@@ -130,7 +127,6 @@ class Test_Parse:
 
     def test_parsing_without_separators(self):
         rules.reset_rules()
-        separators.reset_separators()
         rules.add_rule(
             'lights',
             '{category}{function}{whatAffects}{digits}{type}'
@@ -145,7 +141,6 @@ class Test_RuleWithRepetitions:
     def setup(self):
         tokens.reset_tokens()
         rules.reset_rules()
-        separators.reset_separators()
         tokens.add_token(
             'side', center='C',
             left='L', right='R',
@@ -157,8 +152,6 @@ class Test_RuleWithRepetitions:
             frontal="FRONT", zygomatic="ZYGO",
             retromandibularfossa="RETMAND"
         )
-        separators.add_separator('underscore', '_')
-        separators.add_separator('hyphen', '-')
         rules.add_rule(
             "filename",
             '{side}-{region}_{side}-{region}_{side}-{region}'
@@ -215,7 +208,6 @@ class Test_Serialization:
     def setup(self):
         rules.reset_rules()
         tokens.reset_tokens()
-        separators.reset_separators()
 
     def test_tokens(self):
         token1 = tokens.add_token(
@@ -235,11 +227,6 @@ class Test_Serialization:
         rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
-    def test_separators(self):
-        separator1 = separators.add_separator('underscore', '_')
-        separator2 = separators.Separator.from_data(separator1.data())
-        assert separator1.data() == separator2.data()
-
     def test_validation(self):
         token = tokens.add_token(
             'function', key='key',
@@ -252,12 +239,9 @@ class Test_Serialization:
             '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
         token_number = tokens.add_token_number('digits')
-        sep = separators.add_separator('dot', '.')
 
         assert rules.Rule.from_data(token.data()) is None
         assert tokens.Token.from_data(rule.data()) is None
-        assert tokens.TokenNumber.from_data(sep.data()) is None
-        assert separators.Separator.from_data(token_number.data()) is None
 
     def test_save_load_rule(self):
         rules.add_rule(
@@ -300,15 +284,6 @@ class Test_Serialization:
         tokens.load_token(filepath)
         assert tokens.has_token('test') is True
 
-    def test_save_load_separator(self):
-        separators.add_separator('test')
-        filepath = tempfile.mktemp()
-        separators.save_separator('test', filepath)
-
-        separators.reset_separators()
-        separators.load_separator(filepath)
-        assert separators.has_separator('test') is True
-
     def test_save_load_session(self):
         tokens.add_token('whatAffects')
         tokens.add_token_number('digits')
@@ -327,8 +302,6 @@ class Test_Serialization:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        separators.add_separator('dot', '.')
-        separators.add_separator('underscore', '.')
         rules.add_rule(
             'lights',
             '{category}.{function}.{whatAffects}.{digits}.{type}'
@@ -345,7 +318,6 @@ class Test_Serialization:
 
         rules.reset_rules()
         tokens.reset_tokens()
-        separators.reset_separators()
 
         n.load_session(repo)
         assert tokens.has_token('whatAffects') is True
@@ -355,6 +327,4 @@ class Test_Serialization:
         assert tokens.has_token('type') is True
         assert rules.has_rule('lights') is True
         assert rules.has_rule('test') is True
-        assert separators.has_separator('underscore') is True
-        assert separators.has_separator('dot') is True
         assert rules.get_active_rule().name == 'lights'

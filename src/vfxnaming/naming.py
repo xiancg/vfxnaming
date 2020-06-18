@@ -22,7 +22,6 @@ import os
 import json
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
-import vfxnaming.separators as separators
 from vfxnaming.logger import logger
 from vfxnaming.error import SolvingError
 
@@ -90,8 +89,6 @@ def solve(*args, **kwargs):
             fields_with_digits.append("{}{}".format(each, counter))
         else:
             fields_with_digits.append(each)
-    print("rule regex: ", rule.regex)
-    print("fields with digits: ", fields_with_digits)
     values = dict()
     i = 0
     fields_inc = 0
@@ -151,7 +148,7 @@ def get_repo():
 
 
 def save_session(repo=None):
-    """Save rules, tokens, separators and config files to the repository.
+    """Save rules, tokens and config files to the repository.
 
     Raises:
         IOError, OSError: Repository directory could not be created.
@@ -178,11 +175,6 @@ def save_session(repo=None):
             continue
         logger.debug("Saving rule: '{}' in {}".format(name, repo))
         rules.save_rule(name, repo)
-    # save separators
-    for name, separator in six.iteritems(separators.get_separators()):
-        filepath = os.path.join(repo, name + ".separator")
-        logger.debug("Saving separator: {} in {}".format(name, filepath))
-        separators.save_separator(name, filepath)
     # extra configuration
     active = rules.get_active_rule()
     config = {"set_active_rule": active.name if active else None}
@@ -194,7 +186,7 @@ def save_session(repo=None):
 
 
 def load_session(repo=None):
-    """Load rules, tokens, separators and config from a repository, and create
+    """Load rules, tokens and config from a repository, and create
     Python objects in memory to work with them.
 
     Args:
@@ -207,7 +199,7 @@ def load_session(repo=None):
     if not os.path.exists(repo):
         logger.warning("Given repo directory does not exist: {}".format(repo))
         return False
-    # tokens, rules and separators
+    # tokens and rules
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
@@ -217,9 +209,6 @@ def load_session(repo=None):
             elif filename.endswith(".rule"):
                 logger.debug("Loading rule: {}".format(filepath))
                 rules.load_rule(filepath)
-            elif filename.endswith(".separator"):
-                logger.debug("Loading separator: {}".format(filepath))
-                separators.load_separator(filepath)
     # extra configuration
     filepath = os.path.join(repo, "naming.conf")
     if os.path.exists(filepath):
