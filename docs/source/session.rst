@@ -17,12 +17,10 @@ Session Creation
                 fill='fil', ambient='amb',
                 bounce='bnc', rim='rim',
                 kick='kik', custom='cst', default='cst')
-    n.add_separator('underscore', '_')
     n.add_rule(
-            'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'digits', 'underscore', 'type'
-        )
+        'lights',
+        '{category}_{function}_{whatAffects}_{digits}_{type}'
+    )
     n.save_session()
 
 This will result in the following files being created:
@@ -49,7 +47,6 @@ the repo location to the load_session function:
 
         all_rules = n.get_rules()
         all_tokens = n.get_tokens()
-        all_separators = n.get_separators()
 
 
 Rules with repeated tokens
@@ -74,13 +71,9 @@ Here is an example of such a rule being created.
         frontal="FRONT", zygomatic="ZYGO",
         retromandibularfossa="RETMAND"
     )
-    separators.add_separator('underscore', '_')
-    separators.add_separator('hyphen', '-')
     rules.add_rule(
         "filename",
-        "side", "hyphen", "region", "underscore",
-        "side", "hyphen", "region", "underscore",
-        "side", "hyphen", "region"
+        '{side}-{region}_{side}-{region}_{side}-{region}'
     )
 
     n.save_session()
