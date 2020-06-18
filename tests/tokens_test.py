@@ -66,8 +66,7 @@ class Test_TokenNumber:
         separators.add_separator('underscore', '_')
         rules.add_rule(
             'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'number', 'underscore', 'type'
+            '{category}_{function}_{whatAffects}_{number}_{type}'
         )
 
     def test_explicit_solve(self):
