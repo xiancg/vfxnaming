@@ -177,7 +177,7 @@ class Test_RuleWithRepetitions:
         name = "C-FRONT_-ORBI_R"
         with pytest.raises(ParsingError) as exception:
             n.parse(name)
-        assert str(exception.value).startswith("Missing tokens from passed name") is True
+        assert str(exception.value).startswith("Separators count mismatch") is True
 
     def test_solve_repeated_tokens(self):
         name = "C-MENT_L-PAROT_R-RETMAND"
