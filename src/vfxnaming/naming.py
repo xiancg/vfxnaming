@@ -79,7 +79,7 @@ def solve(*args, **kwargs):
     # * This accounts for those cases where a token is used more than once in a rule
     repeated_fields = dict()
     for each in rule.fields:
-        if each not in separators.get_separators().keys() and each not in repeated_fields.keys():
+        if each not in repeated_fields.keys():
             if rule.fields.count(each) > 1:
                 repeated_fields[each] = 1
     fields_with_digits = list()
@@ -87,20 +87,16 @@ def solve(*args, **kwargs):
         if each in repeated_fields.keys():
             counter = repeated_fields.get(each)
             repeated_fields[each] = counter + 1
-            field_digit = "{}{}".format(each, counter)
-            fields_with_digits.append(field_digit)
+            fields_with_digits.append("{}{}".format(each, counter))
         else:
             fields_with_digits.append(each)
+    print("rule regex: ", rule.regex)
+    print("fields with digits: ", fields_with_digits)
     values = dict()
     i = 0
     fields_inc = 0
     for f in fields_with_digits:
-        separator = separators.get_separator(f)
-        if separator:
-            fields_inc += 1
-            continue
         token = tokens.get_token(rule.fields[fields_inc])
-
         if token:
             # Explicitly passed as keyword argument
             if kwargs.get(f) is not None:
@@ -128,7 +124,7 @@ def solve(*args, **kwargs):
                 continue
             except IndexError as why:
                 raise SolvingError("Missing argument for field '{}'\n{}".format(f, why))
-    logger.debug("Solving rule {} with values {}".format(rule.name, values))
+    logger.debug("Solving rule '{}' with values {}".format(rule.name, values))
     return rule.solve(**values)
 
 

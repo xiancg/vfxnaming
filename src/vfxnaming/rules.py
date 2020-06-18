@@ -8,12 +8,9 @@ import sys
 import functools
 from collections import defaultdict
 from vfxnaming.serialize import Serializable
-from vfxnaming.separators import get_separators
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
 from vfxnaming.error import ParsingError, SolvingError
-
-import six
 
 _rules = {'_active': None}
 
@@ -57,21 +54,13 @@ class Rule(Serializable):
             str: A string with the resulting name.
         """
         result = None
-        separators = get_separators()
-        if separators:
-            has_separators = set(separators.keys()).intersection(self.fields)
-            if len(has_separators) > 0:
-                symbols_dict = dict()
-                for name, separator in six.iteritems(get_separators()):
-                    symbols_dict[name] = separator.symbol
-                values.update(symbols_dict)
+
         try:
-            result = self.pattern.format(**values)
+            result = self.__digits_pattern().format(**values)
         except KeyError as why:
-            field_names = ", ".join(self.fields)
             raise SolvingError(
                 "Arguments passed do not match with naming rule fields {}\n{}".format(
-                    field_names, why
+                    self._pattern, why
                 )
             )
 
@@ -112,7 +101,7 @@ class Rule(Serializable):
                 )
                 repeated_fields = dict()
                 for each in self.fields:
-                    if each not in get_separators().keys() and each not in repeated_fields.keys():
+                    if each not in repeated_fields.keys():
                         if self.fields.count(each) > 1:
                             repeated_fields[each] = 1
                 if repeated_fields:
@@ -216,6 +205,24 @@ class Rule(Serializable):
             return re.escape(groups['other'])
 
         return groups['placeholder']
+
+    def __digits_pattern(self):
+        # * This accounts for those cases where a token is used more than once in a rule
+        digits_pattern = self._pattern
+        for each in list(set(self.fields)):
+            regex_pattern = re.compile(each)
+            indexes = [match.end() for match in regex_pattern.finditer(digits_pattern)]
+            repetetions = len(indexes)
+            if repetetions > 1:
+                i = 0
+                for match in sorted(indexes, reverse=True):
+                    digits_pattern = "{}{}{}".format(
+                        digits_pattern[:match],
+                        str(repetetions-i),
+                        digits_pattern[match:]
+                    )
+                    i += 1
+        return digits_pattern
 
     @property
     def pattern(self):
