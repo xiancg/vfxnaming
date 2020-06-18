@@ -41,8 +41,7 @@ class Rule(Serializable):
     def __init__(self, name, pattern, anchor=ANCHOR_START):
         super(Rule, self).__init__()
         self._name = name
-        self._raw_pattern = pattern
-        self._pattern = self.__init_pattern()
+        self._pattern = pattern
         self._anchor = anchor
         self._regex = self.__build_regex()
 
@@ -90,15 +89,19 @@ class Rule(Serializable):
             dict: A dictionary with keys as tokens and values as given name parts.
             e.g.: {'side':'C', 'part':'helmet', 'number': 1, 'type':'MSH'}
         """
-        delimiters = [value.symbol for key, value in six.iteritems(get_separators())]
-        if len(delimiters) >= 1:
-            logger.debug("Parsing with these separators: {}".format(', '.join(delimiters)))
-            regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
-            name_parts = re.split(regex_pattern, name)
-            if len(name_parts) != len(self.fields):
-                raise ParsingError("Missing tokens from passed name. Found {}".format(", ".join(name_parts)))
-            logger.debug("Name parts: {}".format(", ".join(name_parts)))
-
+        retval = dict()
+        match = self._regex.search(name)
+        if match:
+            name_parts = sorted(match.groupdict().items())
+            if len(match.groupdict().keys()) != len(self.fields):
+                raise ParsingError(
+                    "Missing tokens from passed name. Found {}".format(
+                        ", ".join(["('{}': '{}')".format(k[:-3], v) for k, v in name_parts])
+                    )
+                )
+            logger.debug(
+                "Name parts: {}".format(", ".join(["('{}': '{}')".format(k[:-3], v) for k, v in name_parts]))
+            )
             repeated_fields = dict()
             for each in self.fields:
                 if each not in get_separators().keys() and each not in repeated_fields.keys():
@@ -109,24 +112,24 @@ class Rule(Serializable):
                     "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
                 )
 
-            retval = dict()
-            for i, f in enumerate(self.fields):
-                name_part = name_parts[i]
-                token = get_token(f)
+            for key, value in name_parts:
+                # Strip number that was added to make group name unique
+                token_name = key[:-3]
+                token = get_token(token_name)
                 if not token:
                     continue
-                if f in repeated_fields.keys():
-                    counter = repeated_fields.get(f)
-                    repeated_fields[f] = counter + 1
-                    f = "{}{}".format(f, counter)
-                retval[f] = token.parse(name_part)
-            return retval
-        logger.warning(
-            "No separators used for rule {}, parsing is not possible.".format(
-                self.name
+                if token_name in repeated_fields.keys():
+                    counter = repeated_fields.get(token_name)
+                    repeated_fields[token_name] = counter + 1
+                    token_name = "{}{}".format(token_name, counter)
+                retval[token_name] = token.parse(value)
+        else:
+            logger.warning(
+                "No separators used for rule {}, parsing is not possible.".format(
+                    self.name
+                )
             )
-        )
-        return None
+        return retval
 
     def __build_regex(self):
         # ? Taken from Lucidity by Martin Pengelly-Phillips
@@ -206,27 +209,9 @@ class Rule(Serializable):
 
         return groups['placeholder']
 
-    def __init_pattern(self):
-        # * This accounts for those cases where a token is used more than once in a rule
-        pattern_digits = self._raw_pattern
-        for each in list(set(self.fields)):
-            regex_pattern = re.compile(each)
-            indexes = [match.end() for match in regex_pattern.finditer(pattern_digits)]
-            repetetions = len(indexes)
-            if repetetions > 1:
-                i = 0
-                for match in sorted(indexes, reverse=True):
-                    pattern_digits = "{}{}{}".format(
-                        pattern_digits[:match],
-                        str(repetetions-i),
-                        pattern_digits[match:]
-                    )
-                    i += 1
-        return pattern_digits
-
     @property
     def pattern(self):
-        return self._raw_pattern
+        return self._pattern
 
     @property
     def fields(self):
@@ -234,7 +219,7 @@ class Rule(Serializable):
         Returns:
             [tuple]: Tuple of all Tokens found in this Rule's pattern
         """
-        return tuple(self.__FIELDS_REGEX.findall(self._raw_pattern))
+        return tuple(self.__FIELDS_REGEX.findall(self._pattern))
 
     @property
     def regex(self):

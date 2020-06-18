@@ -117,8 +117,7 @@ class Test_Parse:
         rules.reset_rules()
         rules.add_rule(
             'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'digits', 'underscore', 'type'
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
         name = 'dramatic_bounce_chars_001_LGT'
         parsed = n.parse(name)
@@ -133,7 +132,7 @@ class Test_Parse:
         separators.reset_separators()
         rules.add_rule(
             'lights',
-            'category', 'function', 'whatAffects', 'digits', 'type'
+            '{category}{function}{whatAffects}{digits}{type}'
         )
         name = 'dramatic_bounce_chars_001_LGT'
         parsed = n.parse(name)
@@ -161,9 +160,7 @@ class Test_RuleWithRepetitions:
         separators.add_separator('hyphen', '-')
         rules.add_rule(
             "filename",
-            "side", "hyphen", "region", "underscore",
-            "side", "hyphen", "region", "underscore",
-            "side", "hyphen", "region"
+            '{side}-{region}_{side}-{region}_{side}-{region}'
         )
 
     def test_parse_repeated_tokens(self):
