@@ -228,8 +228,9 @@ class Test_Serialization:
 
     def test_rules(self):
         rule1 = rules.add_rule(
-            'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
-            )
+            'lights',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
         rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
@@ -246,8 +247,9 @@ class Test_Serialization:
             kick='kick', default='custom'
             )
         rule = rules.add_rule(
-            'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
-            )
+            'lights',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
         token_number = tokens.add_token_number('digits')
         sep = separators.add_separator('dot', '.')
 
@@ -257,7 +259,10 @@ class Test_Serialization:
         assert separators.Separator.from_data(token_number.data()) is None
 
     def test_save_load_rule(self):
-        rules.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
+        rules.add_rule(
+            'test',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
         filepath = tempfile.mktemp()
         rules.save_rule('test', filepath)
 
@@ -319,11 +324,11 @@ class Test_Serialization:
         separators.add_separator('underscore', '.')
         rules.add_rule(
             'lights',
-            'category', 'dot', 'function', 'dot', 'whatAffects',
-            'underscore', 'digits', 'dot', 'type'
+            '{category}.{function}.{whatAffects}.{digits}.{type}'
         )
         rules.add_rule(
-            'test', 'category', 'underscore', 'function'
+            'test',
+            '{category}_{function}'
         )
         rules.set_active_rule('lights')
 
