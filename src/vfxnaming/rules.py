@@ -36,6 +36,8 @@ class Rule(Serializable):
     """
 
     __FIELDS_REGEX = re.compile(r'{(.+?)}')
+    __PATTERN_SEPARATORS_REGEX = re.compile(r'}[_\-\.:¦/\\]{*')
+    __SEPARATORS_REGEX = re.compile(r'[_\-\.:\¦/\\]')
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
     def __init__(self, name, pattern, anchor=ANCHOR_START):
@@ -89,47 +91,53 @@ class Rule(Serializable):
             dict: A dictionary with keys as tokens and values as given name parts.
             e.g.: {'side':'C', 'part':'helmet', 'number': 1, 'type':'MSH'}
         """
-        retval = dict()
-        match = self._regex.search(name)
-        if match:
-            name_parts = sorted(match.groupdict().items())
-            if len(match.groupdict().keys()) != len(self.fields):
-                raise ParsingError(
-                    "Missing tokens from passed name. Found {}".format(
-                        ", ".join(["('{}': '{}')".format(k[:-3], v) for k, v in name_parts])
-                    )
-                )
-            logger.debug(
-                "Name parts: {}".format(", ".join(["('{}': '{}')".format(k[:-3], v) for k, v in name_parts]))
-            )
-            repeated_fields = dict()
-            for each in self.fields:
-                if each not in get_separators().keys() and each not in repeated_fields.keys():
-                    if self.fields.count(each) > 1:
-                        repeated_fields[each] = 1
-            if repeated_fields:
-                logger.debug(
-                    "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
-                )
-
-            for key, value in name_parts:
-                # Strip number that was added to make group name unique
-                token_name = key[:-3]
-                token = get_token(token_name)
-                if not token:
-                    continue
-                if token_name in repeated_fields.keys():
-                    counter = repeated_fields.get(token_name)
-                    repeated_fields[token_name] = counter + 1
-                    token_name = "{}{}".format(token_name, counter)
-                retval[token_name] = token.parse(value)
-        else:
+        expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
+        if len(expected_separators) <= 0:
             logger.warning(
-                "No separators used for rule {}, parsing is not possible.".format(
+                "No separators used for rule '{}', parsing is not possible.".format(
                     self.name
                 )
             )
-        return retval
+            return None
+        name_separators = self.__SEPARATORS_REGEX.findall(name)
+        if len(expected_separators) == len(name_separators):
+            retval = dict()
+            match = self._regex.search(name)
+            if match:
+                name_parts = sorted(match.groupdict().items())
+                logger.debug(
+                    "Name parts: {}".format(
+                        ", ".join(["('{}': '{}')".format(k[:-3], v) for k, v in name_parts])
+                    )
+                )
+                repeated_fields = dict()
+                for each in self.fields:
+                    if each not in get_separators().keys() and each not in repeated_fields.keys():
+                        if self.fields.count(each) > 1:
+                            repeated_fields[each] = 1
+                if repeated_fields:
+                    logger.debug(
+                        "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
+                    )
+
+                for key, value in name_parts:
+                    # Strip number that was added to make group name unique
+                    token_name = key[:-3]
+                    token = get_token(token_name)
+                    if not token:
+                        continue
+                    if token_name in repeated_fields.keys():
+                        counter = repeated_fields.get(token_name)
+                        repeated_fields[token_name] = counter + 1
+                        token_name = "{}{}".format(token_name, counter)
+                    retval[token_name] = token.parse(value)
+            return retval
+        else:
+            raise ParsingError(
+                "Separators count mismatch between given name '{}':'{}' and rule's pattern '{}':'{}'.".format(
+                    name, len(name_separators), self._pattern, len(expected_separators)
+                )
+            )
 
     def __build_regex(self):
         # ? Taken from Lucidity by Martin Pengelly-Phillips
