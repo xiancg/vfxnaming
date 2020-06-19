@@ -5,7 +5,7 @@ from vfxnaming import naming as n
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from vfxnaming import logger
-from vfxnaming.error import ParsingError, SolvingError
+from vfxnaming.error import ParsingError, SolvingError, TokenError
 
 import os
 import pytest
@@ -50,7 +50,7 @@ class Test_Solve:
         assert solved == name
 
     def test_no_match_for_token(self):
-        with pytest.raises(SolvingError) as exception:
+        with pytest.raises(TokenError) as exception:
             n.solve(
                 category='natural', function='sarasa',
                 whatAffects='chars', digits=1, type='lighting'
