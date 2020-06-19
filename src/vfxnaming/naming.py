@@ -57,15 +57,18 @@ def solve(*args, **kwargs):
 
     If your rule uses the same token more than once, pass arguments with the token
     name and add an incremental digit
-        i.e.: side1='C', side2='R'
+
+    i.e.: side1='C', side2='R'
 
     If your rule uses the same token more than once, you can also pass a single
     instance of the argument and it'll be applied to all repetitions.
-        i.e.: side='C'
+
+    i.e.: side='C'
 
     If your rule uses the same token more than once, you can ignore one of the repetitions,
     and the solver will use the default value for that token.
-        i.e.: side1='C', side4='L'
+
+    i.e.: side1='C', side4='L'
 
     Raises:
         SolvingError: A required token was passed as None to keyword arguments.

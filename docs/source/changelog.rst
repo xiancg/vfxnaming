@@ -6,12 +6,12 @@ Changelog
 
 **Features:**
     - Adds anchoring, so each Rule may be able to parse and solve from right to left, or left to right. Useful for Rules with hardcoded values (not only Tokens)
+    - Solving and parsing now use Regular Expressions under the hood.
+    - A lot of updates to docs.
 
 **Changes:**
-    - Using regular expressions for more powerful parsing
     - Removes Separator entity
-
-IMPORTANT NOTE: This version is not backwards compatible
+    - IMPORTANT NOTE: This version is not backwards compatible
 
 1.1.6-beta
 ---------------------------------------
