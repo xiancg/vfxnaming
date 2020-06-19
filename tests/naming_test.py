@@ -203,6 +203,85 @@ class Test_RuleWithRepetitions:
         assert result == name
 
 
+class Test_Anchoring:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        tokens.add_token('awesometoken')
+
+    def test_solve_anchoring_end(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            'crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_END
+        )
+
+        name = 'crazy_hardcoded_value_bye'
+        solved = n.solve('bye')
+        assert solved == name
+
+    def test_solve_anchoring_both(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_BOTH
+        )
+
+        name = 'hello_crazy_hardcoded_value_bye'
+        solved = n.solve(awesometoken1='hello', awesometoken2='bye')
+        assert solved == name
+
+    def test_solve_anchoring_start(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value',
+            rules.Rule.ANCHOR_START
+        )
+
+        name = 'hello_crazy_hardcoded_value'
+        solved = n.solve(awesometoken='hello')
+        assert solved == name
+
+    def test_parse_anchoring_end(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            'crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_END
+        )
+
+        name = 'crazy_hardcoded_value_bye'
+        parsed = n.parse(name)
+        assert parsed == {'awesometoken': 'bye'}
+
+    def test_parse_anchoring_both(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_BOTH
+        )
+
+        name = 'hello_crazy_hardcoded_value_bye'
+        parsed = n.parse(name)
+        assert parsed == {'awesometoken1': 'hello', 'awesometoken2': 'bye'}
+
+    def test_parse_anchoring_start(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value',
+            rules.Rule.ANCHOR_START
+        )
+
+        name = 'hello_crazy_hardcoded_value'
+        parsed = n.parse(name)
+        assert parsed == {'awesometoken': 'hello'}
+
+
 class Test_Serialization:
     @pytest.fixture(autouse=True)
     def setup(self):

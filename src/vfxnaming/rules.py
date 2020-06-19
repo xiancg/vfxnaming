@@ -33,8 +33,8 @@ class Rule(Serializable):
     """
 
     __FIELDS_REGEX = re.compile(r'{(.+?)}')
-    __PATTERN_SEPARATORS_REGEX = re.compile(r'}[_\-\.:¦/\\]{*')
-    __SEPARATORS_REGEX = re.compile(r'[_\-\.:\¦/\\]')
+    __PATTERN_SEPARATORS_REGEX = re.compile(r'(}[_\-\.:\|/\\]{|[_\-\.:\|/\\]{|}[_\-\.:\|/\\])')
+    __SEPARATORS_REGEX = re.compile(r'[_\-\.:\|/\\]')
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
     def __init__(self, name, pattern, anchor=ANCHOR_START):
@@ -124,7 +124,7 @@ class Rule(Serializable):
             )
             return None
         name_separators = self.__SEPARATORS_REGEX.findall(name)
-        if len(expected_separators) == len(name_separators):
+        if len(expected_separators) <= len(name_separators):
             retval = dict()
             match = self._regex.search(name)
             if match:
