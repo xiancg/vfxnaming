@@ -1,8 +1,12 @@
-Naming session creation and loading
-====================================
+Naming Repository creation and loading
+=======================================
+
+Using **vfxnaming** means basically creating a series of Tokens and Rules that then get saved to a repository (a simple folder with some files in it).
+
+The saved files are the serialized objects in JSON format, which has the huge advantage of being interchangeable with practically any other programming language.
 
 Session Creation
-----------------
+-----------------
 
 .. code-block:: python
 
@@ -21,7 +25,8 @@ Session Creation
         'lights',
         '{category}_{function}_{whatAffects}_{digits}_{type}'
     )
-    n.save_session()
+    my_repo = 'C:/path/to/my/repo'
+    n.save_session(my_repo)
 
 This will result in the following files being created:
 
@@ -37,13 +42,14 @@ Session Loading
 ----------------
 
 These files can then be read from next time you need to use your new naming rules by passing
-the repo location to the load_session function:
+the repo location to the load_session function. Python object instances will be loaded into memory and you'll be able to interact with them (solving, parsing, adding new rules, new tokens, etc):
 
     .. code-block:: python
 
         import vfxnaming as n
 
-        n.load_session()
+        my_repo = 'C:/path/to/my/repo'
+        n.load_session(my_repo)
 
         all_rules = n.get_rules()
         all_tokens = n.get_tokens()
@@ -90,7 +96,7 @@ When **Solving** a name for a rule with repeated tokens you have three options:
         region3="retromandibularfossa"
     )
 
-2. Explicitly pass some of the repetitions with an added digit for each one. The ones you didn't pass are going to use the token's default.
+2. Explicitly pass some of the repetitions with an added digit for each one. The ones you didn't pass are going to use the Token's default.
 
 .. code-block:: python
 
@@ -110,7 +116,7 @@ When **Solving** a name for a rule with repeated tokens you have three options:
         region3="retromandibularfossa"
     )
 
-When **Parsing** metadata using a rule with repeated tokens, the dictionary you get back will have the keys for the repeated token altered by an incremental digit at the end of the token name.
+When **Parsing** metadata using a rule with repeated tokens, the dictionary you get back will have the keys for the repeated Token altered by an incremental digit at the end of the token name.
 
 .. code-block:: python
 
@@ -120,7 +126,7 @@ When **Parsing** metadata using a rule with repeated tokens, the dictionary you 
         "side3": "right", "region3": "zygomatic"
     }
 
-There are many ways to substract that digit from the keys, but maybe the most reliable will be to use regular expressions. You can also use the ``rule.fields`` attribute and compare your keys to the pure token name.
+There are many ways to substract that digit from the keys, but maybe the most reliable will be to use regular expressions. You can also use the ``rule.fields`` attribute and compare your keys to the pure Token name.
 
 .. code-block:: python
 

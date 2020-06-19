@@ -45,7 +45,7 @@ The regular expressions logic was taken in part from the work Martin Pengelly-Ph
    :maxdepth: 3
    :caption: Getting Started
    
-   session
+   repositories
 
 .. toctree::
    :maxdepth: 3
