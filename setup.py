@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-version_str = '1.1.6-beta'
+version_str = '1.2.0-beta'
 
 setup(
     name='vfxnaming',

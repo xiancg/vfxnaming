@@ -2,12 +2,12 @@
 from __future__ import absolute_import, print_function
 
 from vfxnaming import naming as n
-import vfxnaming.separators as separators
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from vfxnaming import logger
-from vfxnaming.error import ParsingError, SolvingError
+from vfxnaming.error import ParsingError, SolvingError, TokenError
 
+import os
 import pytest
 import tempfile
 
@@ -37,12 +37,10 @@ class Test_Solve:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        separators.add_separator('underscore', '_')
         rules.reset_rules()
         rules.add_rule(
             'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'digits', 'underscore', 'type'
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
 
     def test_explicit(self):
@@ -52,7 +50,7 @@ class Test_Solve:
         assert solved == name
 
     def test_no_match_for_token(self):
-        with pytest.raises(SolvingError) as exception:
+        with pytest.raises(TokenError) as exception:
             n.solve(
                 category='natural', function='sarasa',
                 whatAffects='chars', digits=1, type='lighting'
@@ -114,12 +112,10 @@ class Test_Parse:
             )
 
     def test_parsing_with_separators(self):
-        separators.add_separator('underscore', '_')
         rules.reset_rules()
         rules.add_rule(
             'lights',
-            'category', 'underscore', 'function', 'underscore', 'whatAffects',
-            'underscore', 'digits', 'underscore', 'type'
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
         name = 'dramatic_bounce_chars_001_LGT'
         parsed = n.parse(name)
@@ -131,10 +127,9 @@ class Test_Parse:
 
     def test_parsing_without_separators(self):
         rules.reset_rules()
-        separators.reset_separators()
         rules.add_rule(
             'lights',
-            'category', 'function', 'whatAffects', 'digits', 'type'
+            '{category}{function}{whatAffects}{digits}{type}'
         )
         name = 'dramatic_bounce_chars_001_LGT'
         parsed = n.parse(name)
@@ -146,7 +141,6 @@ class Test_RuleWithRepetitions:
     def setup(self):
         tokens.reset_tokens()
         rules.reset_rules()
-        separators.reset_separators()
         tokens.add_token(
             'side', center='C',
             left='L', right='R',
@@ -158,13 +152,9 @@ class Test_RuleWithRepetitions:
             frontal="FRONT", zygomatic="ZYGO",
             retromandibularfossa="RETMAND"
         )
-        separators.add_separator('underscore', '_')
-        separators.add_separator('hyphen', '-')
         rules.add_rule(
             "filename",
-            "side", "hyphen", "region", "underscore",
-            "side", "hyphen", "region", "underscore",
-            "side", "hyphen", "region"
+            '{side}-{region}_{side}-{region}_{side}-{region}'
         )
 
     def test_parse_repeated_tokens(self):
@@ -181,7 +171,7 @@ class Test_RuleWithRepetitions:
         name = "C-FRONT_-ORBI_R"
         with pytest.raises(ParsingError) as exception:
             n.parse(name)
-        assert str(exception.value).startswith("Missing tokens from passed name") is True
+        assert str(exception.value).startswith("Separators count mismatch") is True
 
     def test_solve_repeated_tokens(self):
         name = "C-MENT_L-PAROT_R-RETMAND"
@@ -213,12 +203,90 @@ class Test_RuleWithRepetitions:
         assert result == name
 
 
+class Test_Anchoring:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        tokens.add_token('awesometoken')
+
+    def test_solve_anchoring_end(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            'crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_END
+        )
+
+        name = 'crazy_hardcoded_value_bye'
+        solved = n.solve('bye')
+        assert solved == name
+
+    def test_solve_anchoring_both(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_BOTH
+        )
+
+        name = 'hello_crazy_hardcoded_value_bye'
+        solved = n.solve(awesometoken1='hello', awesometoken2='bye')
+        assert solved == name
+
+    def test_solve_anchoring_start(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value',
+            rules.Rule.ANCHOR_START
+        )
+
+        name = 'hello_crazy_hardcoded_value'
+        solved = n.solve(awesometoken='hello')
+        assert solved == name
+
+    def test_parse_anchoring_end(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            'crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_END
+        )
+
+        name = 'crazy_hardcoded_value_bye'
+        parsed = n.parse(name)
+        assert parsed == {'awesometoken': 'bye'}
+
+    def test_parse_anchoring_both(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value_{awesometoken}',
+            rules.Rule.ANCHOR_BOTH
+        )
+
+        name = 'hello_crazy_hardcoded_value_bye'
+        parsed = n.parse(name)
+        assert parsed == {'awesometoken1': 'hello', 'awesometoken2': 'bye'}
+
+    def test_parse_anchoring_start(self):
+        rules.reset_rules()
+        rules.add_rule(
+            'anchoring',
+            '{awesometoken}_crazy_hardcoded_value',
+            rules.Rule.ANCHOR_START
+        )
+
+        name = 'hello_crazy_hardcoded_value'
+        parsed = n.parse(name)
+        assert parsed == {'awesometoken': 'hello'}
+
+
 class Test_Serialization:
     @pytest.fixture(autouse=True)
     def setup(self):
         rules.reset_rules()
         tokens.reset_tokens()
-        separators.reset_separators()
 
     def test_tokens(self):
         token1 = tokens.add_token(
@@ -232,15 +300,11 @@ class Test_Serialization:
 
     def test_rules(self):
         rule1 = rules.add_rule(
-            'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
-            )
+            'lights',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
         rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
-
-    def test_separators(self):
-        separator1 = separators.add_separator('underscore', '_')
-        separator2 = separators.Separator.from_data(separator1.data())
-        assert separator1.data() == separator2.data()
 
     def test_validation(self):
         token = tokens.add_token(
@@ -250,22 +314,25 @@ class Test_Serialization:
             kick='kick', default='custom'
             )
         rule = rules.add_rule(
-            'lights', 'category', 'function', 'whatAffects', 'digits', 'type'
-            )
+            'lights',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
         token_number = tokens.add_token_number('digits')
-        sep = separators.add_separator('dot', '.')
 
         assert rules.Rule.from_data(token.data()) is None
         assert tokens.Token.from_data(rule.data()) is None
-        assert tokens.TokenNumber.from_data(sep.data()) is None
-        assert separators.Separator.from_data(token_number.data()) is None
 
     def test_save_load_rule(self):
-        rules.add_rule('test', 'category', 'function', 'whatAffects', 'digits', 'type')
-        filepath = tempfile.mktemp()
-        rules.save_rule('test', filepath)
+        rules.add_rule(
+            'test',
+            '{category}_{function}_{whatAffects}_{digits}_{type}'
+        )
+        tempdir = tempfile.mkdtemp()
+        rules.save_rule('test', tempdir)
 
         rules.reset_rules()
+        file_name = "{}.rule".format('test')
+        filepath = os.path.join(tempdir, file_name)
         rules.load_rule(filepath)
         assert rules.has_rule('test') is True
 
@@ -276,30 +343,25 @@ class Test_Serialization:
             bounce='bounce', rim='rim',
             kick='kick', default='custom'
             )
-        filepath = tempfile.mktemp()
-        tokens.save_token('test', filepath)
+        tempdir = tempfile.mkdtemp()
+        tokens.save_token('test', tempdir)
 
         tokens.reset_tokens()
+        file_name = "{}.token".format('test')
+        filepath = os.path.join(tempdir, file_name)
         tokens.load_token(filepath)
         assert tokens.has_token('test') is True
 
     def test_save_load_token_number(self):
         tokens.add_token_number('test')
-        filepath = tempfile.mktemp()
-        tokens.save_token('test', filepath)
+        tempdir = tempfile.mkdtemp()
+        tokens.save_token('test', tempdir)
 
         tokens.reset_tokens()
+        file_name = "{}.token".format('test')
+        filepath = os.path.join(tempdir, file_name)
         tokens.load_token(filepath)
         assert tokens.has_token('test') is True
-
-    def test_save_load_separator(self):
-        separators.add_separator('test')
-        filepath = tempfile.mktemp()
-        separators.save_separator('test', filepath)
-
-        separators.reset_separators()
-        separators.load_separator(filepath)
-        assert separators.has_separator('test') is True
 
     def test_save_load_session(self):
         tokens.add_token('whatAffects')
@@ -319,15 +381,13 @@ class Test_Serialization:
             'type', lighting='LGT',
             animation='ANI', default='LGT'
             )
-        separators.add_separator('dot', '.')
-        separators.add_separator('underscore', '.')
         rules.add_rule(
             'lights',
-            'category', 'dot', 'function', 'dot', 'whatAffects',
-            'underscore', 'digits', 'dot', 'type'
+            '{category}.{function}.{whatAffects}.{digits}.{type}'
         )
         rules.add_rule(
-            'test', 'category', 'underscore', 'function'
+            'test',
+            '{category}_{function}'
         )
         rules.set_active_rule('lights')
 
@@ -337,7 +397,6 @@ class Test_Serialization:
 
         rules.reset_rules()
         tokens.reset_tokens()
-        separators.reset_separators()
 
         n.load_session(repo)
         assert tokens.has_token('whatAffects') is True
@@ -347,6 +406,4 @@ class Test_Serialization:
         assert tokens.has_token('type') is True
         assert rules.has_rule('lights') is True
         assert rules.has_rule('test') is True
-        assert separators.has_separator('underscore') is True
-        assert separators.has_separator('dot') is True
         assert rules.get_active_rule().name == 'lights'

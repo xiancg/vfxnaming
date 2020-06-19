@@ -11,6 +11,8 @@ logger = logging.getLogger(name='naminglog')
 
 
 def init_logger():
+    """Initialize 'naminglog' logging object and add a STDOUT handler to output to console, terminal, etc.
+    """
     logger.setLevel(logging.DEBUG)
     # Formatter
     formatter = logging.Formatter(
@@ -25,6 +27,14 @@ def init_logger():
 
 
 def init_file_logger():
+    """Adds file log to 'naminglog' logging object. Log files will be located at the user OS folder.
+
+    Raises:
+        OSError, IOError: Directory for log files couldn't be created.
+
+    Returns:
+        [str]: Log file path
+    """
     # Formatter
     formatter = logging.Formatter(
         '[%(asctime)s:%(module)s:%(funcName)s:'

@@ -7,3 +7,7 @@ class ParsingError(BaseException):
 
 class SolvingError(BaseException):
     '''Raise when solving couldn't be completed'''
+
+
+class TokenError(BaseException):
+    '''Raise when Token errors are detected.'''

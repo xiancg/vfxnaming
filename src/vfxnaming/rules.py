@@ -4,41 +4,80 @@ from __future__ import absolute_import, print_function
 import re
 import json
 import os
+import sys
+import functools
+from collections import defaultdict
 from vfxnaming.serialize import Serializable
-from vfxnaming.separators import get_separators
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
 from vfxnaming.error import ParsingError, SolvingError
-
-import six
 
 _rules = {'_active': None}
 
 
 class Rule(Serializable):
-    def __init__(self, name):
-        """Each rule is managed by an instance of this class. Fields exist for each
-        Token and Separator used in the rule definition.
+    """Each rule is managed by an instance of this class. Fields exist for each
+    Token and Separator used in the rule definition.
 
-        Args:
-            name (str): Name that best describes the rule, this will be used as a way
-            to invoke the Rule object.
-        """
+    Args:
+        ``name`` (str): Name that best describes the rule, this will be used as a way
+        to query the Rule object.
+
+        ``pattern`` (str): The template pattern to use, which uses existing Tokens.
+        e.g.: '{side}_{region}_{side}_{region}.png'
+
+        ``anchor``: ([Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH], optional):
+        For parsing, regex matching will look for a match from this Anchor. If a
+        pattern is anchored to the start, it requires the start of a passed path to
+        match the pattern. Defaults to ANCHOR_START.
+    """
+
+    __FIELDS_REGEX = re.compile(r'{(.+?)}')
+    __PATTERN_SEPARATORS_REGEX = re.compile(r'(}[_\-\.:\|/\\]{|[_\-\.:\|/\\]{|}[_\-\.:\|/\\])')
+    __SEPARATORS_REGEX = re.compile(r'[_\-\.:\|/\\]')
+    ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
+
+    def __init__(self, name, pattern, anchor=ANCHOR_START):
         super(Rule, self).__init__()
-        self.name = name
-        self._fields = list()
+        self._name = name
+        self._pattern = pattern
+        self._anchor = anchor
+        self._regex = self.__build_regex()
 
-    def add_fields(self, token_names):
-        """Add fields to rule, by appending them to already existing ones.
-
-        Args:
-            token_names (list): List of new field names.
+    def data(self):
+        """Collect all data for this object instance.
 
         Returns:
-            bool: True if operation was successful
+            dict: {attribute:value}
         """
-        self._fields.extend(token_names)
-        return True
+        retval = dict()
+        retval["_name"] = self._name
+        retval["_pattern"] = self._pattern
+        retval["_anchor"] = self._anchor
+        retval["_Serializable_classname"] = type(self).__name__
+        retval["_Serializable_version"] = "1.0"
+        return retval
+
+    @classmethod
+    def from_data(cls, data):
+        """Create object instance from give data. Used by Rule,
+        Token, Separator to create object instances from disk saved data.
+
+        Args:
+            data (dict): {attribute:value}
+
+        Returns:
+            Serializable: Object instance for Rule, Token or Separator.
+        """
+        # Validation
+        if data.get("_Serializable_classname") != cls.__name__:
+            return None
+        del data["_Serializable_classname"]
+        if data.get("_Serializable_version") is not None:
+            del data["_Serializable_version"]
+
+        this = cls(data.get("_name"), data.get("_pattern"), data.get("_anchor"))
+        return this
 
     def solve(self, **values):
         """Given arguments are used to build a name.
@@ -50,21 +89,13 @@ class Rule(Serializable):
             str: A string with the resulting name.
         """
         result = None
-        separators = get_separators()
-        if separators:
-            has_separators = set(separators.keys()).intersection(self.fields)
-            if len(has_separators) > 0:
-                symbols_dict = dict()
-                for name, separator in six.iteritems(get_separators()):
-                    symbols_dict[name] = separator.symbol
-                values.update(symbols_dict)
+
         try:
-            result = self.pattern.format(**values)
+            result = self.__digits_pattern().format(**values)
         except KeyError as why:
-            field_names = ", ".join(self.fields)
             raise SolvingError(
                 "Arguments passed do not match with naming rule fields {}\n{}".format(
-                    field_names, why
+                    self._pattern, why
                 )
             )
 
@@ -84,70 +115,169 @@ class Rule(Serializable):
             dict: A dictionary with keys as tokens and values as given name parts.
             e.g.: {'side':'C', 'part':'helmet', 'number': 1, 'type':'MSH'}
         """
-        delimiters = [value.symbol for key, value in six.iteritems(get_separators())]
-        if len(delimiters) >= 1:
-            logger.debug("Parsing with these separators: {}".format(', '.join(delimiters)))
-            regex_pattern = '(' + '|'.join(map(re.escape, delimiters)) + ')'
-            name_parts = re.split(regex_pattern, name)
-            if len(name_parts) != len(self.fields):
-                raise ParsingError("Missing tokens from passed name. Found {}".format(", ".join(name_parts)))
-            logger.debug("Name parts: {}".format(", ".join(name_parts)))
-
-            repeated_fields = dict()
-            for each in self.fields:
-                if each not in get_separators().keys() and each not in repeated_fields.keys():
-                    if self.fields.count(each) > 1:
-                        repeated_fields[each] = 1
-            if repeated_fields:
-                logger.debug(
-                    "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
+        expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
+        if len(expected_separators) <= 0:
+            logger.warning(
+                "No separators used for rule '{}', parsing is not possible.".format(
+                    self.name
                 )
-
-            retval = dict()
-            for i, f in enumerate(self.fields):
-                name_part = name_parts[i]
-                token = get_token(f)
-                if not token:
-                    continue
-                if f in repeated_fields.keys():
-                    counter = repeated_fields.get(f)
-                    repeated_fields[f] = counter + 1
-                    f = "{}{}".format(f, counter)
-                retval[f] = token.parse(name_part)
-            return retval
-        logger.warning(
-            "No separators used for rule {}, parsing is not possible.".format(
-                self.name
             )
+            return None
+        name_separators = self.__SEPARATORS_REGEX.findall(name)
+        if len(expected_separators) <= len(name_separators):
+            retval = dict()
+            match = self._regex.search(name)
+            if match:
+                name_parts = sorted(match.groupdict().items())
+                logger.debug(
+                    "Name parts: {}".format(
+                        ", ".join(["('{}': '{}')".format(k[:-3], v) for k, v in name_parts])
+                    )
+                )
+                repeated_fields = dict()
+                for each in self.fields:
+                    if each not in repeated_fields.keys():
+                        if self.fields.count(each) > 1:
+                            repeated_fields[each] = 1
+                if repeated_fields:
+                    logger.debug(
+                        "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
+                    )
+
+                for key, value in name_parts:
+                    # Strip number that was added to make group name unique
+                    token_name = key[:-3]
+                    token = get_token(token_name)
+                    if not token:
+                        continue
+                    if token_name in repeated_fields.keys():
+                        counter = repeated_fields.get(token_name)
+                        repeated_fields[token_name] = counter + 1
+                        token_name = "{}{}".format(token_name, counter)
+                    retval[token_name] = token.parse(value)
+            return retval
+        else:
+            raise ParsingError(
+                "Separators count mismatch between given name '{}':'{}' and rule's pattern '{}':'{}'.".format(
+                    name, len(name_separators), self._pattern, len(expected_separators)
+                )
+            )
+
+    def __build_regex(self):
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        # Escape non-placeholder components
+        expression = re.sub(
+            r'(?P<placeholder>{(.+?)(:(\\}|.)+?)?})|(?P<other>.+?)',
+            self.__escape,
+            self._pattern
         )
-        return None
+        # Replace placeholders with regex pattern
+        expression = re.sub(
+            r'{(?P<placeholder>.+?)(:(?P<expression>(\\}|.)+?))?}',
+            functools.partial(
+                self.__convert, placeholder_count=defaultdict(int)
+            ),
+            expression
+        )
+
+        if self._anchor is not None:
+            if bool(self._anchor & self.ANCHOR_START):
+                expression = '^{0}'.format(expression)
+
+            if bool(self._anchor & self.ANCHOR_END):
+                expression = '{0}$'.format(expression)
+        # Compile expression
+        try:
+            compiled = re.compile(expression)
+        except re.error as error:
+            if any([
+                'bad group name' in str(error),
+                'bad character in group name' in str(error)
+            ]):
+                raise ValueError('Placeholder name contains invalid characters.')
+            else:
+                _, value, traceback = sys.exc_info()
+                message = 'Invalid pattern: {0}'.format(value)
+                if sys.version_info[0] == 3:
+                    raise ValueError(message).with_traceback(traceback)
+                elif sys.version_info[0] == 2:
+                    raise ValueError(message, traceback)
+
+        return compiled
+
+    def __convert(self, match, placeholder_count):
+        """Return a regular expression to represent *match*.
+
+        ``placeholder_count`` should be a ``defaultdict(int)`` that will be used to
+        store counts of unique placeholder names.
+
+        """
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        placeholder_name = match.group('placeholder')
+
+        # The re module does not support duplicate group names. To support
+        # duplicate placeholder names in templates add a unique count to the
+        # regular expression group name and strip it later during parse.
+        placeholder_count[placeholder_name] += 1
+        placeholder_name += '{0:03d}'.format(
+            placeholder_count[placeholder_name]
+        )
+
+        expression = match.group('expression')
+        if expression is None:
+            expression = r'[\w_.\-/:]+'
+
+        # Un-escape potentially escaped characters in expression.
+        expression = expression.replace('{', '{').replace('}', '}')
+
+        return r'(?P<{0}>{1})'.format(placeholder_name, expression)
+
+    def __escape(self, match):
+        """Escape matched 'other' group value."""
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        groups = match.groupdict()
+        if groups['other'] is not None:
+            return re.escape(groups['other'])
+
+        return groups['placeholder']
+
+    def __digits_pattern(self):
+        # * This accounts for those cases where a token is used more than once in a rule
+        digits_pattern = self._pattern
+        for each in list(set(self.fields)):
+            regex_pattern = re.compile(each)
+            indexes = [match.end() for match in regex_pattern.finditer(digits_pattern)]
+            repetetions = len(indexes)
+            if repetetions > 1:
+                i = 0
+                for match in sorted(indexes, reverse=True):
+                    digits_pattern = "{}{}{}".format(
+                        digits_pattern[:match],
+                        str(repetetions-i),
+                        digits_pattern[match:]
+                    )
+                    i += 1
+        return digits_pattern
 
     @property
     def pattern(self):
-        # * This accounts for those cases where a token is used more than once in a rule
-        repeated_fields = dict()
-        for each in self.fields:
-            if each not in get_separators().keys() and each not in repeated_fields.keys():
-                if self.fields.count(each) > 1:
-                    repeated_fields[each] = 1
-        fields_with_digits = list()
-        for each in self.fields:
-            if each in repeated_fields.keys():
-                counter = repeated_fields.get(each)
-                repeated_fields[each] = counter + 1
-                field_digit = "{}{}".format(each, counter)
-                fields_with_digits.append(field_digit)
-            else:
-                fields_with_digits.append(each)
-        return '{' + '}{'.join(fields_with_digits) + '}'
+        return self._pattern
 
     @property
     def fields(self):
-        return tuple(self._fields)
+        """
+        Returns:
+            [tuple]: Tuple of all Tokens found in this Rule's pattern
+        """
+        return tuple(self.__FIELDS_REGEX.findall(self._pattern))
 
-    @fields.setter
-    def fields(self, f):
-        self._fields = f
+    @property
+    def regex(self):
+        """
+        Returns:
+            [str]: Regular expression used to parse from this Rule
+        """
+        return self._regex
 
     @property
     def name(self):
@@ -158,22 +288,26 @@ class Rule(Serializable):
         self._name = n
 
 
-def add_rule(name, *fields):
+def add_rule(name, pattern, anchor=Rule.ANCHOR_START):
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
 
     Args:
-        name (str): Name that best describes the rule, this will be used as a way
+        ``name`` (str): Name that best describes the rule, this will be used as a way
         to invoke the Rule object.
 
-        fields: Each argument following the name is treated as a field for the
-        new Rule
+        ``pattern`` (str): The template pattern to use, which uses existing Tokens.
+        e.g.: '{side}_{region}_{side}_{region}.png'
+
+        ``anchor``: ([Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH], optional):
+        For parsing, regex matching will look for a match from this Anchor. If a
+        pattern is anchored to the start, it requires the start of a passed path to
+        match the pattern. Defaults to ANCHOR_START.
 
     Returns:
         Rule: The Rule object instance created for given name and fields.
     """
-    rule = Rule(name)
-    rule.fields = fields
+    rule = Rule(name, pattern, anchor)
     _rules[name] = rule
     if get_active_rule() is None:
         set_active_rule(name)
@@ -267,12 +401,13 @@ def get_rules():
     return _rules
 
 
-def save_rule(name, filepath):
+def save_rule(name, directory):
     """Saves given rule serialized to specified location.
 
     Args:
-        name (str): The name of the rule to be saved.
-        filepath (str): Path location to save the rule.
+        ``name`` (str): The name of the rule to be saved.
+
+        ``directory`` (str): Path location to save the rule.
 
     Returns:
         bool: True if successful, False if rule wasn't found in current session.
@@ -280,6 +415,8 @@ def save_rule(name, filepath):
     rule = get_rule(name)
     if not rule:
         return False
+    file_name = "{}.rule".format(name)
+    filepath = os.path.join(directory, file_name)
     with open(filepath, "w") as fp:
         json.dump(rule.data(), fp)
     return True
@@ -301,6 +438,8 @@ def load_rule(filepath):
             data = json.load(fp)
     except Exception:
         return False
-    rule = Rule.from_data(data)
-    _rules[rule.name] = rule
-    return True
+    new_rule = Rule.from_data(data)
+    if new_rule:
+        _rules[new_rule.name] = new_rule
+        return True
+    return False
