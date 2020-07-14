@@ -254,9 +254,11 @@ def add_token(name, **kwargs):
         kwargs: Each argument following the name is treated as an option for the
         new Token.
 
+    Raises:
+        TokenError: If explicitly passed default does not match with any of the options.
+
     Returns:
-        Token: The Token object instance created for given name and fields. None
-        if default option passed does not match with any option.
+        Token: The Token object instance created for given name and fields.
     """
     token = Token(name)
     for k, v in six.iteritems(kwargs):

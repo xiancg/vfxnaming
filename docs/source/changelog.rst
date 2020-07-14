@@ -1,6 +1,16 @@
 Changelog
 ================================
 
+1.2.1-beta
+---------------------------------------
+
+**Changes:**
+    - Default option when adding Tokens must now be one the options passed for the Token.
+    - Default option can now be explicitly passed as the full name option or its abbreviation.
+    - When Parsing, if no value matches with the Token options and Token is Optional, raise TokenError.
+    - IMPORTANT NOTE: This version might require updates on old Tokens that accepted any default value before. Quick and simple fix is to add that value as an option for the Token.
+
+
 1.2.0-beta
 ---------------------------------------
 
