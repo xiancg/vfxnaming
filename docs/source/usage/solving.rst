@@ -24,7 +24,7 @@ Let's set these Tokens and Rules.
         'function',
         key='key', fill='fil', ambient='amb',
         bounce='bnc', rim='rim', kick='kik', custom='cst',
-        default='cst'
+        default='custom'
     )
     n.add_token(
         'type', lighting='LGT', animation='ANI', default='LGT'
@@ -59,7 +59,7 @@ Each of these calls to vfxnaming.solve() will produce the exact same result:
 .. note::
     natural_custom_chars_001_LGT
 
-If you don't pass a required Token (either as an argument or keyword argument), such as 'whatAffects' in this example, you'll get a TokenError.
+If you don't pass a required Token (either as an argument or keyword argument), such as 'whatAffects' in this example, you'll get a **TokenError**. You'll also get a **TokenError** if you try to parse a value that doesn't match any of the options in the Token.
 
 Solving rules with repeated tokens
 -----------------------------------------

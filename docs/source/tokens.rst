@@ -1,8 +1,8 @@
 Tokens module
 ================
-Tokens are the meaningful parts of a template. A token can be required, meaning fully typed by the user, or can have a set of default options preconfigured.
+Tokens are the meaningful parts of a template. A token can be required, meaning fully typed by the user, or can have a set of options preconfigured.
 
-If options are present, then one of them is the default one. Each option follows a {full_name:abbreviation} schema, so that names can be short but meaning can be recovered easily.
+If options are present, then one of them is the default one. Each option follows a {full_name:abbreviation} schema, so that names can be short but meaning can be recovered easily. The default option might be passed explicitly by the user by passing a *default* argument (it must match one of the options in the Token). If no default options is explicitly passed, the Token will sort options alphabetically and pick the first one. Please notice if you pass the *default* option explicitly, you can use the abbreviation or the full option name.
 
 .. code-block:: python
     :linenos:
@@ -13,7 +13,7 @@ If options are present, then one of them is the default one. Each option follows
                 practical='pra', dramatic='dra',
                 volumetric='vol', default='nat')
 
-In line 1 we're creating a **Required Token**. This means that for solving the user has to provide a value. This is a explicit solve.
+In line 1 we're creating a **Required Token**. This means that for solving the user must provide a value. This is a explicit solve.
 
 In line 2 we're creating a **Number Token**. This is a special Token really useful for working with version like or counting parts of a name. It's always required.
 
