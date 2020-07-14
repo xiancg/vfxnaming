@@ -53,13 +53,14 @@ class Test_TokenNumber:
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
-            )
+        )
         tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         tokens.add_token('type', lighting='LGT', default='LGT')
         rules.add_rule(
             'lights',

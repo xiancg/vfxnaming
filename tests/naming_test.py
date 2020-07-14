@@ -31,8 +31,9 @@ class Test_Solve:
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         tokens.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
@@ -99,17 +100,18 @@ class Test_Parse:
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
-            )
+        )
         tokens.add_token(
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         tokens.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'
-            )
+        )
 
     def test_parsing_with_separators(self):
         rules.reset_rules()
@@ -293,8 +295,9 @@ class Test_Serialization:
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         token2 = tokens.Token.from_data(token1.data())
         assert token1.data() == token2.data()
 
@@ -311,13 +314,14 @@ class Test_Serialization:
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         rule = rules.add_rule(
             'lights',
             '{category}_{function}_{whatAffects}_{digits}_{type}'
         )
-        token_number = tokens.add_token_number('digits')
+        tokens.add_token_number('digits')
 
         assert rules.Rule.from_data(token.data()) is None
         assert tokens.Token.from_data(rule.data()) is None
@@ -341,8 +345,9 @@ class Test_Serialization:
             'test', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         tempdir = tempfile.mkdtemp()
         tokens.save_token('test', tempdir)
 
@@ -375,8 +380,9 @@ class Test_Serialization:
             'function', key='key',
             fill='fill', ambient='ambient',
             bounce='bounce', rim='rim',
-            kick='kick', default='custom'
-            )
+            custom='custom', kick='kick',
+            default='custom'
+        )
         tokens.add_token(
             'type', lighting='LGT',
             animation='ANI', default='LGT'

@@ -263,7 +263,13 @@ def add_token(name, **kwargs):
             continue
         token.add_option(k, v)
     if "default" in kwargs.keys():
-        token.default = kwargs.get('default')
+        extract_default = copy.deepcopy(kwargs)
+        del extract_default["default"]
+        if kwargs.get('default') in extract_default.values():
+            token.default = kwargs.get('default')
+        else:
+            logger.error("Default value must match one of the options passed.")
+            return None
     _tokens[name] = token
     return token
 
