@@ -78,13 +78,18 @@ class Token(Serializable):
             value (str): Name part to be parsed to the token origin
 
         Returns:
-            str: Token origin for given value or value itself if no match is found.
+            str: Token origin for given value or value itself if token is required.
         """
-        if len(self._options) >= 1:
+        if self.required:
+            return value
+        elif not self.required and len(self._options) >= 1:
             for k, v in six.iteritems(self._options):
                 if v == value:
                     return k
-        return value
+        raise TokenError("Value '{}' not found in Token '{}'. Options: {}".format(
+                value, self.name, ', '.join(self._options.values())
+            )
+        )
 
     @property
     def required(self):
