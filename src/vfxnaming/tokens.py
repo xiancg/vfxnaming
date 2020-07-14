@@ -69,7 +69,7 @@ class Token(Serializable):
                     )
             return self._options.get(name)
         elif not self.required and not name:
-            return self.default
+            return self._options.get(self.default)
 
     def parse(self, value):
         """Get metatada (origin) for given value in name. e.g.: L could return left
@@ -112,7 +112,7 @@ class Token(Serializable):
             str: Default option value
         """
         if self._default is None and len(self._options) >= 1:
-            self._default = sorted(list(self._options.values()))[0]
+            self._default = sorted(list(self._options.keys()))[0]
         return self._default
 
     @default.setter
@@ -255,7 +255,8 @@ def add_token(name, **kwargs):
         new Token.
 
     Returns:
-        Token: The Token object instance created for given name and fields.
+        Token: The Token object instance created for given name and fields. None
+        if default option passed does not match with any option.
     """
     token = Token(name)
     for k, v in six.iteritems(kwargs):
@@ -265,11 +266,15 @@ def add_token(name, **kwargs):
     if "default" in kwargs.keys():
         extract_default = copy.deepcopy(kwargs)
         del extract_default["default"]
-        if kwargs.get('default') in extract_default.values():
+        if kwargs.get('default') in extract_default.keys():
             token.default = kwargs.get('default')
+        elif kwargs.get('default') in extract_default.values():
+            for k, v in six.iteritems(extract_default):
+                if v == kwargs.get('default'):
+                    token.default = k
+                    break
         else:
-            logger.error("Default value must match one of the options passed.")
-            return None
+            raise TokenError("Default value must match one of the options passed.")
     _tokens[name] = token
     return token
 

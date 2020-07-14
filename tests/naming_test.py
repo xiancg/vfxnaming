@@ -36,7 +36,7 @@ class Test_Solve:
         )
         tokens.add_token(
             'type', lighting='LGT',
-            animation='ANI', default='LGT'
+            animation='ANI', default='lighting'
             )
         rules.reset_rules()
         rules.add_rule(
@@ -110,7 +110,7 @@ class Test_Parse:
         )
         tokens.add_token(
             'type', lighting='LGT',
-            animation='ANI', default='LGT'
+            animation='ANI', default='lighting'
         )
 
     def test_parsing_with_separators(self):
@@ -146,7 +146,7 @@ class Test_RuleWithRepetitions:
         tokens.add_token(
             'side', center='C',
             left='L', right='R',
-            default='C'
+            default='center'
         )
         tokens.add_token(
             'region', orbital="ORBI",
@@ -385,7 +385,7 @@ class Test_Serialization:
         )
         tokens.add_token(
             'type', lighting='LGT',
-            animation='ANI', default='LGT'
+            animation='ANI', default='lighting'
             )
         rules.add_rule(
             'lights',
