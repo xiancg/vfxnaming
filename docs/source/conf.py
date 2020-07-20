@@ -17,12 +17,12 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Naming'
+project = 'VFX Naming'
 copyright = '2019, Cesar Saez, Chris Granados- Xian'
-author = 'Cesar Saez, Chris Granados- Xian'
+author = 'Chris Granados- Xian'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = '1.2.2-beta'
 
 
 # -- General configuration ---------------------------------------------------

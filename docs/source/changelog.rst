@@ -1,6 +1,12 @@
 Changelog
 ================================
 
+1.2.2-beta
+---------------------------------------
+
+**Improvements:**
+    -Added remove_option(), update_option(), has_option_fullname(), has_option_abbreviation() methods to Token
+
 1.2.1-beta
 ---------------------------------------
 
