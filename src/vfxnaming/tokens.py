@@ -34,10 +34,84 @@ class Token(Serializable):
         """Add an option pair to this Token.
 
         Args:
-            key (str): Full length name of the option
+            key (str): Full name of the option
             value (str): Abbreviation to be used when building the name.
+
+        Returns:
+            [bool]: True if successful. False otherwise.
         """
-        self._options[key] = value
+        if key not in self._options.keys():
+            self._options[key] = value
+            return True
+        logger.debug(
+            "Option '{}':'{}' already exists in Token '{}'. "
+            "Use update_option() instead.".format(key, self._options.get(key), self.name)
+        )
+        return False
+
+    def update_option(self, key, value):
+        """Update an option pair on this Token.
+
+        Args:
+            key (str): Full name of the option
+            value (str): Abbreviation to be used when building the name.
+
+        Returns:
+            [bool]: True if successful. False otherwise.
+        """
+        if key in self._options.keys():
+            self._options[key] = value
+            return True
+        logger.debug(
+            "Option '{}':'{}' doesn't exist in Token '{}'. "
+            "Use add_option() instead.".format(key, self._options.get(key), self.name)
+        )
+        return False
+
+    def remove_option(self, key):
+        """Remove an option on this Token.
+
+        Args:
+            key (str): Full name of the option
+
+        Returns:
+            [bool]: True if successful. False otherwise.
+        """
+        if key in self._options.keys():
+            del self._options[key]
+            return True
+        logger.debug(
+            "Option '{}':'{}' doesn't exist in Token '{}'. ".format(
+                key, self._options.get(key), self.name
+            )
+        )
+        return False
+
+    def has_option_fullname(self, key):
+        """Looks for given option full name in the options.
+
+        Args:
+            key (str): Full name of the option
+
+        Returns:
+            [bool]: True if found. False otherwise.
+        """
+        if key in self._options.keys():
+            return True
+        return False
+
+    def has_option_abbreviation(self, value):
+        """Looks for given option abbreviation in the options.
+
+        Args:
+            value ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        if value in self._options.values():
+            return True
+        return False
 
     def solve(self, name=None):
         """Solve for abbreviation given a certain name. e.g.: center could return C
