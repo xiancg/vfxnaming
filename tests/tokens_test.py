@@ -26,7 +26,7 @@ class Test_Token:
             'category', natural='natural',
             practical='practical', dramatic='dramatic',
             volumetric='volumetric', default='natural'
-            )
+        )
         assert isinstance(result, tokens.Token) is True
 
     def test_reset_tokens(self):
@@ -39,6 +39,55 @@ class Test_Token:
         assert result is True
 
         result = tokens.remove_token('test2')
+        assert result is False
+
+
+class Test_Token_Options:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        self.light_category = tokens.add_token(
+            'category', natural='natural',
+            practical='practical', dramatic='dramatic',
+            volumetric='volumetric', default='natural'
+        )
+
+    def test_add_option(self):
+        result = self.light_category.add_option("extra", "extra")
+        assert result is True
+        assert "extra" in self.light_category.options.keys()
+
+        result = self.light_category.add_option("dramatic", "DRA")
+        assert result is False
+
+    def test_remove_option(self):
+        result = self.light_category.remove_option("natural")
+        assert result is True
+        assert "natural" not in self.light_category.options.keys()
+
+        result = self.light_category.remove_option("non_existent")
+        assert result is False
+
+    def test_update_option(self):
+        result = self.light_category.update_option("natural", "unnatural")
+        assert result is True
+        assert "unnatural" in self.light_category.options.values()
+
+        result = self.light_category.update_option("non_existent", "unnatural")
+        assert result is False
+
+    def test_has_option_fullname(self):
+        result = self.light_category.has_option_fullname("dramatic")
+        assert result is True
+
+        result = self.light_category.has_option_fullname("default")
+        assert result is False
+
+    def test_has_option_abbreviation(self):
+        result = self.light_category.has_option_abbreviation("volumetric")
+        assert result is True
+
+        result = self.light_category.has_option_abbreviation("VOL")
         assert result is False
 
 
