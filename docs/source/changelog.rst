@@ -1,6 +1,12 @@
 Changelog
 ================================
 
+1.2.3-beta
+---------------------------------------
+
+**Bug fixes:**
+    -Checks for naming.conf existance when loading a repo and resets both rules and tokens
+
 1.2.2-beta
 ---------------------------------------
 

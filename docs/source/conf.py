@@ -22,7 +22,7 @@ copyright = '2019, Cesar Saez, Chris Granados- Xian'
 author = 'Chris Granados- Xian'
 
 # The full version, including alpha/beta/rc tags
-release = '1.2.2-beta'
+release = '1.2.3-beta'
 
 
 # -- General configuration ---------------------------------------------------
