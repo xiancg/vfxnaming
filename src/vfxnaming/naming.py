@@ -202,6 +202,12 @@ def load_session(repo=None):
     if not os.path.exists(repo):
         logger.warning("Given repo directory does not exist: {}".format(repo))
         return False
+    namingconf = os.path.join(repo, "naming.conf")
+    if not os.path.exists(namingconf):
+        logger.warning("Repo is not valid. naming.conf not found {}".format(namingconf))
+        return False
+    rules.reset_rules()
+    tokens.reset_tokens()
     # tokens and rules
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
@@ -213,10 +219,9 @@ def load_session(repo=None):
                 logger.debug("Loading rule: {}".format(filepath))
                 rules.load_rule(filepath)
     # extra configuration
-    filepath = os.path.join(repo, "naming.conf")
-    if os.path.exists(filepath):
-        logger.debug("Loading active rule: {}".format(filepath))
-        with open(filepath) as fp:
+    if os.path.exists(namingconf):
+        logger.debug("Loading active rule: {}".format(namingconf))
+        with open(namingconf) as fp:
             config = json.load(fp)
         rules.set_active_rule(config.get('set_active_rule'))
     return True
