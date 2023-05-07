@@ -8,11 +8,16 @@ pytest = "*"
 pytest-cov = "*"
 pytest-datafiles = "*"
 flake8 = "*"
-vfxnaming = {editable = true,path = "."}
 python-coveralls = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
+build = "*"
+wheel = "*"
+rstcheck = "*"
 
-[packages]
-six = "*"
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

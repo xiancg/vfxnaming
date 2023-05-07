@@ -1,6 +1,3 @@
-# coding=utf-8
-
-
 class ParsingError(BaseException):
     '''Raise when parsing couldn't be completed'''
 

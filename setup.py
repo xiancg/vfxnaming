@@ -1,38 +1,47 @@
 from setuptools import setup, find_packages
-from os import path
-from io import open
+from pathlib import Path
+import re
 
-here = path.abspath(path.dirname(__file__))
+PACKAGENAME = 'vfxnaming'
+PACKAGE_NICENAME = 'VFX Naming Conventions Framework'
+
+module_dir = Path(__file__).parents[0]
+version_module = module_dir.joinpath('src', PACKAGENAME, '_version.py')
+
+version_str = "0.0.0"
+with open(version_module) as fp:
+    version_str = re.match(
+        r'.*__version__ = [\',\"](.*?)[\',\"]',
+        fp.read(),
+        re.DOTALL
+    ).group(1)
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+with open(module_dir.joinpath('README.rst'), encoding='utf-8') as fp:
+    long_description = fp.read()
 
-version_str = '1.2.3-beta'
 
 setup(
-    name='vfxnaming',
+    name=PACKAGENAME,
     version=version_str,
-    description='Naming conventions library',
+    description=PACKAGE_NICENAME,
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     url='https://github.com/xiancg/vfxnaming',
-    download_url='https://github.com/xiancg/vfxnaming/archive/v{}.tar.gz'.format(version_str),
+    download_url=f'https://github.com/xiancg/vfxnaming/archive/v{version_str}.tar.gz',
     author='Chris Granados- Xian',
     author_email='info@chrisgranados.com',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.7'
     ],
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
-    install_requires=['six'],
+    python_requires='>=3.7, <4',
     extras_require={
         'dev': ['pytest', 'pytest-cov', 'pytest-datafiles', 'python-coveralls', 'flake8'],
         'docs': ['sphinx', 'sphinx-rtd-theme']
     },
-    package_data={'': ['cfg/config.json']}
+    include_package_data=True
 )

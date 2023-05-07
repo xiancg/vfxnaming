@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'VFX Naming'
-copyright = '2019, Cesar Saez, Chris Granados- Xian'
+project = 'VFX Naming Conventions Framework'
+copyright = '2019, Chris Granados- Xian, Cesar Saez'
 author = 'Chris Granados- Xian'
 
 # The full version, including alpha/beta/rc tags

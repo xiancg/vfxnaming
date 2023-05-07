@@ -60,10 +60,10 @@ This is going to initalize a log file where everything will be recorded.
     from vfxnaming import logger
     logger.init_file_logger()
 
-Credits
+Acknowledgements
 --------------------
 
-**vfxnaming** is completely based on `Copyright (c) 2017 Cesar Saez <https://www.cesarsaez.me/>`_
+**vfxnaming** is based on `Copyright (c) 2017 Cesar Saez <https://www.cesarsaez.me/>`_
 work. I highly recommend his `Website-Blog <https://www.cesarsaez.me/>`_ and
 the video tutorial series on his `YouTube Channel <https://www.youtube.com/channel/UCRjk6bi_1ZQ9sL69agz0xMg>`_ 
 
