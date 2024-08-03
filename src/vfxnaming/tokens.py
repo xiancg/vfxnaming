@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function
-
 import copy
 import json
 import os
@@ -8,7 +5,6 @@ from vfxnaming.serialize import Serializable
 from vfxnaming.logger import logger
 from vfxnaming.error import TokenError
 
-import six
 
 _tokens = dict()
 
@@ -133,14 +129,16 @@ class Token(Serializable):
         if self.required and name:
             return name
         elif self.required and name is None:
-            raise TokenError("Token {} is required. name parameter must be passed.".format(self.name))
+            raise TokenError(
+                "Token {} is required. name parameter must be passed.".format(self.name)
+            )
         elif not self.required and name:
             if name not in self._options.keys():
                 raise TokenError(
                     "name '{}' not found in Token '{}'. Options: {}".format(
-                        name, self.name, ', '.join(self._options.keys())
-                        )
+                        name, self.name, ", ".join(self._options.keys())
                     )
+                )
             return self._options.get(name)
         elif not self.required and not name:
             return self._options.get(self.default)
@@ -157,11 +155,12 @@ class Token(Serializable):
         if self.required:
             return value
         elif not self.required and len(self._options) >= 1:
-            for k, v in six.iteritems(self._options):
+            for k, v in self._options.items():
                 if v == value:
                     return k
-        raise TokenError("Value '{}' not found in Token '{}'. Options: {}".format(
-                value, self.name, ', '.join(self._options.values())
+        raise TokenError(
+            "Value '{}' not found in Token '{}'. Options: {}".format(
+                value, self.name, ", ".join(self._options.values())
             )
         )
 
@@ -225,7 +224,7 @@ class TokenNumber(Serializable):
             str: The solved string to be used in the name
         """
         numberStr = str(number).zfill(self.padding)
-        return '{}{}{}'.format(self.prefix, numberStr, self.suffix)
+        return "{}{}{}".format(self.prefix, numberStr, self.suffix)
 
     def parse(self, value):
         """Get metatada (number) for given value in name. e.g.: v0025 will return 25
@@ -282,33 +281,33 @@ class TokenNumber(Serializable):
 
     @property
     def padding(self):
-        return self._options.get('padding')
+        return self._options.get("padding")
 
     @padding.setter
     def padding(self, p):
         if p <= 0:
             p = 1
-        self._options['padding'] = int(p)
+        self._options["padding"] = int(p)
 
     @property
     def prefix(self):
-        return self._options.get('prefix')
+        return self._options.get("prefix")
 
     @prefix.setter
     def prefix(self, this_prefix):
         if isinstance(this_prefix, str) and not this_prefix.isdigit():
-            self._options['prefix'] = this_prefix
+            self._options["prefix"] = this_prefix
         else:
             logger.warning("Given prefix has to be a string: {}".format(this_prefix))
 
     @property
     def suffix(self):
-        return self._options.get('suffix')
+        return self._options.get("suffix")
 
     @suffix.setter
     def suffix(self, this_suffix):
         if isinstance(this_suffix, str) and not this_suffix.isdigit():
-            self._options['suffix'] = this_suffix
+            self._options["suffix"] = this_suffix
         else:
             logger.warning("Given suffix has to be a string: {}".format(this_suffix))
 
@@ -335,18 +334,18 @@ def add_token(name, **kwargs):
         Token: The Token object instance created for given name and fields.
     """
     token = Token(name)
-    for k, v in six.iteritems(kwargs):
+    for k, v in kwargs.items():
         if k == "default":
             continue
         token.add_option(k, v)
     if "default" in kwargs.keys():
         extract_default = copy.deepcopy(kwargs)
         del extract_default["default"]
-        if kwargs.get('default') in extract_default.keys():
-            token.default = kwargs.get('default')
-        elif kwargs.get('default') in extract_default.values():
-            for k, v in six.iteritems(extract_default):
-                if v == kwargs.get('default'):
+        if kwargs.get("default") in extract_default.keys():
+            token.default = kwargs.get("default")
+        elif kwargs.get("default") in extract_default.values():
+            for k, v in extract_default.items():
+                if v == kwargs.get("default"):
                     token.default = k
                     break
         else:

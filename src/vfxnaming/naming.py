@@ -25,7 +25,6 @@ import vfxnaming.tokens as tokens
 from vfxnaming.logger import logger
 from vfxnaming.error import SolvingError
 
-import six
 
 NAMING_REPO_ENV = "NAMING_REPO"
 
@@ -169,11 +168,11 @@ def save_session(repo=None):
         except (IOError, OSError) as why:
             raise why
     # save tokens
-    for name, token in six.iteritems(tokens.get_tokens()):
+    for name, token in tokens.get_tokens().items():
         logger.debug("Saving token: '{}' in {}".format(name, repo))
         tokens.save_token(name, repo)
     # save rules
-    for name, rule in six.iteritems(rules.get_rules()):
+    for name, rule in rules.get_rules().items():
         if not isinstance(rule, rules.Rule):
             continue
         logger.debug("Saving rule: '{}' in {}".format(name, repo))
@@ -223,5 +222,5 @@ def load_session(repo=None):
         logger.debug("Loading active rule: {}".format(namingconf))
         with open(namingconf) as fp:
             config = json.load(fp)
-        rules.set_active_rule(config.get('set_active_rule'))
+        rules.set_active_rule(config.get("set_active_rule"))
     return True
