@@ -7,7 +7,7 @@ verify_ssl = true
 pytest = "*"
 pytest-cov = "*"
 pytest-datafiles = "*"
-flake8 = "*"
+ruff = "*"
 python-coveralls = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
@@ -17,7 +17,7 @@ wheel = "*"
 rstcheck = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.10"
 
 [pipenv]
 allow_prereleases = true

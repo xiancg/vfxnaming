@@ -1,3 +1,39 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["setuptools>=61.0", "wheel", "twine", "build"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vfxnaming"
+version="1.2.3-beta"
+authors = [
+  { name="Chris Granados", email="info@chrisgranados.com" },
+]
+description = "VFX Naming Conventions Framework"
+readme = "README.rst"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.7",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+keywords = ["vfx", "games", "naming", "convention", "gaming", "tech", "art", "pipeline"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+
+[project.optional-dependencies]
+tests = ["pytest", "pytest-cov", "pytest-datafiles", "python-coveralls", "flake8"]
+lint = ["ruff"]
+docs = ["sphinx", "sphinx_rtd_theme"]
+build = ["setuptools", "twine", "wheel", "build"]
+
+[project.urls]
+Repository = "https://github.com/xiancg/vfxnaming"
+Documentation = "https://naming-conventions.readthedocs.io/en/latest/"
