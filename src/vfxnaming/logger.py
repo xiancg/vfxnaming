@@ -1,84 +1,133 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function
-
 import logging
 import sys
-import os
 import json
 from datetime import date
-
-_base_name = "vfxnaming"
-logger = logging.getLogger(name='{}log'.format(_base_name))
+from pathlib import Path
 
 
-def init_logger():
-    """Initialize '{}log' logging object and add a STDOUT handler to output to console, terminal, etc.
-    """.format(_base_name)
-    logger.setLevel(logging.DEBUG)
+class Logger:
+    LEVEL_DEFAULT = logging.INFO
 
-    found_handler = False
-    for each in logger.handlers:
-        if isinstance(each, logging.StreamHandler):
-            found_handler = True
-            break
+    def __init__(self, logger_name, propagate=False):
+        self.name = logger_name
+        self.__logger_obj = None
+        self.propagate = propagate
+        self.file_handler = None
 
-    if not found_handler:
-        # Formatter
-        formatter = logging.Formatter(
-            '[%(asctime)s:%(module)s:%(funcName)s:'
-            '%(lineno)s:%(levelname)s] %(message)s'
-        )
-        # STDOUT stream
-        streamHandler = logging.StreamHandler(sys.stdout)
-        streamHandler.setLevel(logging.DEBUG)
-        streamHandler.setFormatter(formatter)
-        logger.addHandler(streamHandler)
+    @property
+    def logger_obj(self):
+        if not self.__logger_obj:
+            if self.logger_exists(self.name):
+                self.__logger_obj = logging.getLogger(self.name)
+            else:
+                self.__logger_obj = logging.getLogger(self.name)
+                self.__logger_obj.setLevel(self.LEVEL_DEFAULT)
+                self.__logger_obj.propagate = self.propagate
 
+                formatter = logging.Formatter(
+                    "[%(asctime)s:%(module)s:%(funcName)s:"
+                    "%(lineno)s:%(levelname)s] %(message)s"
+                )
 
-def init_file_logger():
-    """Adds file log to '{}log' logging object. Log files will be located at the user OS folder.
+                stream_handler = logging.StreamHandler(sys.stderr)
+                stream_handler.setFormatter(formatter)
+                self.__logger_obj.addHandler(stream_handler)
 
-    Raises:
-        OSError, IOError: Directory for log files couldn't be created.
+        return self.__logger_obj
 
-    Returns:
-        [str]: Log file path
-    """.format(_base_name)
+    @staticmethod
+    def logger_exists(name):
+        return name in logging.Logger.manager.loggerDict.keys()
 
-    found_handler = False
-    for each in logger.handlers:
-        if isinstance(each, logging.FileHandler):
-            found_handler = True
-            break
+    def set_level(self, level):
+        self.logger_obj.setLevel(level)
 
-    if not found_handler:
-        # Formatter
-        formatter = logging.Formatter(
-            '[%(asctime)s:%(module)s:%(funcName)s:'
-            '%(lineno)s:%(levelname)s] %(message)s'
-        )
-        # Log file stream
-        userPath = os.path.expanduser("~")
-        module_dir = os.path.split(__file__)[0]
-        config_location = os.path.join(module_dir, "cfg", "config.json")
-        config = dict()
-        with open(config_location) as fp:
-            config = json.load(fp)
-        finalDir = os.path.join(userPath, "." + config["logger_dir_name"])
+    def debug(self, msg, *args, **kwargs):
+        self.logger_obj.debug(msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        self.logger_obj.info(msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        self.logger_obj.warning(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        self.logger_obj.error(msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        self.logger_obj.critical(msg, *args, **kwargs)
+
+    def log(self, level, msg, *args, **kwargs):
+        self.logger_obj.log(level, msg, *args, **kwargs)
+
+    def exception(self, msg, *args, **kwargs):
+        self.logger_obj.exception(msg, *args, **kwargs)
+
+    def log_to_file(self, level=logging.DEBUG):
+        log_file_path = self.get_log_file_path()
 
         try:
-            if not os.path.exists(finalDir):
-                os.mkdir(finalDir)
+            if not log_file_path.parent.exists():
+                log_file_path.parent.mkdir()
         except (OSError, IOError) as why:
             raise why
 
+        self.file_handler = logging.FileHandler(log_file_path, mode="a")
+        self.file_handler.setLevel(level)
+
+        formatter = logging.Formatter(
+            "[%(asctime)s:%(module)s:%(funcName)s:"
+            "%(lineno)s:%(levelname)s] %(message)s"
+        )
+
+        self.file_handler.setFormatter(formatter)
+        self.logger_obj.addHandler(self.file_handler)
+
+    def stop_logging_to_file(self):
+        if self.file_handler:
+            self.logger_obj.removeHandler(self.file_handler)
+            self.file_handler.close()
+            self.file_handler = None
+
+    def get_log_file_path(self):
+        user_path = Path("~").expanduser()
+        module_dir = Path(__file__).parents[0]
+        config_location = module_dir.joinpath("cfg", "config.json")
+        config = {}
+        with open(config_location) as fp:
+            config = json.load(fp)
+        final_dir = user_path.joinpath(f".{config.get('cfg_dir_name')}")
         today = date.today()
         date_string = today.strftime("%d-%m-%Y")
-        log_file_path = os.path.join(finalDir, '{}_{}.log'.format(_base_name, date_string))
-        fileHandler = logging.FileHandler(log_file_path, mode='a')
-        fileHandler.setLevel(logging.DEBUG)
-        fileHandler.setFormatter(formatter)
-        logger.addHandler(fileHandler)
+        log_file_path = final_dir.joinpath(f"{self.logger_obj.name}_{date_string}.log")
 
         return log_file_path
-    return None
+
+
+def init_logger(base_name, log_to_file=False):
+    """
+    Initialize 'base_name' logging object and add a STDOUT handler to output to
+    console, terminal, etc.
+
+    Args:
+        base_name (str): Base name for the logger. Will be used to create the logger name.
+        log_to_file (bool): If True, the logger will log to a file.
+
+    Returns:
+        tuple: Tuple containing: logger, logger_gui (child of logger and used for GUI messages)
+    """
+    logger = Logger(f"{base_name}log")
+    if log_to_file:
+        logger.log_to_file()
+
+    logger_gui = Logger(f"{base_name}log.gui", propagate=True)
+    logger_gui.set_level(logging.INFO)
+
+    return logger, logger_gui
+
+
+logger, logger_gui = init_logger("vfxnaming")
+
+
+if __name__ == "__main__":
+    pass
