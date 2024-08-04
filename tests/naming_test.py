@@ -464,25 +464,52 @@ class Test_Serialization:
         rules.reset_rules()
         tokens.reset_tokens()
 
-    def test_tokens(self):
-        token1 = tokens.add_token(
-            "function",
-            key="key",
-            fill="fill",
-            ambient="ambient",
-            bounce="bounce",
-            rim="rim",
-            custom="custom",
-            kick="kick",
-            default="custom",
-        )
+    @pytest.mark.parametrize(
+        "name,options",
+        [
+            (
+                "function",
+                {
+                    "key": "key",
+                    "fill": "fill",
+                    "ambient": "ambient",
+                    "bounce": "bounce",
+                    "rim": "rim",
+                    "custom": "custom",
+                    "kick": "kick",
+                    "default": "custom",
+                },
+            ),
+            (
+                "side",
+                {
+                    "left": "left",
+                    "right": "right",
+                    "center": "center",
+                },
+            ),
+        ],
+    )
+    def test_tokens(self, name: str, options: Dict):
+        token1 = tokens.add_token(name, **options)
         token2 = tokens.Token.from_data(token1.data())
         assert token1.data() == token2.data()
 
-    def test_rules(self):
-        rule1 = rules.add_rule(
-            "lights", "{category}_{function}_{whatAffects}_{digits}_{type}"
-        )
+    @pytest.mark.parametrize(
+        "name,pattern",
+        [
+            (
+                "lights",
+                "{category}_{function}_{whatAffects}_{digits}_{type}",
+            ),
+            (
+                "filename",
+                "{side}-{region}_{side}-{region}_{side}-{region}",
+            ),
+        ],
+    )
+    def test_rules(self, name: str, pattern: str):
+        rule1 = rules.add_rule(name, pattern)
         rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
