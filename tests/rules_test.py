@@ -8,11 +8,17 @@ class Test_Rule:
     def setup(self):
         rules.reset_rules()
 
-    def test_add(self):
-        result = rules.add_rule(
-            "lights", "{category}_{function}_{whatAffects}_{digits}_{type}"
-        )
-        assert isinstance(result, rules.Rule) is True
+    @pytest.mark.parametrize(
+        "name,pattern,expected",
+        [
+            ("lights", "{category}_{function}_{whatAffects}_{digits}_{type}", True),
+            ("filename", "{side}-{region}_{side}-{region}_{side}-{region}", True),
+            ("nope", "", False),  # TODO: Working here, this shouldn't be passing
+        ],
+    )
+    def test_add(self, name: str, pattern: str, expected: bool):
+        result = rules.add_rule(name, pattern)
+        assert isinstance(result, rules.Rule) is expected
 
     def test_reset_rules(self):
         result = rules.reset_rules()
