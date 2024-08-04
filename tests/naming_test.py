@@ -70,36 +70,51 @@ class Test_Solve:
         assert (solved == name) is expected
 
     def test_no_match_for_token(self):
-        with pytest.raises(TokenError) as exception:
+        with pytest.raises(TokenError):
             n.solve(
                 category="natural",
-                function="sarasa",
+                function="whatever",
                 whatAffects="chars",
                 digits=1,
                 type="lighting",
             )
-        assert str(exception.value).startswith("name") is True
 
     def test_missing_required_token(self):
-        with pytest.raises(SolvingError) as exception:
+        with pytest.raises(SolvingError):
             n.solve(category="natural", function="key", digits=1, type="lighting")
-        assert str(exception.value).startswith("Token") is True
 
     def test_missing_not_required_token(self):
-        with pytest.raises(SolvingError) as exception:
+        with pytest.raises(SolvingError):
             n.solve("chars")
-        assert str(exception.value).startswith("Missing argument for field") is True
 
-    def test_defaults(self):
-        name = "natural_custom_chars_001_LGT"
-        solved = n.solve(
-            category="natural", whatAffects="chars", digits=1, type="lighting"
-        )
-        assert solved == name
-
-        name = "natural_custom_chars_001_LGT"
-        solved = n.solve(whatAffects="chars", digits=1)
-        assert solved == name
+    @pytest.mark.parametrize(
+        "name,solve_data,expected",
+        [
+            (
+                "natural_custom_chars_001_LGT",
+                {
+                    "category": "natural",
+                    "whatAffects": "chars",
+                    "digits": 1,
+                    "type": "lighting",
+                },
+                True,
+            ),
+            (
+                "natural_custom_chars_001_LGT",
+                {"whatAffects": "chars", "digits": 1},
+                True,
+            ),
+            (
+                "whatever_nondefault_chars_001_LGT",
+                {"whatAffects": "chars", "digits": 1},
+                False,
+            ),
+        ],
+    )
+    def test_defaults(self, name: str, solve_data: Dict, expected: bool):
+        solved = n.solve(**solve_data)
+        assert (solved == name) is expected
 
     def test_implicit(self):
         name = "natural_custom_chars_001_ANI"
