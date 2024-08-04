@@ -220,16 +220,34 @@ class Test_RuleWithRepetitions:
         )
         rules.add_rule("filename", "{side}-{region}_{side}-{region}_{side}-{region}")
 
-    def test_parse_repeated_tokens(self):
-        name = "C-FRONT_L-ORBI_R-ZYGO"
-        expected = {
-            "side1": "center",
-            "region1": "frontal",
-            "side2": "left",
-            "region2": "orbital",
-            "side3": "right",
-            "region3": "zygomatic",
-        }
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            (
+                "C-FRONT_L-ORBI_R-ZYGO",
+                {
+                    "side1": "center",
+                    "region1": "frontal",
+                    "side2": "left",
+                    "region2": "orbital",
+                    "side3": "right",
+                    "region3": "zygomatic",
+                },
+            ),
+            (
+                "R-MENT_C-PAROT_L-RETMAND",
+                {
+                    "side1": "right",
+                    "region1": "mental",
+                    "side2": "center",
+                    "region2": "parotidmasseter",
+                    "side3": "left",
+                    "region3": "retromandibularfossa",
+                },
+            ),
+        ],
+    )
+    def test_parse_repeated_tokens(self, name: str, expected: Dict):
         result = n.parse(name)
         assert result == expected
 
