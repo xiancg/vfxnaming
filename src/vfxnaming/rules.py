@@ -4,7 +4,7 @@ import sys
 import functools
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, AnyStr, Union
+from typing import Dict, AnyStr, Union, Tuple
 
 from vfxnaming.serialize import Serializable
 from vfxnaming.tokens import get_token
@@ -40,10 +40,10 @@ class Rule(Serializable):
 
     def __init__(self, name, pattern, anchor=ANCHOR_START):
         super(Rule, self).__init__()
-        self._name = name
-        self._pattern = pattern
-        self._anchor = anchor
-        self._regex = self.__build_regex()
+        self._name: str = name
+        self._pattern: str = pattern
+        self._anchor: int = anchor
+        self._regex: re.Pattern = self.__build_regex()
 
     def data(self) -> Dict:
         """Collect all data for this object instance.
@@ -243,11 +243,11 @@ class Rule(Serializable):
         return digits_pattern
 
     @property
-    def pattern(self):
+    def pattern(self) -> AnyStr:
         return self._pattern
 
     @property
-    def fields(self):
+    def fields(self) -> Tuple:
         """
         Returns:
             [tuple]: Tuple of all Tokens found in this Rule's pattern
@@ -255,7 +255,7 @@ class Rule(Serializable):
         return tuple(self.__FIELDS_REGEX.findall(self._pattern))
 
     @property
-    def regex(self):
+    def regex(self) -> re.Pattern:
         """
         Returns:
             [str]: Regular expression used to parse from this Rule
@@ -263,15 +263,15 @@ class Rule(Serializable):
         return self._regex
 
     @property
-    def name(self):
+    def name(self) -> AnyStr:
         return self._name
 
     @name.setter
-    def name(self, n):
+    def name(self, n: str):
         self._name = n
 
 
-def add_rule(name, pattern, anchor=Rule.ANCHOR_START):
+def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Rule:
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
 
@@ -298,7 +298,7 @@ def add_rule(name, pattern, anchor=Rule.ANCHOR_START):
     return rule
 
 
-def remove_rule(name):
+def remove_rule(name: AnyStr) -> bool:
     """Remove Rule from current session.
 
     Args:
@@ -313,7 +313,7 @@ def remove_rule(name):
     return False
 
 
-def has_rule(name):
+def has_rule(name: AnyStr) -> bool:
     """Test if current session has a rule with given name.
 
     Args:
@@ -325,7 +325,7 @@ def has_rule(name):
     return name in _rules.keys()
 
 
-def reset_rules():
+def reset_rules() -> bool:
     """Clears all rules created for current session.
 
     Returns:
@@ -336,7 +336,7 @@ def reset_rules():
     return True
 
 
-def get_active_rule():
+def get_active_rule() -> Rule:
     """Get currently active rule for the session. This is the rule
     that will be used to parse and solve from.
 
@@ -347,7 +347,7 @@ def get_active_rule():
     return _rules.get(name)
 
 
-def set_active_rule(name):
+def set_active_rule(name: AnyStr) -> bool:
     """Sets given rule as active for the session. This it the rule that's
     being used to parse and solve from.
 
@@ -363,7 +363,7 @@ def set_active_rule(name):
     return False
 
 
-def get_rule(name):
+def get_rule(name: AnyStr) -> Rule:
     """Gets Rule object with given name.
 
     Args:
@@ -375,7 +375,7 @@ def get_rule(name):
     return _rules.get(name)
 
 
-def get_rules():
+def get_rules() -> Dict:
     """Get all Rule objects for current session.
 
     Returns:
@@ -384,7 +384,7 @@ def get_rules():
     return _rules
 
 
-def save_rule(name, directory: Path):
+def save_rule(name: AnyStr, directory: Path) -> bool:
     """Saves given rule serialized to specified location.
 
     Args:
@@ -405,7 +405,7 @@ def save_rule(name, directory: Path):
     return True
 
 
-def load_rule(filepath: Path):
+def load_rule(filepath: Path) -> bool:
     """Load rule from given location and create Rule object in memory to work with it.
 
     Args:

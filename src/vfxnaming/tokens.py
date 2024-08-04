@@ -1,6 +1,7 @@
 import copy
 import json
 from pathlib import Path
+from typing import AnyStr, Dict, Union
 
 from vfxnaming.serialize import Serializable
 from vfxnaming.logger import logger
@@ -11,7 +12,7 @@ _tokens = dict()
 
 
 class Token(Serializable):
-    def __init__(self, name):
+    def __init__(self, name: AnyStr):
         """Tokens are the meaningful parts of a naming rule. A token can be required,
         meaning fully typed by the user, or can have a set of default options preconfigured.
         If options are present, then one of them is the default one.
@@ -23,11 +24,11 @@ class Token(Serializable):
             to invoke the Token object.
         """
         super(Token, self).__init__()
-        self._name = name
+        self._name: AnyStr = name
         self._default = None
-        self._options = dict()
+        self._options: Dict = {}
 
-    def add_option(self, key, value):
+    def add_option(self, key: AnyStr, value: AnyStr) -> bool:
         """Add an option pair to this Token.
 
         Args:
@@ -46,7 +47,7 @@ class Token(Serializable):
         )
         return False
 
-    def update_option(self, key, value):
+    def update_option(self, key: AnyStr, value: AnyStr) -> bool:
         """Update an option pair on this Token.
 
         Args:
@@ -65,7 +66,7 @@ class Token(Serializable):
         )
         return False
 
-    def remove_option(self, key):
+    def remove_option(self, key: AnyStr) -> bool:
         """Remove an option on this Token.
 
         Args:
@@ -82,7 +83,7 @@ class Token(Serializable):
         )
         return False
 
-    def has_option_fullname(self, key):
+    def has_option_fullname(self, key: AnyStr) -> bool:
         """Looks for given option full name in the options.
 
         Args:
@@ -95,7 +96,7 @@ class Token(Serializable):
             return True
         return False
 
-    def has_option_abbreviation(self, value):
+    def has_option_abbreviation(self, value: AnyStr) -> bool:
         """Looks for given option abbreviation in the options.
 
         Args:
@@ -108,7 +109,7 @@ class Token(Serializable):
             return True
         return False
 
-    def solve(self, name=None):
+    def solve(self, name: Union[AnyStr, None] = None) -> AnyStr:
         """Solve for abbreviation given a certain name. e.g.: center could return C
 
         Args:
@@ -141,7 +142,7 @@ class Token(Serializable):
         elif not self.required and not name:
             return self._options.get(self.default)
 
-    def parse(self, value):
+    def parse(self, value: AnyStr) -> AnyStr:
         """Get metatada (origin) for given value in name. e.g.: L could return left
 
         Args:
@@ -162,20 +163,20 @@ class Token(Serializable):
         )
 
     @property
-    def required(self):
+    def required(self) -> bool:
         return self.default is None
 
     @property
-    def name(self):
+    def name(self) -> AnyStr:
         return self._name
 
     @name.setter
-    def name(self, n):
+    def name(self, n: AnyStr):
         self._name = n
 
     @property
-    def default(self):
-        """If Token has options, one of them will be default. Eitther passed by the user,
+    def default(self) -> AnyStr:
+        """If Token has options, one of them will be default. Either passed by the user,
         or simply the first found item in options.
 
         Returns:
@@ -186,16 +187,16 @@ class Token(Serializable):
         return self._default
 
     @default.setter
-    def default(self, d):
+    def default(self, d: AnyStr):
         self._default = d
 
     @property
-    def options(self):
+    def options(self) -> Dict:
         return copy.deepcopy(self._options)
 
 
 class TokenNumber(Serializable):
-    def __init__(self, name):
+    def __init__(self, name: AnyStr):
         """Token for numbers with the ability to handle pure digits and version like strings
         (e.g.: v0025) with padding settings.
 
@@ -206,11 +207,11 @@ class TokenNumber(Serializable):
             to invoke the Token object.
         """
         super(TokenNumber, self).__init__()
-        self._name = name
-        self._default = 1
-        self._options = {"prefix": "", "suffix": "", "padding": 3}
+        self._name: AnyStr = name
+        self._default: int = 1
+        self._options: Dict = {"prefix": "", "suffix": "", "padding": 3}
 
-    def solve(self, number):
+    def solve(self, number: int) -> AnyStr:
         """Solve for number with prefix, suffix and padding parameter found in the instance
             options. e.g.: 1 with padding 3, will return 001
 
@@ -223,7 +224,7 @@ class TokenNumber(Serializable):
         number_str = str(number).zfill(self.padding)
         return f"{self.prefix}{number_str}{self.suffix}"
 
-    def parse(self, value):
+    def parse(self, value: AnyStr) -> int:
         """Get metatada (number) for given value in name. e.g.: v0025 will return 25
 
         Args:
@@ -261,59 +262,59 @@ class TokenNumber(Serializable):
                 return int(value[prefix_index:-suffix_index])
 
     @property
-    def name(self):
+    def name(self) -> AnyStr:
         return self._name
 
     @name.setter
-    def name(self, n):
+    def name(self, n: AnyStr):
         self._name = n
 
     @property
-    def default(self):
+    def default(self) -> AnyStr:
         return self._default
 
     @property
-    def required(self):
+    def required(self) -> bool:
         return True
 
     @property
-    def padding(self):
+    def padding(self) -> int:
         return self._options.get("padding")
 
     @padding.setter
-    def padding(self, p):
+    def padding(self, p: int):
         if p <= 0:
             p = 1
         self._options["padding"] = int(p)
 
     @property
-    def prefix(self):
+    def prefix(self) -> AnyStr:
         return self._options.get("prefix")
 
     @prefix.setter
-    def prefix(self, this_prefix):
+    def prefix(self, this_prefix: AnyStr):
         if isinstance(this_prefix, str) and not this_prefix.isdigit():
             self._options["prefix"] = this_prefix
         else:
             logger.warning(f"Given prefix has to be a string: {this_prefix}")
 
     @property
-    def suffix(self):
+    def suffix(self) -> AnyStr:
         return self._options.get("suffix")
 
     @suffix.setter
-    def suffix(self, this_suffix):
+    def suffix(self, this_suffix: AnyStr):
         if isinstance(this_suffix, str) and not this_suffix.isdigit():
             self._options["suffix"] = this_suffix
         else:
             logger.warning(f"Given suffix has to be a string: {this_suffix}")
 
     @property
-    def options(self):
+    def options(self) -> Dict:
         return copy.deepcopy(self._options)
 
 
-def add_token(name, **kwargs):
+def add_token(name: AnyStr, **kwargs) -> Token:
     """Add token to current naming session. If 'default' keyword argument is found,
     set it as default for the token instance.
 
@@ -351,7 +352,9 @@ def add_token(name, **kwargs):
     return token
 
 
-def add_token_number(name, prefix=str(), suffix=str(), padding=3):
+def add_token_number(
+    name, prefix: AnyStr = "", suffix: AnyStr = "", padding: int = 3
+) -> TokenNumber:
     """Add token number to current naming session.
 
     Args:
@@ -377,7 +380,7 @@ def add_token_number(name, prefix=str(), suffix=str(), padding=3):
     return token
 
 
-def remove_token(name):
+def remove_token(name: AnyStr) -> bool:
     """Remove Token or TokenNumber from current session.
 
     Args:
@@ -392,7 +395,7 @@ def remove_token(name):
     return False
 
 
-def has_token(name):
+def has_token(name: AnyStr) -> bool:
     """Test if current session has a token with given name.
 
     Args:
@@ -404,7 +407,7 @@ def has_token(name):
     return name in _tokens.keys()
 
 
-def reset_tokens():
+def reset_tokens() -> bool:
     """Clears all rules created for current session.
 
     Returns:
@@ -414,7 +417,7 @@ def reset_tokens():
     return True
 
 
-def get_token(name):
+def get_token(name: AnyStr) -> Union[Token, TokenNumber, None]:
     """Gets Token or TokenNumber object with given name.
 
     Args:
@@ -426,7 +429,7 @@ def get_token(name):
     return _tokens.get(name)
 
 
-def get_tokens():
+def get_tokens() -> Dict:
     """Get all Token and TokenNumber objects for current session.
 
     Returns:
@@ -435,7 +438,7 @@ def get_tokens():
     return _tokens
 
 
-def save_token(name, directory: Path):
+def save_token(name: AnyStr, directory: Path) -> bool:
     """Saves given token serialized to specified location.
 
     Args:
@@ -455,7 +458,7 @@ def save_token(name, directory: Path):
     return True
 
 
-def load_token(filepath: Path):
+def load_token(filepath: Path) -> bool:
     """Load token from given location and create Token or TokenNumber object in
     memory to work with it.
 
