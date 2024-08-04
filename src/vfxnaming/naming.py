@@ -16,12 +16,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from __future__ import absolute_import, print_function
-
 import os
 import json
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
+from pathlib import Path
+
 from vfxnaming.logger import logger
 from vfxnaming.error import SolvingError
 
@@ -134,19 +134,19 @@ def get_repo():
     Environment varialble name: NAMING_REPO
 
     Returns:
-        str: Naming repository location
+        Path: Naming repository location
     """
     env_repo = os.environ.get(NAMING_REPO_ENV)
-    userPath = os.path.expanduser("~")
-    module_dir = os.path.split(__file__)[0]
-    config_location = os.path.join(module_dir, "cfg", "config.json")
+    user_path = Path.expanduser("~")
+    module_dir = Path(__file__).parent
+    config_location = module_dir / "cfg/config.json"
     config = dict()
     with open(config_location) as fp:
         config = json.load(fp)
-    local_repo = os.path.join(userPath, "." + config["local_repo_name"], "naming_repo")
+    local_repo = user_path / f".{config['local_repo_name']}/naming_repo"
     result = env_repo or local_repo
     logger.debug(f"Repo found: {result}")
-    return result
+    return Path(result)
 
 
 def save_session(repo=None):
@@ -161,10 +161,10 @@ def save_session(repo=None):
     Returns:
         bool: True if saving session operation was successful.
     """
-    repo = repo or get_repo()
-    if not os.path.exists(repo):
+    repo: Path = repo or get_repo()
+    if not repo.exists():
         try:
-            os.mkdir(repo)
+            repo.mkdir(parents=True)
         except (IOError, OSError) as why:
             raise why
     # save tokens
@@ -180,7 +180,7 @@ def save_session(repo=None):
     # extra configuration
     active = rules.get_active_rule()
     config = {"set_active_rule": active.name if active else None}
-    filepath = os.path.join(repo, "naming.conf")
+    filepath = repo / "naming.conf"
     logger.debug(f"Saving active rule: {active.name} in {filepath}")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
@@ -197,12 +197,12 @@ def load_session(repo=None):
     Returns:
         bool: True if loading session operation was successful.
     """
-    repo = repo or get_repo()
-    if not os.path.exists(repo):
+    repo: Path = repo or get_repo()
+    if not repo.exists():
         logger.warning(f"Given repo directory does not exist: {repo}")
         return False
-    namingconf = os.path.join(repo, "naming.conf")
-    if not os.path.exists(namingconf):
+    namingconf = repo / "naming.conf"
+    if not namingconf.exists():
         logger.warning(f"Repo is not valid. naming.conf not found {namingconf}")
         return False
     rules.reset_rules()
@@ -210,7 +210,7 @@ def load_session(repo=None):
     # tokens and rules
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
-            filepath = os.path.join(dirpath, filename)
+            filepath = Path(dirpath) / filename
             if filename.endswith(".token"):
                 logger.debug(f"Loading token: {filepath}")
                 tokens.load_token(filepath)
@@ -218,7 +218,7 @@ def load_session(repo=None):
                 logger.debug(f"Loading rule: {filepath}")
                 rules.load_rule(filepath)
     # extra configuration
-    if os.path.exists(namingconf):
+    if namingconf.exists():
         logger.debug(f"Loading active rule: {namingconf}")
         with open(namingconf) as fp:
             config = json.load(fp)

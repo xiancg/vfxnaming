@@ -1,6 +1,7 @@
 import copy
 import json
-import os
+from pathlib import Path
+
 from vfxnaming.serialize import Serializable
 from vfxnaming.logger import logger
 from vfxnaming.error import TokenError
@@ -434,7 +435,7 @@ def get_tokens():
     return _tokens
 
 
-def save_token(name, directory):
+def save_token(name, directory: Path):
     """Saves given token serialized to specified location.
 
     Args:
@@ -448,13 +449,13 @@ def save_token(name, directory):
     if not token:
         return False
     file_name = f"{name}.token"
-    filepath = os.path.join(directory, file_name)
+    filepath = directory / file_name
     with open(filepath, "w") as fp:
         json.dump(token.data(), fp)
     return True
 
 
-def load_token(filepath):
+def load_token(filepath: Path):
     """Load token from given location and create Token or TokenNumber object in
     memory to work with it.
 
@@ -464,7 +465,7 @@ def load_token(filepath):
     Returns:
         bool: True if successful, False if .token wasn't found.
     """
-    if not os.path.isfile(filepath):
+    if not filepath.is_file():
         return False
     try:
         with open(filepath) as fp:
@@ -473,6 +474,11 @@ def load_token(filepath):
         return False
     class_name = data.get("_Serializable_classname")
     logger.debug(f"Loading token type: {class_name}")
-    token = Token.from_data(data)
-    _tokens[token.name] = token
-    return True
+    token_class = globals().get(class_name)
+    if token_class is None:
+        return False
+    token = getattr(token_class, "from_data")(data)
+    if token:
+        _tokens[token.name] = token
+        return True
+    return False

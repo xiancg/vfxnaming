@@ -1,9 +1,10 @@
 import re
 import json
-import os
 import sys
 import functools
+from pathlib import Path
 from collections import defaultdict
+
 from vfxnaming.serialize import Serializable
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
@@ -386,7 +387,7 @@ def get_rules():
     return _rules
 
 
-def save_rule(name, directory):
+def save_rule(name, directory: Path):
     """Saves given rule serialized to specified location.
 
     Args:
@@ -401,13 +402,13 @@ def save_rule(name, directory):
     if not rule:
         return False
     file_name = f"{name}.rule"
-    filepath = os.path.join(directory, file_name)
+    filepath = directory / file_name
     with open(filepath, "w") as fp:
         json.dump(rule.data(), fp)
     return True
 
 
-def load_rule(filepath):
+def load_rule(filepath: Path):
     """Load rule from given location and create Rule object in memory to work with it.
 
     Args:
@@ -416,7 +417,7 @@ def load_rule(filepath):
     Returns:
         bool: True if successful, False if .rule wasn't found.
     """
-    if not os.path.isfile(filepath):
+    if not filepath.is_file():
         return False
     try:
         with open(filepath) as fp:

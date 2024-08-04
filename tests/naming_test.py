@@ -1,11 +1,11 @@
+from pathlib import Path
+import pytest
+import tempfile
+
 from vfxnaming import naming as n
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from vfxnaming.error import ParsingError, SolvingError, TokenError
-
-import os
-import pytest
-import tempfile
 
 
 class Test_Solve:
@@ -328,12 +328,12 @@ class Test_Serialization:
 
     def test_save_load_rule(self):
         rules.add_rule("test", "{category}_{function}_{whatAffects}_{digits}_{type}")
-        tempdir = tempfile.mkdtemp()
+        tempdir = Path(tempfile.mkdtemp())
         rules.save_rule("test", tempdir)
 
         rules.reset_rules()
         file_name = "test.rule"
-        filepath = os.path.join(tempdir, file_name)
+        filepath = tempdir / file_name
         rules.load_rule(filepath)
         assert rules.has_rule("test") is True
 
@@ -349,23 +349,23 @@ class Test_Serialization:
             kick="kick",
             default="custom",
         )
-        tempdir = tempfile.mkdtemp()
+        tempdir = Path(tempfile.mkdtemp())
         tokens.save_token("test", tempdir)
 
         tokens.reset_tokens()
         file_name = "test.token"
-        filepath = os.path.join(tempdir, file_name)
+        filepath = tempdir / file_name
         tokens.load_token(filepath)
         assert tokens.has_token("test") is True
 
     def test_save_load_token_number(self):
         tokens.add_token_number("test")
-        tempdir = tempfile.mkdtemp()
+        tempdir = Path(tempfile.mkdtemp())
         tokens.save_token("test", tempdir)
 
         tokens.reset_tokens()
         file_name = "test.token"
-        filepath = os.path.join(tempdir, file_name)
+        filepath = tempdir / file_name
         tokens.load_token(filepath)
         assert tokens.has_token("test") is True
 
@@ -396,7 +396,7 @@ class Test_Serialization:
         rules.add_rule("test", "{category}_{function}")
         rules.set_active_rule("lights")
 
-        repo = tempfile.mkdtemp()
+        repo = Path(tempfile.mkdtemp())
         save_result = n.save_session(repo)
         assert save_result is True
 
