@@ -27,7 +27,6 @@ class Test_Rule:
         assert result is False
 
     def test_active(self):
-        # pattern = '{category}_{function}_{digits}_{type}'
         rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
         rules.add_rule("test", "{category}_{function}_{digits}_{type}")
         rules.set_active_rule("test")
