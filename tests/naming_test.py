@@ -1,6 +1,7 @@
 from pathlib import Path
 import pytest
 import tempfile
+from typing import Dict
 
 from vfxnaming import naming as n
 import vfxnaming.rules as rules
@@ -37,16 +38,36 @@ class Test_Solve:
         rules.reset_rules()
         rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
 
-    def test_explicit(self):
-        name = "natural_ambient_chars_001_LGT"
-        solved = n.solve(
-            category="natural",
-            function="ambient",
-            whatAffects="chars",
-            digits=1,
-            type="lighting",
-        )
-        assert solved == name
+    @pytest.mark.parametrize(
+        "name,solve_data,expected",
+        [
+            (
+                "natural_ambient_chars_001_LGT",
+                {
+                    "category": "natural",
+                    "function": "ambient",
+                    "whatAffects": "chars",
+                    "digits": 1,
+                    "type": "lighting",
+                },
+                True,
+            ),
+            (
+                "natural_key_env_010_LGT",
+                {
+                    "category": "natural",
+                    "function": "ambient",
+                    "whatAffects": "chars",
+                    "digits": 1,
+                    "type": "lighting",
+                },
+                False,
+            ),
+        ],
+    )
+    def test_explicit(self, name: str, solve_data: Dict, expected: bool):
+        solved = n.solve(**solve_data)
+        assert (solved == name) is expected
 
     def test_no_match_for_token(self):
         with pytest.raises(TokenError) as exception:
