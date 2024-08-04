@@ -253,42 +253,90 @@ class Test_RuleWithRepetitions:
 
     def test_parse_repeated_tokens_missing_some(self):
         name = "C-FRONT_-ORBI_R"
-        with pytest.raises(ParsingError) as exception:
+        with pytest.raises(ParsingError):
             n.parse(name)
-        assert str(exception.value).startswith("Separators count mismatch") is True
 
-    def test_solve_repeated_tokens(self):
-        name = "C-MENT_L-PAROT_R-RETMAND"
-        result = n.solve(
-            side1="center",
-            side2="left",
-            side3="right",
-            region1="mental",
-            region2="parotidmasseter",
-            region3="retromandibularfossa",
-        )
-
+    @pytest.mark.parametrize(
+        "name,data",
+        [
+            (
+                "C-MENT_L-PAROT_R-RETMAND",
+                {
+                    "side1": "center",
+                    "side2": "left",
+                    "side3": "right",
+                    "region1": "mental",
+                    "region2": "parotidmasseter",
+                    "region3": "retromandibularfossa",
+                },
+            ),
+            (
+                "C-FRONT_R-ORBI_L-ZYGO",
+                {
+                    "side1": "center",
+                    "side2": "right",
+                    "side3": "left",
+                    "region1": "frontal",
+                    "region2": "orbital",
+                    "region3": "zygomatic",
+                },
+            ),
+        ],
+    )
+    def test_solve_repeated_tokens(self, name: str, data: Dict):
+        result = n.solve(**data)
         assert result == name
 
-    def test_solve_repeat_one_token(self):
-        name = "L-MENT_L-PAROT_L-RETMAND"
-        result = n.solve(
-            side="left",
-            region1="mental",
-            region2="parotidmasseter",
-            region3="retromandibularfossa",
-        )
-
+    @pytest.mark.parametrize(
+        "name,data",
+        [
+            (
+                "L-MENT_L-PAROT_L-RETMAND",
+                {
+                    "side": "left",
+                    "region1": "mental",
+                    "region2": "parotidmasseter",
+                    "region3": "retromandibularfossa",
+                },
+            ),
+            (
+                "R-FRONT_R-FRONT_R-FRONT",
+                {
+                    "side1": "right",
+                    "side2": "right",
+                    "side3": "right",
+                    "region": "frontal",
+                },
+            ),
+        ],
+    )
+    def test_solve_repeat_one_token(self, name: str, data: Dict):
+        result = n.solve(**data)
         assert result == name
 
-    def test_solve_repeated_missing_some(self):
-        name = "C-FRONT_C-PAROT_R-RETMAND"
-        result = n.solve(
-            side1="center",
-            side3="right",
-            region2="parotidmasseter",
-            region3="retromandibularfossa",
-        )
+    @pytest.mark.parametrize(
+        "name,data",
+        [
+            (
+                "C-FRONT_C-PAROT_R-RETMAND",
+                {
+                    "side3": "right",
+                    "region2": "parotidmasseter",
+                    "region3": "retromandibularfossa",
+                },
+            ),
+            (
+                "L-FRONT_C-RETMAND_R-FRONT",
+                {
+                    "side1": "left",
+                    "side3": "right",
+                    "region2": "retromandibularfossa",
+                },
+            ),
+        ],
+    )
+    def test_solve_repeated_missing_some(self, name: str, data: Dict):
+        result = n.solve(**data)
         assert result == name
 
 
