@@ -93,9 +93,7 @@ class Rule(Serializable):
             result = self.__digits_pattern().format(**values)
         except KeyError as why:
             raise SolvingError(
-                "Arguments passed do not match with naming rule fields {}\n{}".format(
-                    self._pattern, why
-                )
+                f"Arguments passed do not match with naming rule fields {self._pattern}\n{why}"
             )
 
         return result
@@ -117,9 +115,7 @@ class Rule(Serializable):
         expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
         if len(expected_separators) <= 0:
             logger.warning(
-                "No separators used for rule '{}', parsing is not possible.".format(
-                    self.name
-                )
+                f"No separators used for rule '{self.name}', parsing is not possible."
             )
             return None
         name_separators = self.__SEPARATORS_REGEX.findall(name)
@@ -128,22 +124,17 @@ class Rule(Serializable):
             match = self._regex.search(name)
             if match:
                 name_parts = sorted(match.groupdict().items())
-                logger.debug(
-                    "Name parts: {}".format(
-                        ", ".join(
-                            ["('{}': '{}')".format(k[:-3], v) for k, v in name_parts]
-                        )
-                    )
+                name_parts_str = ", ".join(
+                    [f"('{k[:-3]}': '{v}')" for k, v in name_parts]
                 )
+                logger.debug(f"Name parts: {name_parts_str}")
                 repeated_fields = dict()
                 for each in self.fields:
                     if each not in repeated_fields.keys():
                         if self.fields.count(each) > 1:
                             repeated_fields[each] = 1
                 if repeated_fields:
-                    logger.debug(
-                        "Repeated tokens: {}".format(", ".join(repeated_fields.keys()))
-                    )
+                    logger.debug(f"Repeated tokens: {', '.join(repeated_fields.keys())}")
 
                 for key, value in name_parts:
                     # Strip number that was added to make group name unique
@@ -154,14 +145,13 @@ class Rule(Serializable):
                     if token_name in repeated_fields.keys():
                         counter = repeated_fields.get(token_name)
                         repeated_fields[token_name] = counter + 1
-                        token_name = "{}{}".format(token_name, counter)
+                        token_name = f"{token_name}{counter}"
                     retval[token_name] = token.parse(value)
             return retval
         else:
             raise ParsingError(
-                "Separators count mismatch between given name '{}':'{}' and rule's pattern '{}':'{}'.".format(
-                    name, len(name_separators), self._pattern, len(expected_separators)
-                )
+                f"Separators count mismatch between given name '{name}':'{len(name_separators)}' "
+                f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
 
     def __build_regex(self):
@@ -181,10 +171,10 @@ class Rule(Serializable):
 
         if self._anchor is not None:
             if bool(self._anchor & self.ANCHOR_START):
-                expression = "^{0}".format(expression)
+                expression = f"^{expression}"
 
             if bool(self._anchor & self.ANCHOR_END):
-                expression = "{0}$".format(expression)
+                expression = f"{expression}$"
         # Compile expression
         try:
             compiled = re.compile(expression)
@@ -198,7 +188,7 @@ class Rule(Serializable):
                 raise ValueError("Placeholder name contains invalid characters.")
             else:
                 _, value, traceback = sys.exc_info()
-                message = "Invalid pattern: {0}".format(value)
+                message = f"Invalid pattern: {value}"
                 if sys.version_info[0] == 3:
                     raise ValueError(message).with_traceback(traceback)
                 elif sys.version_info[0] == 2:
@@ -250,11 +240,7 @@ class Rule(Serializable):
             if repetetions > 1:
                 i = 0
                 for match in sorted(indexes, reverse=True):
-                    digits_pattern = "{}{}{}".format(
-                        digits_pattern[:match],
-                        str(repetetions - i),
-                        digits_pattern[match:],
-                    )
+                    digits_pattern = f"{digits_pattern[:match]}{str(repetetions - i)}{digits_pattern[match:]}"
                     i += 1
         return digits_pattern
 
@@ -310,7 +296,7 @@ def add_rule(name, pattern, anchor=Rule.ANCHOR_START):
     _rules[name] = rule
     if get_active_rule() is None:
         set_active_rule(name)
-        logger.debug("No active rule found, setting this one as active: {}".format(name))
+        logger.debug(f"No active rule found, setting this one as active: {name}")
     return rule
 
 
@@ -414,7 +400,7 @@ def save_rule(name, directory):
     rule = get_rule(name)
     if not rule:
         return False
-    file_name = "{}.rule".format(name)
+    file_name = f"{name}.rule"
     filepath = os.path.join(directory, file_name)
     with open(filepath, "w") as fp:
         json.dump(rule.data(), fp)

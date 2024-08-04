@@ -88,7 +88,7 @@ def solve(*args, **kwargs):
         if each in repeated_fields.keys():
             counter = repeated_fields.get(each)
             repeated_fields[each] = counter + 1
-            fields_with_digits.append("{}{}".format(each, counter))
+            fields_with_digits.append(f"{each}{counter}")
         else:
             fields_with_digits.append(each)
     values = dict()
@@ -122,8 +122,8 @@ def solve(*args, **kwargs):
                 fields_inc += 1
                 continue
             except IndexError as why:
-                raise SolvingError("Missing argument for field '{}'\n{}".format(f, why))
-    logger.debug("Solving rule '{}' with values {}".format(rule.name, values))
+                raise SolvingError(f"Missing argument for field '{f}'\n{why}")
+    logger.debug(f"Solving rule '{rule.name}' with values {values}")
     return rule.solve(**values)
 
 
@@ -145,7 +145,7 @@ def get_repo():
         config = json.load(fp)
     local_repo = os.path.join(userPath, "." + config["local_repo_name"], "naming_repo")
     result = env_repo or local_repo
-    logger.debug("Repo found: {}".format(result))
+    logger.debug(f"Repo found: {result}")
     return result
 
 
@@ -169,19 +169,19 @@ def save_session(repo=None):
             raise why
     # save tokens
     for name, token in tokens.get_tokens().items():
-        logger.debug("Saving token: '{}' in {}".format(name, repo))
+        logger.debug(f"Saving token: '{name}' in {repo}")
         tokens.save_token(name, repo)
     # save rules
     for name, rule in rules.get_rules().items():
         if not isinstance(rule, rules.Rule):
             continue
-        logger.debug("Saving rule: '{}' in {}".format(name, repo))
+        logger.debug(f"Saving rule: '{name}' in {repo}")
         rules.save_rule(name, repo)
     # extra configuration
     active = rules.get_active_rule()
     config = {"set_active_rule": active.name if active else None}
     filepath = os.path.join(repo, "naming.conf")
-    logger.debug("Saving active rule: {} in {}".format(active.name, filepath))
+    logger.debug(f"Saving active rule: {active.name} in {filepath}")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
     return True
@@ -199,11 +199,11 @@ def load_session(repo=None):
     """
     repo = repo or get_repo()
     if not os.path.exists(repo):
-        logger.warning("Given repo directory does not exist: {}".format(repo))
+        logger.warning(f"Given repo directory does not exist: {repo}")
         return False
     namingconf = os.path.join(repo, "naming.conf")
     if not os.path.exists(namingconf):
-        logger.warning("Repo is not valid. naming.conf not found {}".format(namingconf))
+        logger.warning(f"Repo is not valid. naming.conf not found {namingconf}")
         return False
     rules.reset_rules()
     tokens.reset_tokens()
@@ -212,14 +212,14 @@ def load_session(repo=None):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
             if filename.endswith(".token"):
-                logger.debug("Loading token: {}".format(filepath))
+                logger.debug(f"Loading token: {filepath}")
                 tokens.load_token(filepath)
             elif filename.endswith(".rule"):
-                logger.debug("Loading rule: {}".format(filepath))
+                logger.debug(f"Loading rule: {filepath}")
                 rules.load_rule(filepath)
     # extra configuration
     if os.path.exists(namingconf):
-        logger.debug("Loading active rule: {}".format(namingconf))
+        logger.debug(f"Loading active rule: {namingconf}")
         with open(namingconf) as fp:
             config = json.load(fp)
         rules.set_active_rule(config.get("set_active_rule"))

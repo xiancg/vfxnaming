@@ -40,8 +40,8 @@ class Token(Serializable):
             self._options[key] = value
             return True
         logger.debug(
-            "Option '{}':'{}' already exists in Token '{}'. "
-            "Use update_option() instead.".format(key, self._options.get(key), self.name)
+            f"Option '{key}':'{self._options.get(key)}' already exists in Token '{self.name}'. "
+            "Use update_option() instead."
         )
         return False
 
@@ -59,8 +59,8 @@ class Token(Serializable):
             self._options[key] = value
             return True
         logger.debug(
-            "Option '{}':'{}' doesn't exist in Token '{}'. "
-            "Use add_option() instead.".format(key, self._options.get(key), self.name)
+            f"Option '{key}':'{self._options.get(key)}' doesn't exist in Token '{self.name}'. "
+            "Use add_option() instead."
         )
         return False
 
@@ -77,9 +77,7 @@ class Token(Serializable):
             del self._options[key]
             return True
         logger.debug(
-            "Option '{}':'{}' doesn't exist in Token '{}'. ".format(
-                key, self._options.get(key), self.name
-            )
+            f"Option '{key}':'{self._options.get(key)}' doesn't exist in Token '{self.name}'"
         )
         return False
 
@@ -130,14 +128,13 @@ class Token(Serializable):
             return name
         elif self.required and name is None:
             raise TokenError(
-                "Token {} is required. name parameter must be passed.".format(self.name)
+                f"Token {self.name} is required. name parameter must be passed."
             )
         elif not self.required and name:
             if name not in self._options.keys():
                 raise TokenError(
-                    "name '{}' not found in Token '{}'. Options: {}".format(
-                        name, self.name, ", ".join(self._options.keys())
-                    )
+                    f"name '{name}' not found in Token '{self.name}'. "
+                    f"Options: {', '.join(self._options.keys())}"
                 )
             return self._options.get(name)
         elif not self.required and not name:
@@ -159,9 +156,8 @@ class Token(Serializable):
                 if v == value:
                     return k
         raise TokenError(
-            "Value '{}' not found in Token '{}'. Options: {}".format(
-                value, self.name, ", ".join(self._options.values())
-            )
+            f"Value '{value}' not found in Token '{self.name}'. "
+            f"Options: {', '.join(self._options.values())}"
         )
 
     @property
@@ -223,8 +219,8 @@ class TokenNumber(Serializable):
         Returns:
             str: The solved string to be used in the name
         """
-        numberStr = str(number).zfill(self.padding)
-        return "{}{}{}".format(self.prefix, numberStr, self.suffix)
+        number_str = str(number).zfill(self.padding)
+        return f"{self.prefix}{number_str}{self.suffix}"
 
     def parse(self, value):
         """Get metatada (number) for given value in name. e.g.: v0025 will return 25
@@ -298,7 +294,7 @@ class TokenNumber(Serializable):
         if isinstance(this_prefix, str) and not this_prefix.isdigit():
             self._options["prefix"] = this_prefix
         else:
-            logger.warning("Given prefix has to be a string: {}".format(this_prefix))
+            logger.warning(f"Given prefix has to be a string: {this_prefix}")
 
     @property
     def suffix(self):
@@ -309,7 +305,7 @@ class TokenNumber(Serializable):
         if isinstance(this_suffix, str) and not this_suffix.isdigit():
             self._options["suffix"] = this_suffix
         else:
-            logger.warning("Given suffix has to be a string: {}".format(this_suffix))
+            logger.warning(f"Given suffix has to be a string: {this_suffix}")
 
     @property
     def options(self):
@@ -451,7 +447,7 @@ def save_token(name, directory):
     token = get_token(name)
     if not token:
         return False
-    file_name = "{}.token".format(name)
+    file_name = f"{name}.token"
     filepath = os.path.join(directory, file_name)
     with open(filepath, "w") as fp:
         json.dump(token.data(), fp)
@@ -476,7 +472,7 @@ def load_token(filepath):
     except Exception:
         return False
     class_name = data.get("_Serializable_classname")
-    logger.debug("Loading token type: {}".format(class_name))
-    token = eval("{}.from_data(data)".format(class_name))
+    logger.debug(f"Loading token type: {class_name}")
+    token = Token.from_data(data)
     _tokens[token.name] = token
     return True

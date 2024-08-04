@@ -332,7 +332,7 @@ class Test_Serialization:
         rules.save_rule("test", tempdir)
 
         rules.reset_rules()
-        file_name = "{}.rule".format("test")
+        file_name = "test.rule"
         filepath = os.path.join(tempdir, file_name)
         rules.load_rule(filepath)
         assert rules.has_rule("test") is True
@@ -353,7 +353,7 @@ class Test_Serialization:
         tokens.save_token("test", tempdir)
 
         tokens.reset_tokens()
-        file_name = "{}.token".format("test")
+        file_name = "test.token"
         filepath = os.path.join(tempdir, file_name)
         tokens.load_token(filepath)
         assert tokens.has_token("test") is True
@@ -364,7 +364,7 @@ class Test_Serialization:
         tokens.save_token("test", tempdir)
 
         tokens.reset_tokens()
-        file_name = "{}.token".format("test")
+        file_name = "test.token"
         filepath = os.path.join(tempdir, file_name)
         tokens.load_token(filepath)
         assert tokens.has_token("test") is True
