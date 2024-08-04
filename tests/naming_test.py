@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 import tempfile
-from typing import Dict
+from typing import Dict, List
 
 from vfxnaming import naming as n
 import vfxnaming.rules as rules
@@ -116,13 +116,23 @@ class Test_Solve:
         solved = n.solve(**solve_data)
         assert (solved == name) is expected
 
-    def test_implicit(self):
-        name = "natural_custom_chars_001_ANI"
-        solved = n.solve("chars", 1, type="animation")
-        assert solved == name
-
-        name = "natural_custom_chars_001_LGT"
-        solved = n.solve("chars", 1)
+    @pytest.mark.parametrize(
+        "name,solve_args,solve_kwargs",
+        [
+            (
+                "natural_custom_chars_001_ANI",
+                ["chars", 1],
+                {"type": "animation"},
+            ),
+            (
+                "natural_custom_chars_001_LGT",
+                ["chars", 1],
+                {},
+            ),
+        ],
+    )
+    def test_implicit(self, name: str, solve_args: List, solve_kwargs: Dict):
+        solved = n.solve(*solve_args, **solve_kwargs)
         assert solved == name
 
 
