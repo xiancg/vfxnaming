@@ -3,6 +3,7 @@ import sys
 import json
 from datetime import date
 from pathlib import Path
+from typing import AnyStr, Tuple
 
 
 class Logger:
@@ -15,7 +16,7 @@ class Logger:
         self.file_handler = None
 
     @property
-    def logger_obj(self):
+    def logger_obj(self) -> logging.Logger:
         if not self.__logger_obj:
             if self.logger_exists(self.name):
                 self.__logger_obj = logging.getLogger(self.name)
@@ -36,35 +37,35 @@ class Logger:
         return self.__logger_obj
 
     @staticmethod
-    def logger_exists(name):
+    def logger_exists(name: AnyStr) -> bool:
         return name in logging.Logger.manager.loggerDict.keys()
 
     def set_level(self, level):
         self.logger_obj.setLevel(level)
 
-    def debug(self, msg, *args, **kwargs):
+    def debug(self, msg: AnyStr, *args, **kwargs):
         self.logger_obj.debug(msg, *args, **kwargs)
 
-    def info(self, msg, *args, **kwargs):
+    def info(self, msg: AnyStr, *args, **kwargs):
         self.logger_obj.info(msg, *args, **kwargs)
 
-    def warning(self, msg, *args, **kwargs):
+    def warning(self, msg: AnyStr, *args, **kwargs):
         self.logger_obj.warning(msg, *args, **kwargs)
 
-    def error(self, msg, *args, **kwargs):
+    def error(self, msg: AnyStr, *args, **kwargs):
         self.logger_obj.error(msg, *args, **kwargs)
 
-    def critical(self, msg, *args, **kwargs):
+    def critical(self, msg: AnyStr, *args, **kwargs):
         self.logger_obj.critical(msg, *args, **kwargs)
 
-    def log(self, level, msg, *args, **kwargs):
+    def log(self, level, msg: AnyStr, *args, **kwargs):
         self.logger_obj.log(level, msg, *args, **kwargs)
 
-    def exception(self, msg, *args, **kwargs):
+    def exception(self, msg: AnyStr, *args, **kwargs):
         self.logger_obj.exception(msg, *args, **kwargs)
 
     def log_to_file(self, level=logging.DEBUG):
-        log_file_path = self.get_log_file_path()
+        log_file_path: Path = self.get_log_file_path()
 
         try:
             if not log_file_path.parent.exists():
@@ -89,22 +90,24 @@ class Logger:
             self.file_handler.close()
             self.file_handler = None
 
-    def get_log_file_path(self):
+    def get_log_file_path(self) -> Path:
         user_path = Path("~").expanduser()
         module_dir = Path(__file__).parents[0]
-        config_location = module_dir.joinpath("cfg", "config.json")
+        config_location = module_dir / "cfg/config.json"
         config = {}
         with open(config_location) as fp:
             config = json.load(fp)
-        final_dir = user_path.joinpath(f".{config.get('cfg_dir_name')}")
+        final_dir = user_path / f".{config.get('cfg_dir_name')}"
         today = date.today()
         date_string = today.strftime("%d-%m-%Y")
-        log_file_path = final_dir.joinpath(f"{self.logger_obj.name}_{date_string}.log")
+        log_file_path = final_dir / f"{self.logger_obj.name}_{date_string}.log"
 
         return log_file_path
 
 
-def init_logger(base_name, log_to_file=False):
+def init_logger(
+    base_name: AnyStr, log_to_file: bool = False
+) -> Tuple[logging.Logger, logging.Logger]:
     """
     Initialize 'base_name' logging object and add a STDOUT handler to output to
     console, terminal, etc.

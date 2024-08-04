@@ -4,6 +4,7 @@ import sys
 import functools
 from pathlib import Path
 from collections import defaultdict
+from typing import Dict, AnyStr, Union
 
 from vfxnaming.serialize import Serializable
 from vfxnaming.tokens import get_token
@@ -44,7 +45,7 @@ class Rule(Serializable):
         self._anchor = anchor
         self._regex = self.__build_regex()
 
-    def data(self):
+    def data(self) -> Dict:
         """Collect all data for this object instance.
 
         Returns:
@@ -59,7 +60,7 @@ class Rule(Serializable):
         return retval
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data) -> "Rule":
         """Create object instance from give data. Used by Rule,
         Token, Separator to create object instances from disk saved data.
 
@@ -79,7 +80,7 @@ class Rule(Serializable):
         this = cls(data.get("_name"), data.get("_pattern"), data.get("_anchor"))
         return this
 
-    def solve(self, **values):
+    def solve(self, **values) -> AnyStr:
         """Given arguments are used to build a name.
 
         Raises:
@@ -99,7 +100,7 @@ class Rule(Serializable):
 
         return result
 
-    def parse(self, name):
+    def parse(self, name: AnyStr) -> Union[Dict, None]:
         """Build and return dictionary with keys as tokens and values as given names.
 
         If your rule uses the same token more than once, the returned dictionary keys
@@ -155,7 +156,7 @@ class Rule(Serializable):
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
 
-    def __build_regex(self):
+    def __build_regex(self) -> re.Pattern:
         # ? Taken from Lucidity by Martin Pengelly-Phillips
         # Escape non-placeholder components
         expression = re.sub(
@@ -190,14 +191,11 @@ class Rule(Serializable):
             else:
                 _, value, traceback = sys.exc_info()
                 message = f"Invalid pattern: {value}"
-                if sys.version_info[0] == 3:
-                    raise ValueError(message).with_traceback(traceback)
-                elif sys.version_info[0] == 2:
-                    raise ValueError(message, traceback)
+                raise ValueError(message).with_traceback(traceback)
 
         return compiled
 
-    def __convert(self, match, placeholder_count):
+    def __convert(self, match: re.Match, placeholder_count: int) -> AnyStr:
         """Return a regular expression to represent *match*.
 
         ``placeholder_count`` should be a ``defaultdict(int)`` that will be used to
@@ -222,16 +220,15 @@ class Rule(Serializable):
 
         return r"(?P<{0}>{1})".format(placeholder_name, expression)
 
-    def __escape(self, match):
+    def __escape(self, match: re.Match) -> AnyStr:
         """Escape matched 'other' group value."""
         # ? Taken from Lucidity by Martin Pengelly-Phillips
         groups = match.groupdict()
-        if groups["other"] is not None:
-            return re.escape(groups["other"])
+        if groups.get("other"):
+            return re.escape(groups.get("other"))
+        return groups.get("placeholder")
 
-        return groups["placeholder"]
-
-    def __digits_pattern(self):
+    def __digits_pattern(self) -> AnyStr:
         # * This accounts for those cases where a token is used more than once in a rule
         digits_pattern = self._pattern
         for each in list(set(self.fields)):

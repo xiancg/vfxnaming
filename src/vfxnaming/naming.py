@@ -21,6 +21,7 @@ import json
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from pathlib import Path
+from typing import AnyStr, Dict, Union
 
 from vfxnaming.logger import logger
 from vfxnaming.error import SolvingError
@@ -29,7 +30,7 @@ from vfxnaming.error import SolvingError
 NAMING_REPO_ENV = "NAMING_REPO"
 
 
-def parse(name):
+def parse(name: AnyStr) -> Dict:
     """Get metadata from a name string recognized by the currently active rule.
 
     -For rules with repeated tokens:
@@ -49,7 +50,7 @@ def parse(name):
     return rule.parse(name)
 
 
-def solve(*args, **kwargs):
+def solve(*args, **kwargs) -> AnyStr:
     """Given arguments are used to build a name following currently active rule.
 
     -For rules with repeated tokens:
@@ -76,7 +77,7 @@ def solve(*args, **kwargs):
     Returns:
         str: A string with the resulting name.
     """
-    rule = rules.get_active_rule()
+    rule: rules.Rule = rules.get_active_rule()
     # * This accounts for those cases where a token is used more than once in a rule
     repeated_fields = dict()
     for each in rule.fields:
@@ -91,7 +92,7 @@ def solve(*args, **kwargs):
             fields_with_digits.append(f"{each}{counter}")
         else:
             fields_with_digits.append(each)
-    values = dict()
+    values = {}
     i = 0
     fields_inc = 0
     for f in fields_with_digits:
@@ -127,7 +128,7 @@ def solve(*args, **kwargs):
     return rule.solve(**values)
 
 
-def get_repo():
+def get_repo() -> Path:
     """Get repository location from either global environment variable or local user,
     giving priority to environment variable.
 
@@ -149,14 +150,14 @@ def get_repo():
     return Path(result)
 
 
-def save_session(repo=None):
+def save_session(repo: Union[Path, None] = None) -> bool:
     """Save rules, tokens and config files to the repository.
 
     Raises:
         IOError, OSError: Repository directory could not be created.
 
     Args:
-        repo (str, optional): Absolue path to a repository. Defaults to None.
+        repo (Path, optional): Absolue path to a repository. Defaults to None.
 
     Returns:
         bool: True if saving session operation was successful.
@@ -187,12 +188,12 @@ def save_session(repo=None):
     return True
 
 
-def load_session(repo=None):
+def load_session(repo: Union[Path, None] = None) -> bool:
     """Load rules, tokens and config from a repository, and create
     Python objects in memory to work with them.
 
     Args:
-        repo (str, optional): Absolute path to a repository. Defaults to None.
+        repo (Path, optional): Absolute path to a repository. Defaults to None.
 
     Returns:
         bool: True if loading session operation was successful.
