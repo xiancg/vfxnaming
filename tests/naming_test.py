@@ -346,69 +346,116 @@ class Test_Anchoring:
         tokens.reset_tokens()
         tokens.add_token("awesometoken")
 
-    def test_solve_anchoring_end(self):
+    @pytest.mark.parametrize(
+        "anchor_position,expected",
+        [
+            (rules.Rule.ANCHOR_END, True),
+            (rules.Rule.ANCHOR_BOTH, True),
+            (rules.Rule.ANCHOR_START, True),
+        ],
+    )
+    def test_solve_anchoring_end(self, anchor_position: int, expected: bool):
         rules.reset_rules()
         rules.add_rule(
-            "anchoring", "crazy_hardcoded_value_{awesometoken}", rules.Rule.ANCHOR_END
+            "anchoring", "crazy_hardcoded_value_{awesometoken}", anchor_position
         )
-
         name = "crazy_hardcoded_value_bye"
         solved = n.solve("bye")
-        assert solved == name
+        assert (solved == name) is expected
 
-    def test_solve_anchoring_both(self):
+    @pytest.mark.parametrize(
+        "anchor_position,expected",
+        [
+            (rules.Rule.ANCHOR_END, True),
+            (rules.Rule.ANCHOR_BOTH, True),
+            (rules.Rule.ANCHOR_START, True),
+        ],
+    )
+    def test_solve_anchoring_both(self, anchor_position: int, expected: bool):
         rules.reset_rules()
         rules.add_rule(
             "anchoring",
             "{awesometoken}_crazy_hardcoded_value_{awesometoken}",
-            rules.Rule.ANCHOR_BOTH,
+            anchor_position,
         )
 
         name = "hello_crazy_hardcoded_value_bye"
         solved = n.solve(awesometoken1="hello", awesometoken2="bye")
-        assert solved == name
+        assert (solved == name) is expected
 
-    def test_solve_anchoring_start(self):
+    @pytest.mark.parametrize(
+        "anchor_position,expected",
+        [
+            (rules.Rule.ANCHOR_END, True),
+            (rules.Rule.ANCHOR_BOTH, True),
+            (rules.Rule.ANCHOR_START, True),
+        ],
+    )
+    def test_solve_anchoring_start(self, anchor_position: int, expected: bool):
         rules.reset_rules()
         rules.add_rule(
-            "anchoring", "{awesometoken}_crazy_hardcoded_value", rules.Rule.ANCHOR_START
+            "anchoring", "{awesometoken}_crazy_hardcoded_value", anchor_position
         )
 
         name = "hello_crazy_hardcoded_value"
         solved = n.solve(awesometoken="hello")
-        assert solved == name
+        assert (solved == name) is expected
 
-    def test_parse_anchoring_end(self):
+    @pytest.mark.parametrize(
+        "anchor_position,expected",
+        [
+            (rules.Rule.ANCHOR_END, True),
+            (rules.Rule.ANCHOR_BOTH, True),
+            (rules.Rule.ANCHOR_START, True),
+        ],
+    )
+    def test_parse_anchoring_end(self, anchor_position: int, expected: bool):
         rules.reset_rules()
         rules.add_rule(
-            "anchoring", "crazy_hardcoded_value_{awesometoken}", rules.Rule.ANCHOR_END
+            "anchoring", "crazy_hardcoded_value_{awesometoken}", anchor_position
         )
 
         name = "crazy_hardcoded_value_bye"
         parsed = n.parse(name)
-        assert parsed == {"awesometoken": "bye"}
+        assert (parsed == {"awesometoken": "bye"}) is expected
 
-    def test_parse_anchoring_both(self):
+    @pytest.mark.parametrize(
+        "anchor_position,expected",
+        [
+            (rules.Rule.ANCHOR_END, True),
+            (rules.Rule.ANCHOR_BOTH, True),
+            (rules.Rule.ANCHOR_START, True),
+        ],
+    )
+    def test_parse_anchoring_both(self, anchor_position: int, expected: bool):
         rules.reset_rules()
         rules.add_rule(
             "anchoring",
             "{awesometoken}_crazy_hardcoded_value_{awesometoken}",
-            rules.Rule.ANCHOR_BOTH,
+            anchor_position,
         )
 
         name = "hello_crazy_hardcoded_value_bye"
         parsed = n.parse(name)
-        assert parsed == {"awesometoken1": "hello", "awesometoken2": "bye"}
+        assert (parsed == {"awesometoken1": "hello", "awesometoken2": "bye"}) is expected
 
-    def test_parse_anchoring_start(self):
+    @pytest.mark.parametrize(
+        "anchor_position,expected",
+        [
+            (rules.Rule.ANCHOR_END, True),
+            (rules.Rule.ANCHOR_BOTH, True),
+            (rules.Rule.ANCHOR_START, True),
+        ],
+    )
+    def test_parse_anchoring_start(self, anchor_position: int, expected: bool):
         rules.reset_rules()
         rules.add_rule(
-            "anchoring", "{awesometoken}_crazy_hardcoded_value", rules.Rule.ANCHOR_START
+            "anchoring", "{awesometoken}_crazy_hardcoded_value", anchor_position
         )
 
         name = "hello_crazy_hardcoded_value"
         parsed = n.parse(name)
-        assert parsed == {"awesometoken": "hello"}
+        assert (parsed == {"awesometoken": "hello"}) is expected
 
 
 class Test_Serialization:
