@@ -163,16 +163,37 @@ class Test_Parse:
         )
         tokens.add_token("type", lighting="LGT", animation="ANI", default="lighting")
 
-    def test_parsing_with_separators(self):
+    @pytest.mark.parametrize(
+        "name,parsed_data",
+        [
+            (
+                "dramatic_bounce_chars_001_LGT",
+                {
+                    "category": "dramatic",
+                    "function": "bounce",
+                    "whatAffects": "chars",
+                    "digits": 1,
+                    "type": "lighting",
+                },
+            ),
+            (
+                "natural_key_env_012_ANI",
+                {
+                    "category": "natural",
+                    "function": "key",
+                    "whatAffects": "env",
+                    "digits": 12,
+                    "type": "animation",
+                },
+            ),
+        ],
+    )
+    def test_parsing_with_separators(self, name: str, parsed_data: Dict):
         rules.reset_rules()
         rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
-        name = "dramatic_bounce_chars_001_LGT"
         parsed = n.parse(name)
-        assert parsed["category"] == "dramatic"
-        assert parsed["function"] == "bounce"
-        assert parsed["whatAffects"] == "chars"
-        assert parsed["digits"] == 1
-        assert parsed["type"] == "lighting"
+        for key, value in parsed_data.items():
+            assert parsed.get(key) == value
 
     def test_parsing_without_separators(self):
         rules.reset_rules()
