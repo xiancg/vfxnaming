@@ -13,7 +13,7 @@ class Test_Rule:
         [
             ("lights", "{category}_{function}_{whatAffects}_{digits}_{type}", True),
             ("filename", "{side}-{region}_{side}-{region}_{side}-{region}", True),
-            ("nope", "", False),  # TODO: Working here, this shouldn't be passing
+            ("nope", "", False),
         ],
     )
     def test_add(self, name: str, pattern: str, expected: bool):
@@ -24,17 +24,22 @@ class Test_Rule:
         result = rules.reset_rules()
         assert result is True
 
-    def test_remove_rule(self):
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            ("test", True),
+            ("test2", False),
+        ],
+    )
+    def test_remove_rule(self, name: str, expected: bool):
         rules.add_rule("test", "{category}_{function}_{digits}_{type}")
-        result = rules.remove_rule("test")
-        assert result is True
-
-        result = rules.remove_rule("test2")
-        assert result is False
+        result = rules.remove_rule(name)
+        assert result is expected
 
     def test_active(self):
         rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
-        rules.add_rule("test", "{category}_{function}_{digits}_{type}")
+        test_rule = rules.add_rule("test", "{category}_{function}_{digits}_{type}")
         rules.set_active_rule("test")
         result = rules.get_active_rule()
         assert result is not None
+        assert result is test_rule

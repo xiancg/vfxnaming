@@ -271,7 +271,7 @@ class Rule(Serializable):
         self._name = n
 
 
-def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Union[str, None]:
+def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Union[Rule, None]:
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
 
