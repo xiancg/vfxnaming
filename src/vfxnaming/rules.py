@@ -271,7 +271,7 @@ class Rule(Serializable):
         self._name = n
 
 
-def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Rule:
+def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Union[str, None]:
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
 
@@ -288,8 +288,17 @@ def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Rule:
         match the pattern. Defaults to ANCHOR_START.
 
     Returns:
-        Rule: The Rule object instance created for given name and fields.
+        Rule: The Rule object instance created for given name and fields. None if
     """
+    if pattern == "":
+        logger.error(f"Pattern cannot be empty for rule: {name}")
+        return
+    if name == "":
+        logger.error(f"Name cannot be empty for rule: {pattern}")
+        return
+    if anchor not in [Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH]:
+        logger.error(f"Invalid anchor value for rule: {name}")
+        return
     rule = Rule(name, pattern, anchor)
     _rules[name] = rule
     if get_active_rule() is None:
