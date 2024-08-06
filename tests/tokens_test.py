@@ -1,3 +1,5 @@
+from typing import List
+
 from vfxnaming import naming as n
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
@@ -10,31 +12,41 @@ class Test_Token:
     def setup(self):
         tokens.reset_tokens()
 
-    def test_add(self):
-        result = tokens.add_token("whatAffects")
-        assert isinstance(result, tokens.Token) is True
-
-        result = tokens.add_token(
-            "category",
-            natural="natural",
-            practical="practical",
-            dramatic="dramatic",
-            volumetric="volumetric",
-            default="natural",
-        )
+    @pytest.mark.parametrize(
+        "name,kwargs",
+        [
+            ("test", {}),
+            (
+                "category",
+                {
+                    "natural": "natural",
+                    "practical": "practical",
+                    "dramatic": "dramatic",
+                    "volumetric": "volumetric",
+                    "default": "natural",
+                },
+            ),
+        ],
+    )
+    def test_add(self, name: str, kwargs):
+        result = tokens.add_token(name, **kwargs)
         assert isinstance(result, tokens.Token) is True
 
     def test_reset_tokens(self):
         result = tokens.reset_tokens()
         assert result is True
 
-    def test_remove_token(self):
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            ("test", True),
+            ("test2", False),
+        ],
+    )
+    def test_remove_token(self, name: str, expected: bool):
         tokens.add_token("test")
-        result = tokens.remove_token("test")
-        assert result is True
-
-        result = tokens.remove_token("test2")
-        assert result is False
+        result = tokens.remove_token(name)
+        assert result is expected
 
 
 class Test_Token_Options:
@@ -50,43 +62,60 @@ class Test_Token_Options:
             default="natural",
         )
 
-    def test_add_option(self):
-        result = self.light_category.add_option("extra", "extra")
-        assert result is True
-        assert "extra" in self.light_category.options.keys()
+    @pytest.mark.parametrize(
+        "key,abbreviation,expected",
+        [
+            ("extra", "extra", True),
+            ("dramatic", "DRA", False),
+        ],
+    )
+    def test_add_option(self, key: str, abbreviation: str, expected: bool):
+        result = self.light_category.add_option(key, abbreviation)
+        assert result is expected
 
-        result = self.light_category.add_option("dramatic", "DRA")
-        assert result is False
+    @pytest.mark.parametrize(
+        "key,expected",
+        [
+            ("natural", True),
+            ("non_existent", False),
+        ],
+    )
+    def test_remove_option(self, key: str, expected: bool):
+        result = self.light_category.remove_option(key)
+        assert result is expected
 
-    def test_remove_option(self):
-        result = self.light_category.remove_option("natural")
-        assert result is True
-        assert "natural" not in self.light_category.options.keys()
+    @pytest.mark.parametrize(
+        "old_key,new_key,expected",
+        [
+            ("natural", "unnatural", True),
+            ("non_existent", "unnatural", False),
+        ],
+    )
+    def test_update_option(self, old_key: str, new_key: str, expected: bool):
+        result = self.light_category.update_option(old_key, new_key)
+        assert result is expected
 
-        result = self.light_category.remove_option("non_existent")
-        assert result is False
+    @pytest.mark.parametrize(
+        "full_name,expected",
+        [
+            ("dramatic", True),
+            ("default", False),
+        ],
+    )
+    def test_has_option_fullname(self, full_name: str, expected: bool):
+        result = self.light_category.has_option_fullname(full_name)
+        assert result is expected
 
-    def test_update_option(self):
-        result = self.light_category.update_option("natural", "unnatural")
-        assert result is True
-        assert "unnatural" in self.light_category.options.values()
-
-        result = self.light_category.update_option("non_existent", "unnatural")
-        assert result is False
-
-    def test_has_option_fullname(self):
-        result = self.light_category.has_option_fullname("dramatic")
-        assert result is True
-
-        result = self.light_category.has_option_fullname("default")
-        assert result is False
-
-    def test_has_option_abbreviation(self):
-        result = self.light_category.has_option_abbreviation("volumetric")
-        assert result is True
-
-        result = self.light_category.has_option_abbreviation("VOL")
-        assert result is False
+    @pytest.mark.parametrize(
+        "abbreviation,expected",
+        [
+            ("volumetric", True),
+            ("VOL", False),
+        ],
+    )
+    def test_has_option_abbreviation(self, abbreviation: str, expected: bool):
+        result = self.light_category.has_option_abbreviation(abbreviation)
+        assert result is expected
 
 
 class Test_TokenNumber:
@@ -118,21 +147,55 @@ class Test_TokenNumber:
         tokens.add_token("type", lighting="LGT", default="LGT")
         rules.add_rule("lights", "{category}_{function}_{whatAffects}_{number}_{type}")
 
-    def test_explicit_solve(self):
-        name = "natural_ambient_chars_024_LGT"
-        solved = n.solve(
-            category="natural",
-            function="ambient",
-            whatAffects="chars",
-            number=24,
-            type="lighting",
-        )
-        assert solved == name
+    @pytest.mark.parametrize(
+        "name,data,expected",
+        [
+            (
+                "natural_ambient_chars_024_LGT",
+                {
+                    "category": "natural",
+                    "function": "ambient",
+                    "whatAffects": "chars",
+                    "number": 24,
+                    "type": "lighting",
+                },
+                True,
+            ),
+            (
+                "natural_ambient_chars_3_LGT",
+                {
+                    "category": "natural",
+                    "function": "ambient",
+                    "whatAffects": "chars",
+                    "number": 3,
+                    "type": "lighting",
+                },
+                False,
+            ),
+        ],
+    )
+    def test_explicit_solve(self, name: str, data: dict, expected: bool):
+        solved = n.solve(**data)
+        assert (solved == name) is expected
 
-    def test_implicit_solve(self):
-        name = "natural_custom_chars_032_LGT"
-        solved = n.solve("chars", 32)
-        assert solved == name
+    @pytest.mark.parametrize(
+        "name,data,expected",
+        [
+            (
+                "natural_custom_chars_032_LGT",
+                ["chars", 32],
+                True,
+            ),
+            (
+                "natural_custom_chars_3_LGT",
+                ["chars", 3],
+                False,
+            ),
+        ],
+    )
+    def test_implicit_solve(self, name: str, data: List, expected: bool):
+        solved = n.solve(*data)
+        assert (solved == name) is expected
 
     def test_prefix_suffix_padding_solve(self):
         name = "natural_custom_chars_v0032rt_LGT"
