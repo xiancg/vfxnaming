@@ -225,7 +225,7 @@ class TokenNumber(Serializable):
         return f"{self.prefix}{number_str}{self.suffix}"
 
     def parse(self, value: AnyStr) -> int:
-        """Get metatada (number) for given value in name. e.g.: v0025 will return 25
+        """Get metadata (number) for given value in name. e.g.: v0025 will return 25
 
         Args:
             value (str): String value taken from a name with digits in it.
@@ -253,6 +253,13 @@ class TokenNumber(Serializable):
                 elif each.isdigit() and suffix_index > 0:
                     break
                 suffix_index += 1
+
+            if prefix_index != -1 and self.prefix != "":
+                if value[prefix_index : len(self.prefix)] != self.prefix:
+                    logger.warning(f"Prefix '{self.prefix}' not found in '{value}'")
+            if suffix_index != -1 and self.suffix != "":
+                if value[-suffix_index:] != self.suffix:
+                    logger.warning(f"Suffix '{self.suffix}' not found in '{value}'")
 
             if prefix_index == -1 and suffix_index >= 0:
                 return int(value[:-suffix_index])

@@ -197,28 +197,44 @@ class Test_TokenNumber:
         solved = n.solve(*data)
         assert (solved == name) is expected
 
-    def test_prefix_suffix_padding_solve(self):
-        name = "natural_custom_chars_v0032rt_LGT"
+    @pytest.mark.parametrize(
+        "name,prefix,suffix,padding",
+        [
+            ("natural_custom_chars_v0032rt_LGT", "v", "rt", 4),
+            ("natural_custom_chars_ver32X_LGT", "ver", "X", 2),
+        ],
+    )
+    def test_prefix_suffix_padding_solve(
+        self, name: str, prefix: str, suffix: str, padding: int
+    ):
         tokens.remove_token("number")
-        tokens.add_token_number("number", prefix="v", suffix="rt", padding=4)
+        tokens.add_token_number("number", prefix=prefix, suffix=suffix, padding=padding)
         solved = n.solve("chars", 32)
         assert solved == name
 
-    def test_prefix_suffix_padding_parse(self):
-        name = "natural_custom_chars_v0032rt_LGT"
+    @pytest.mark.parametrize(
+        "name,prefix,suffix,padding,num",
+        [
+            ("natural_custom_chars_v0076rt_LGT", "v", "rt", 4, 76),
+            ("natural_custom_chars_ver1850X_LGT", "ver", "X", 2, 1850),
+        ],
+    )
+    def test_prefix_suffix_padding_parse(
+        self, name: str, prefix: str, suffix: str, padding: int, num: int
+    ):
         tokens.remove_token("number")
-        tokens.add_token_number("number", prefix="v", suffix="rt", padding=4)
+        tokens.add_token_number("number", prefix=prefix, suffix=suffix, padding=padding)
         parsed = n.parse(name)
         assert parsed["category"] == "natural"
         assert parsed["function"] == "custom"
         assert parsed["whatAffects"] == "chars"
-        assert parsed["number"] == 32
+        assert parsed["number"] == num
         assert parsed["type"] == "lighting"
 
     def test_prefix_only(self):
         name = "natural_custom_chars_v0078_LGT"
         tokens.remove_token("number")
-        tokens.add_token_number("number", prefix="v", padding=4)
+        tokens.add_token_number("number", prefix="W", padding=4)
         parsed = n.parse(name)
         assert parsed["category"] == "natural"
         assert parsed["function"] == "custom"
