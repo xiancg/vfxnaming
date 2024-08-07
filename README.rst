@@ -1,11 +1,9 @@
 VFX Naming Conventions Framework
 ===================================
 
-.. image:: https://travis-ci.org/xiancg/vfxnaming.svg?branch=master
-    :target: https://travis-ci.org/xiancg/vfxnaming
+.. image:: https://github.com/xiancg/vfxnaming/actions/workflows/ci_vfxnaming.yml/badge.svg?event=push&branch=master
 .. image:: https://readthedocs.org/projects/naming-conventions/badge/?version=latest
-.. image:: https://coveralls.io/repos/github/xiancg/vfxnaming/badge.svg?branch=master
-    :target: https://coveralls.io/github/xiancg/vfxnaming?branch=master
+.. image:: https://img.shields.io/github/license/readthedocs/actions
 
 A complete suite of tools to manage naming conventions from one or more "Rule repositories". Structure naming rules with your own custom tokens. Then use the library to solve names following those rules so your naming is consistent, and also to parse metadata from exisiting names (cus a name is basically a collection of metadata, right?)
 
