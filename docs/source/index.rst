@@ -1,11 +1,9 @@
 VFX Naming Conventions Docs
 ========================================
 
-.. image:: https://travis-ci.org/xiancg/vfxnaming.svg?branch=master
-    :target: https://travis-ci.org/xiancg/vfxnaming
+.. image:: https://github.com/xiancg/vfxnaming/actions/workflows/ci_vfxnaming.yml/badge.svg?event=push&branch=master
 .. image:: https://readthedocs.org/projects/naming-conventions/badge/?version=latest
-.. image:: https://coveralls.io/repos/github/xiancg/vfxnaming/badge.svg?branch=master
-    :target: https://coveralls.io/github/xiancg/vfxnaming?branch=master
+.. image:: https://img.shields.io/github/license/readthedocs/actions
 
 Installation
 ------------
