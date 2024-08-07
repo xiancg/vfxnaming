@@ -1,6 +1,17 @@
 Changelog
 ================================
 
+1.3.0-beta
+---------------------------------------
+
+**Improvements:**
+    - Tests parametrization
+    - Removed old dependencies
+    - pyproject.toml file added instead of setup.py
+
+**Changes:**
+    -Dropped support for Python 2 and 3.7
+
 1.2.4-beta
 ---------------------------------------
 

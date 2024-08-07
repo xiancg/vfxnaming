@@ -16,21 +16,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from __future__ import absolute_import, print_function
-
 import os
 import json
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
+from pathlib import Path
+from typing import AnyStr, Dict, Union
+
 from vfxnaming.logger import logger
 from vfxnaming.error import SolvingError
 
-import six
 
 NAMING_REPO_ENV = "NAMING_REPO"
 
 
-def parse(name):
+def parse(name: AnyStr) -> Dict:
     """Get metadata from a name string recognized by the currently active rule.
 
     -For rules with repeated tokens:
@@ -50,7 +50,7 @@ def parse(name):
     return rule.parse(name)
 
 
-def solve(*args, **kwargs):
+def solve(*args, **kwargs) -> AnyStr:
     """Given arguments are used to build a name following currently active rule.
 
     -For rules with repeated tokens:
@@ -77,7 +77,7 @@ def solve(*args, **kwargs):
     Returns:
         str: A string with the resulting name.
     """
-    rule = rules.get_active_rule()
+    rule: rules.Rule = rules.get_active_rule()
     # * This accounts for those cases where a token is used more than once in a rule
     repeated_fields = dict()
     for each in rule.fields:
@@ -89,10 +89,10 @@ def solve(*args, **kwargs):
         if each in repeated_fields.keys():
             counter = repeated_fields.get(each)
             repeated_fields[each] = counter + 1
-            fields_with_digits.append("{}{}".format(each, counter))
+            fields_with_digits.append(f"{each}{counter}")
         else:
             fields_with_digits.append(each)
-    values = dict()
+    values = {}
     i = 0
     fields_inc = 0
     for f in fields_with_digits:
@@ -123,105 +123,105 @@ def solve(*args, **kwargs):
                 fields_inc += 1
                 continue
             except IndexError as why:
-                raise SolvingError("Missing argument for field '{}'\n{}".format(f, why))
-    logger.debug("Solving rule '{}' with values {}".format(rule.name, values))
+                raise SolvingError(f"Missing argument for field '{f}'\n{why}")
+    logger.debug(f"Solving rule '{rule.name}' with values {values}")
     return rule.solve(**values)
 
 
-def get_repo():
+def get_repo() -> Path:
     """Get repository location from either global environment variable or local user,
     giving priority to environment variable.
 
     Environment varialble name: NAMING_REPO
 
     Returns:
-        str: Naming repository location
+        Path: Naming repository location
     """
     env_repo = os.environ.get(NAMING_REPO_ENV)
-    userPath = os.path.expanduser("~")
-    module_dir = os.path.split(__file__)[0]
-    config_location = os.path.join(module_dir, "cfg", "config.json")
+    user_path = Path.expanduser("~")
+    module_dir = Path(__file__).parent
+    config_location = module_dir / "cfg/config.json"
     config = dict()
     with open(config_location) as fp:
         config = json.load(fp)
-    local_repo = os.path.join(userPath, "." + config["local_repo_name"], "naming_repo")
+    local_repo = user_path / f".{config['local_repo_name']}/naming_repo"
     result = env_repo or local_repo
-    logger.debug("Repo found: {}".format(result))
-    return result
+    logger.debug(f"Repo found: {result}")
+    return Path(result)
 
 
-def save_session(repo=None):
+def save_session(repo: Union[Path, None] = None) -> bool:
     """Save rules, tokens and config files to the repository.
 
     Raises:
         IOError, OSError: Repository directory could not be created.
 
     Args:
-        repo (str, optional): Absolue path to a repository. Defaults to None.
+        repo (Path, optional): Absolue path to a repository. Defaults to None.
 
     Returns:
         bool: True if saving session operation was successful.
     """
-    repo = repo or get_repo()
-    if not os.path.exists(repo):
+    repo: Path = repo or get_repo()
+    if not repo.exists():
         try:
-            os.mkdir(repo)
+            repo.mkdir(parents=True)
         except (IOError, OSError) as why:
             raise why
     # save tokens
-    for name, token in six.iteritems(tokens.get_tokens()):
-        logger.debug("Saving token: '{}' in {}".format(name, repo))
+    for name, token in tokens.get_tokens().items():
+        logger.debug(f"Saving token: '{name}' in {repo}")
         tokens.save_token(name, repo)
     # save rules
-    for name, rule in six.iteritems(rules.get_rules()):
+    for name, rule in rules.get_rules().items():
         if not isinstance(rule, rules.Rule):
             continue
-        logger.debug("Saving rule: '{}' in {}".format(name, repo))
+        logger.debug(f"Saving rule: '{name}' in {repo}")
         rules.save_rule(name, repo)
     # extra configuration
     active = rules.get_active_rule()
     config = {"set_active_rule": active.name if active else None}
-    filepath = os.path.join(repo, "naming.conf")
-    logger.debug("Saving active rule: {} in {}".format(active.name, filepath))
+    filepath = repo / "naming.conf"
+    logger.debug(f"Saving active rule: {active.name} in {filepath}")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
     return True
 
 
-def load_session(repo=None):
+def load_session(repo: Union[Path, None] = None) -> bool:
     """Load rules, tokens and config from a repository, and create
     Python objects in memory to work with them.
 
     Args:
-        repo (str, optional): Absolute path to a repository. Defaults to None.
+        repo (Path, optional): Absolute path to a repository. Defaults to None.
 
     Returns:
         bool: True if loading session operation was successful.
     """
-    repo = repo or get_repo()
-    if not os.path.exists(repo):
-        logger.warning("Given repo directory does not exist: {}".format(repo))
+    repo: Path = repo or get_repo()
+    if not repo.exists():
+        logger.warning(f"Given repo directory does not exist: {repo}")
         return False
-    namingconf = os.path.join(repo, "naming.conf")
-    if not os.path.exists(namingconf):
-        logger.warning("Repo is not valid. naming.conf not found {}".format(namingconf))
+    namingconf = repo / "naming.conf"
+    if not namingconf.exists():
+        logger.warning(f"Repo is not valid. naming.conf not found {namingconf}")
         return False
     rules.reset_rules()
     tokens.reset_tokens()
     # tokens and rules
     for dirpath, dirnames, filenames in os.walk(repo):
         for filename in filenames:
-            filepath = os.path.join(dirpath, filename)
+            filepath = Path(dirpath) / filename
             if filename.endswith(".token"):
-                logger.debug("Loading token: {}".format(filepath))
+                logger.debug(f"Loading token: {filepath}")
                 tokens.load_token(filepath)
             elif filename.endswith(".rule"):
-                logger.debug("Loading rule: {}".format(filepath))
+                logger.debug(f"Loading rule: {filepath}")
                 rules.load_rule(filepath)
     # extra configuration
-    if os.path.exists(namingconf):
-        logger.debug("Loading active rule: {}".format(namingconf))
+    if namingconf.exists():
+        logger.debug(f"Loading active rule: {namingconf}")
         with open(namingconf) as fp:
             config = json.load(fp)
-        rules.set_active_rule(config.get('set_active_rule'))
+        rules.set_active_rule(config.get("set_active_rule"))
     return True

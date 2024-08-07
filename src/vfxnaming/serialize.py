@@ -1,11 +1,9 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function
-
+from typing import Dict
 import copy
 
 
 class Serializable(object):
-    def data(self):
+    def data(self) -> Dict:
         """Collect all data for this object instance.
 
         Returns:
@@ -17,7 +15,7 @@ class Serializable(object):
         return retval
 
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data: Dict) -> "Serializable":
         """Create object instance from give data. Used by Rule,
         Token, Separator to create object instances from disk saved data.
 

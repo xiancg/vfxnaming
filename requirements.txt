@@ -1,2 +1,0 @@
--i https://pypi.org/simple
-six==1.14.0

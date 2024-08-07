@@ -7,12 +7,18 @@ verify_ssl = true
 pytest = "*"
 pytest-cov = "*"
 pytest-datafiles = "*"
-flake8 = "*"
-vfxnaming = {editable = true,path = "."}
+ruff = "*"
 python-coveralls = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
+build = "*"
+wheel = "*"
+rstcheck = "*"
+vfxnaming = {editable=true, path="."}
 
-[packages]
-six = "*"
+[requires]
+python_version = "3.10"
+
+[pipenv]
+allow_prereleases = true

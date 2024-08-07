@@ -60,18 +60,15 @@ This is going to initalize a log file where everything will be recorded.
     from vfxnaming import logger
     logger.init_file_logger()
 
-Credits
+Acknowledgements
 --------------------
 
-**vfxnaming** is completely based on `Copyright (c) 2017 Cesar Saez <https://www.cesarsaez.me/>`_
-work. I highly recommend his `Website-Blog <https://www.cesarsaez.me/>`_ and
-the video tutorial series on his `YouTube Channel <https://www.youtube.com/channel/UCRjk6bi_1ZQ9sL69agz0xMg>`_ 
-
-For more information and credits please check :doc:`credits`
+For more information please check :doc:`credits`
 
 .. toctree::
    :maxdepth: 3
    :caption: Getting Started
+   :hidden:
    
    usage/repositories
    usage/solving
@@ -80,6 +77,7 @@ For more information and credits please check :doc:`credits`
 .. toctree::
    :maxdepth: 3
    :caption: API Reference
+   :hidden:
    
    vfxnaming
    rules
@@ -89,6 +87,7 @@ For more information and credits please check :doc:`credits`
 .. toctree::
    :maxdepth: 3
    :caption: Changelog, Roadmap and Credits
+   :hidden:
 
    changelog
    roadmap
