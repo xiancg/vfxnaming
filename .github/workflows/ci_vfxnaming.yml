@@ -6,6 +6,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment:
+      name: coverage
     strategy:
       fail-fast: false
       matrix:
