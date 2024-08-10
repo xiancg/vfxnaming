@@ -1,11 +1,13 @@
 name: VFXNaming CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment:
+      name: coverage
     strategy:
       fail-fast: false
       matrix:
@@ -30,3 +32,8 @@ jobs:
     - name: Run tests with tox
       run: |
         tox -e py310ci
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      
