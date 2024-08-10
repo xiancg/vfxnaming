@@ -4,6 +4,8 @@ VFX Naming Conventions Docs
 .. image:: https://github.com/xiancg/vfxnaming/actions/workflows/ci_vfxnaming.yml/badge.svg?event=push&branch=master
 .. image:: https://readthedocs.org/projects/naming-conventions/badge/?version=latest
 .. image:: https://img.shields.io/github/license/readthedocs/actions
+.. image:: https://coveralls.io/repos/github/xiancg/vfxnaming/badge.svg
+
 
 Installation
 ------------
