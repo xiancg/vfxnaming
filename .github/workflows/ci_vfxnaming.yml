@@ -1,6 +1,6 @@
 name: VFXNaming CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -30,3 +30,5 @@ jobs:
     - name: Run tests with tox
       run: |
         tox -e py310ci
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
