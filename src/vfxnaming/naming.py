@@ -308,9 +308,9 @@ def load_session(repo: Union[Path, None] = None) -> bool:
     if not repo.exists():
         logger.warning(f"Given repo directory does not exist: {repo}")
         return False
-    namingconf = repo / "naming.conf"
+    namingconf = repo / "vfxnaming.conf"
     if not namingconf.exists():
-        logger.warning(f"Repo is not valid. naming.conf not found {namingconf}")
+        logger.warning(f"Repo is not valid. vfxnaming.conf not found {namingconf}")
         return False
     rules.reset_rules()
     tokens.reset_tokens()
