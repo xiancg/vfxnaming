@@ -19,6 +19,8 @@
 import os
 import re
 import json
+import traceback
+import shutil
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from pathlib import Path
@@ -138,7 +140,7 @@ def validate_repo(repo: Path) -> bool:
     Returns:
         bool: True if valid, False otherwise.
     """
-    config_file = repo / "naming.conf"
+    config_file = repo / "vfxnaming.conf"
     if not config_file.exists():
         return False
     return True
@@ -238,39 +240,55 @@ def get_repo(force_repo: Union[Path, str] = None) -> Path:
     raise RepoError(f"VFXNaming repo directory doesn't exist: {root}")
 
 
-def save_session(repo: Union[Path, None] = None) -> bool:
+def save_session(repo: Union[Path, None] = None, override=True):
     """Save rules, tokens and config files to the repository.
 
     Raises:
-        IOError, OSError: Repository directory could not be created.
+        RepoError: Repository directory could not be created or is not valid.
+
+        TokenError: Not required tokens must have at least one option (fullname=abbreviation).
+
+        TemplateError: Template patterns are not valid.
 
     Args:
-        repo (Path, optional): Absolue path to a repository. Defaults to None.
+        ``repo`` (str, optional): Path to a repository. Defaults to None.
+
+        ``override`` (bool, optional): If True, it'll remove given directory and recreate it.
 
     Returns:
-        bool: True if saving session operation was successful.
+        [bool]: True if saving session operation was successful.
     """
-    repo: Path = repo or get_repo()
+    # Validations
+    rules.validate_rules()
+    tokens.validate_tokens()
+
+    repo = repo or get_repo()
+    if override:
+        try:
+            shutil.rmtree(repo)
+        except (IOError, OSError) as why:
+            raise RepoError(why, traceback.format_exc())
     if not repo.exists():
         try:
-            repo.mkdir(parents=True)
+            os.mkdir(repo)
         except (IOError, OSError) as why:
-            raise why
-    # save tokens
+            raise RepoError(why, traceback.format_exc())
+
+    # Save tokens
     for name, token in tokens.get_tokens().items():
-        logger.debug(f"Saving token: '{name}' in {repo}")
+        logger.debug(f"Saving token: {name} in {repo}")
         tokens.save_token(name, repo)
-    # save rules
-    for name, rule in rules.get_rules().items():
-        if not isinstance(rule, rules.Rule):
+    # Save rules
+    for name, template in rules.get_rules().items():
+        if not isinstance(template, rules.Rule):
             continue
-        logger.debug(f"Saving rule: '{name}' in {repo}")
+        logger.debug(f"Saving template: {name} in {repo}")
         rules.save_rule(name, repo)
     # extra configuration
     active = rules.get_active_rule()
-    config = {"set_active_rule": active.name if active else None}
-    filepath = repo / "naming.conf"
-    logger.debug(f"Saving active rule: {active.name} in {filepath}")
+    config = {"set_active_template": active.name if active else None}
+    filepath = os.path.join(repo, "vfxnaming.conf")
+    logger.debug(f"Saving active template: {active.name} in {filepath}")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
     return True

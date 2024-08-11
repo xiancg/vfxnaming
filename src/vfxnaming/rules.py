@@ -9,7 +9,7 @@ from typing import Dict, AnyStr, Union, Tuple
 from vfxnaming.serialize import Serializable
 from vfxnaming.tokens import get_token
 from vfxnaming.logger import logger
-from vfxnaming.error import ParsingError, SolvingError
+from vfxnaming.error import ParsingError, SolvingError, RuleError
 
 _rules = {"_active": None}
 
@@ -370,6 +370,31 @@ def set_active_rule(name: AnyStr) -> bool:
         _rules["_active"] = name
         return True
     return False
+
+
+def validate_rule_pattern(name):
+    """Validates rule pattern is not empty.
+
+    Args:
+        name (str): The name of the rule to validate its pattern.
+
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    if has_rule(name):
+        template_obj = get_rule(name)
+        if len(template_obj.pattern) >= 1:
+            return True
+    return False
+
+
+def validate_rules():
+    not_valid = []
+    for name, template in get_rules().items():
+        if not validate_rule_pattern(name):
+            not_valid.append(name)
+    if len(not_valid) >= 1:
+        raise RuleError(f"Rules {', '.join(not_valid)}: Patterns are not valid.")
 
 
 def get_rule(name: AnyStr) -> Rule:

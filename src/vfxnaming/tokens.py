@@ -445,6 +445,18 @@ def get_tokens() -> Dict:
     return _tokens
 
 
+def validate_tokens():
+    not_valid = list()
+    for name, token_obj in get_tokens().items():
+        if not token_obj.required and len(token_obj.options) == 0:
+            not_valid.append(name)
+    if len(not_valid) >= 1:
+        raise TokenError(
+            f"Tokens {', '.join(not_valid)}: Not required tokens must "
+            "have at least one option (fullname=abbreviation)."
+        )
+
+
 def save_token(name: AnyStr, directory: Path) -> bool:
     """Saves given token serialized to specified location.
 
