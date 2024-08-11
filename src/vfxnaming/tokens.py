@@ -28,45 +28,47 @@ class Token(Serializable):
         self._default = None
         self._options: Dict = {}
 
-    def add_option(self, key: AnyStr, value: AnyStr) -> bool:
+    def add_option(self, fullname: AnyStr, abbreviation: AnyStr) -> bool:
         """Add an option pair to this Token.
 
         Args:
-            key (str): Full name of the option
-            value (str): Abbreviation to be used when building the name.
+            fullname (str): Full name of the option
+            abbreviation (str): Abbreviation to be used when building the name.
 
         Returns:
             [bool]: True if successful. False otherwise.
         """
-        if key not in self._options.keys():
-            self._options[key] = value
+        if fullname not in self._options.keys():
+            self._options[fullname] = abbreviation
+            if len(self._options) == 1:
+                self._default = fullname
             return True
         logger.debug(
-            f"Option '{key}':'{self._options.get(key)}' already exists in Token '{self.name}'. "
+            f"Option '{fullname}':'{self._options.get(fullname)}' already exists in Token '{self.name}'. "
             "Use update_option() instead."
         )
         return False
 
-    def update_option(self, key: AnyStr, value: AnyStr) -> bool:
+    def update_option(self, fullname: AnyStr, abbreviation: AnyStr) -> bool:
         """Update an option pair on this Token.
 
         Args:
-            key (str): Full name of the option
-            value (str): Abbreviation to be used when building the name.
+            fullname (str): Full name of the option
+            abbreviation (str): Abbreviation to be used when building the name.
 
         Returns:
             [bool]: True if successful. False otherwise.
         """
-        if key in self._options.keys():
-            self._options[key] = value
+        if fullname in self._options.keys():
+            self._options[fullname] = abbreviation
             return True
         logger.debug(
-            f"Option '{key}':'{self._options.get(key)}' doesn't exist in Token '{self.name}'. "
+            f"Option '{fullname}':'{self._options.get(fullname)}' doesn't exist in Token '{self.name}'. "
             "Use add_option() instead."
         )
         return False
 
-    def remove_option(self, key: AnyStr) -> bool:
+    def remove_option(self, fullname: AnyStr) -> bool:
         """Remove an option on this Token.
 
         Args:
@@ -75,37 +77,42 @@ class Token(Serializable):
         Returns:
             [bool]: True if successful. False otherwise.
         """
-        if key in self._options.keys():
-            del self._options[key]
+        if fullname in self._options.keys():
+            del self._options[fullname]
             return True
         logger.debug(
-            f"Option '{key}':'{self._options.get(key)}' doesn't exist in Token '{self.name}'"
+            f"Option '{fullname}':'{self._options.get(fullname)}' doesn't exist in Token '{self.name}'"
         )
         return False
 
-    def has_option_fullname(self, key: AnyStr) -> bool:
+    def clear_options(self):
+        """Clears all the options for this token."""
+        self._default = None
+        self._options = {}
+
+    def has_option_fullname(self, fullname: AnyStr) -> bool:
         """Looks for given option full name in the options.
 
         Args:
-            key (str): Full name of the option
+            fullname (str): Full name of the option
 
         Returns:
             [bool]: True if found. False otherwise.
         """
-        if key in self._options.keys():
+        if fullname in self._options.keys():
             return True
         return False
 
-    def has_option_abbreviation(self, value: AnyStr) -> bool:
+    def has_option_abbreviation(self, abbreviation: AnyStr) -> bool:
         """Looks for given option abbreviation in the options.
 
         Args:
-            value ([type]): [description]
+            abbreviation ([type]): [description]
 
         Returns:
             [type]: [description]
         """
-        if value in self._options.values():
+        if abbreviation in self._options.values():
             return True
         return False
 
@@ -119,11 +126,14 @@ class Token(Serializable):
 
         Raises:
             SolvingError: If Token is required and no value is passed.
+
             SolvingError: If given name is not found in options list.
 
         Returns:
             str: If Token is required, the same input value is returned
+
             str: If Token has options, the abbreviation for given name is returned
+
             str: If nothing is passed and Token has options, default option is returned.
         """
         if self.required and name:
@@ -164,10 +174,18 @@ class Token(Serializable):
 
     @property
     def required(self) -> bool:
+        """
+        Returns:
+            [bool]: True if Token is required, False otherwise
+        """
         return self.default is None
 
     @property
     def name(self) -> AnyStr:
+        """
+        Returns:
+            [str]: Name of this Token
+        """
         return self._name
 
     @name.setter
@@ -188,10 +206,18 @@ class Token(Serializable):
 
     @default.setter
     def default(self, d: AnyStr):
+        """
+        Args:
+            d (str): Value of the default option to be set
+        """
         self._default = d
 
     @property
     def options(self) -> Dict:
+        """
+        Returns:
+            [dict]: {"option_full_name":"abbreviation"}
+        """
         return copy.deepcopy(self._options)
 
 
@@ -270,6 +296,10 @@ class TokenNumber(Serializable):
 
     @property
     def name(self) -> AnyStr:
+        """
+        Returns:
+            [str]: Name of this Token
+        """
         return self._name
 
     @name.setter
@@ -303,7 +333,7 @@ class TokenNumber(Serializable):
         if isinstance(this_prefix, str) and not this_prefix.isdigit():
             self._options["prefix"] = this_prefix
         else:
-            logger.warning(f"Given prefix has to be a string: {this_prefix}")
+            logger.warning(f"Prefix must be a string: {this_prefix}")
 
     @property
     def suffix(self) -> AnyStr:
@@ -314,7 +344,7 @@ class TokenNumber(Serializable):
         if isinstance(this_suffix, str) and not this_suffix.isdigit():
             self._options["suffix"] = this_suffix
         else:
-            logger.warning(f"Given suffix has to be a string: {this_suffix}")
+            logger.warning(f"Suffix must be a string: {this_suffix}")
 
     @property
     def options(self) -> Dict:
@@ -414,6 +444,28 @@ def has_token(name: AnyStr) -> bool:
     return name in _tokens.keys()
 
 
+def update_token_name(old_name, new_name):
+    """Update token name.
+
+    Args:
+        old_name (str): The current name of the token to update.
+
+        new_name (str): The new name of the token to be updated.
+
+    Returns:
+        True if Token name was updated, False if another token
+        has that name already or no current template with old_name was found.
+    """
+    if has_token(old_name) and not has_token(new_name):
+        token_obj = _tokens.pop(old_name)
+        token_obj.name = new_name
+        _tokens[new_name] = token_obj
+        if _tokens.get("_active") == old_name:
+            _tokens["_active"] == new_name
+        return True
+    return False
+
+
 def reset_tokens() -> bool:
     """Clears all rules created for current session.
 
@@ -434,6 +486,150 @@ def get_token(name: AnyStr) -> Union[Token, TokenNumber, None]:
         Rule: Token object instance for given name.
     """
     return _tokens.get(name)
+
+
+def get_token_options(token_name):
+    """Gets Token options for given token
+
+    Args:
+        ``token_name`` (str): The name of the token to query.
+
+    Returns:
+        [dict]: Token options. None if no token with given name was found,
+        or token has no options.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        return token_obj.options
+    return None
+
+
+def get_token_default_option(token_name):
+    """Gets Token default option for given token
+
+    Args:
+        ``token_name`` (str): The name of the token to query.
+
+    Returns:
+        [dict]: Token default option. None if no token with given name was found,
+        or token has no options.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        option_dict = {token_obj.default: token_obj.options.get(token_obj.default)}
+        return option_dict
+    return None
+
+
+def add_option_to_token(token_name, fullname, abbreviation):
+    """Adds an option pair to this Token.
+
+    Args:
+        ``token_name`` (str): The name of the exisiting token.
+
+        ``fullname`` (str): Full length name of the option.
+
+        ``abbreviation`` (str): Abbreviation to be used when building the path.
+
+    Returns:
+        [bool]: True if successful. False otherwise.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        return token_obj.add_option(fullname, abbreviation)
+    return False
+
+
+def update_option_fullname_from_token(token_name, old_fullname, new_fullname):
+    """Update an option fullname on this Token.
+
+    Args:
+        ``token_name`` (str): The name of the exisiting token.
+
+        ``old_fullname`` (str): Old full length name of the option.
+
+        ``new_fullname`` (str): New full length name of the option.
+
+        ``abbreviation`` (str): Abbreviation to be used when building the path.
+
+    Returns:
+        [bool]: True if successful. False otherwise.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        if token_obj.has_option_fullname(old_fullname):
+            abbreviation = token_obj.options.get(old_fullname)
+            token_obj.remove_option(old_fullname)
+            return token_obj.add_option(new_fullname, abbreviation)
+    return False
+
+
+def update_option_abbreviation_from_token(token_name, fullname, abbreviation):
+    """Update an option abbreviation on this Token.
+
+    Args:
+        ``token_name`` (str): The name of the exisiting token.
+
+        ``fullname`` (str): Full length name of the option.
+
+        ``abbreviation`` (str): Abbreviation to be used when building the path.
+
+    Returns:
+        [bool]: True if successful. False otherwise.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        if token_obj.has_option_fullname(fullname):
+            return token_obj.update_option(fullname, abbreviation)
+    return False
+
+
+def remove_option_from_token(token_name, fullname):
+    """Remove an option on given token.
+
+    Args:
+        ``token_name`` (str): The name of the exisiting token.
+
+        ``fullname`` (str): Full length name of the option
+
+    Returns:
+        [bool]: True if successful. False otherwise.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        if token_obj.has_option_fullname(fullname):
+            return token_obj.remove_option(fullname)
+    return False
+
+
+def has_option_fullname(token_name, fullname):
+    """Looks for given option full name in the given token options.
+
+    Args:
+        ``fullname`` (str): Full name of the option
+
+    Returns:
+        [bool]: True if found. False otherwise.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        return token_obj.has_option_fullname(fullname)
+    return False
+
+
+def has_option_abbreviation(token_name, abbreviation):
+    """Looks for given option abbreviation in the given token options.
+
+    Args:
+        ``abbreviation`` (str): Abbreviation
+
+    Returns:
+        [bool]: True if found. False otherwise.
+    """
+    if has_token(token_name):
+        token_obj = get_token(token_name)
+        return token_obj.has_option_abbreviation(abbreviation)
+    return False
 
 
 def get_tokens() -> Dict:

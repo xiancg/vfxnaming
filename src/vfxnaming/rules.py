@@ -37,7 +37,7 @@ class Rule(Serializable):
         r"(}[_\-\.:\|/\\]{|[_\-\.:\|/\\]{|}[_\-\.:\|/\\])"
     )
     __SEPARATORS_REGEX = re.compile(r"[_\-\.:\|/\\]")
-    __RULE_REFERENCE_REGEX = re.compile(r'{@(?P<reference>.+?)}')
+    __RULE_REFERENCE_REGEX = re.compile(r"{@(?P<reference>.+?)}")
     __AT_CODE = "_FXW_"
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
@@ -166,7 +166,7 @@ class Rule(Serializable):
         expression = re.sub(
             r"(?P<placeholder>{(.+?)(:(\\}|.)+?)?})|(?P<other>.+?)",
             self.__escape,
-            self.expanded_pattern()
+            self.expanded_pattern(),
         )
         # Replace placeholders with regex pattern
         expression = re.sub(
@@ -212,7 +212,7 @@ class Rule(Serializable):
         # this symbol not a valid character for a group name in the standard
         # Python regex library. Rather than rewrite or monkey patch the library
         # work around the restriction with a unique identifier.
-        placeholder_name = placeholder_name.replace('@', self.__AT_CODE)
+        placeholder_name = placeholder_name.replace("@", self.__AT_CODE)
 
         # The re module does not support duplicate group names. To support
         # duplicate placeholder names in templates add a unique count to the
@@ -236,10 +236,8 @@ class Rule(Serializable):
             [str]: Pattern with all referenced rules expanded recursively.
         """
         # ? Taken from Lucidity by Martin Pengelly-Phillips
-        return self.__RULE_REFERENCE_REGEX.sub(
-            self.__expand_reference, self.pattern
-        )
-    
+        return self.__RULE_REFERENCE_REGEX.sub(self.__expand_reference, self.pattern)
+
     def expanded_pattern_validation(self, pattern):
         """Return pattern with all referenced rules expanded recursively from a given pattern
 
@@ -251,9 +249,7 @@ class Rule(Serializable):
             [str]: Pattern with all referenced rules expanded recursively.
         """
         # ? Taken from Lucidity by Martin Pengelly-Phillips
-        return self.__RULE_REFERENCE_REGEX.sub(
-            self.__expand_reference, pattern
-        )
+        return self.__RULE_REFERENCE_REGEX.sub(self.__expand_reference, pattern)
 
     def __expand_reference(self, match):
         """Expand reference represented by *match*.
@@ -269,12 +265,12 @@ class Rule(Serializable):
             [str]: Expanded reference pattern
         """
         # ? Taken from Lucidity by Martin Pengelly-Phillips
-        reference = match.group('reference')
+        reference = match.group("reference")
 
         rule = get_rule(reference)
         if rule is None:
             raise RuleError(
-                'Failed to find reference {} in current repo.'.format(reference)
+                "Failed to find reference {} in current repo.".format(reference)
             )
 
         return rule.expanded_pattern()
@@ -299,7 +295,8 @@ class Rule(Serializable):
             if repetitions > 1:
                 i = 0
                 for match in sorted(indexes, reverse=True):
-                    digits_pattern = f"{digits_pattern[:match-1]}{str(repetitions-i)}{digits_pattern[match-1:]}"                    i += 1
+                    digits_pattern = f"{digits_pattern[:match-1]}{str(repetitions-i)}{digits_pattern[match-1:]}"
+                    i += 1
         logger.debug(f"Digits pattern to account for repeated fields: {digits_pattern}")
         return digits_pattern
 
