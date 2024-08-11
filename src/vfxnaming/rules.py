@@ -2,6 +2,7 @@ import re
 import json
 import sys
 import functools
+from copy import deepcopy
 from pathlib import Path
 from collections import defaultdict
 from typing import Dict, AnyStr, Union, Tuple
@@ -382,8 +383,8 @@ def validate_rule_pattern(name):
         bool: True if successful, False otherwise.
     """
     if has_rule(name):
-        template_obj = get_rule(name)
-        if len(template_obj.pattern) >= 1:
+        rule_obj = get_rule(name)
+        if len(rule_obj.pattern) >= 1:
             return True
     return False
 
@@ -415,7 +416,9 @@ def get_rules() -> Dict:
     Returns:
         dict: {rule_name:Rule}
     """
-    return _rules
+    rules_copy = deepcopy(_rules)
+    del rules_copy["_active"]
+    return rules_copy
 
 
 def save_rule(name: AnyStr, directory: Path) -> bool:

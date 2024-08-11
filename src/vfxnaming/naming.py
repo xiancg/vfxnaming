@@ -286,9 +286,9 @@ def save_session(repo: Union[Path, None] = None, override=True):
         rules.save_rule(name, repo)
     # extra configuration
     active = rules.get_active_rule()
-    config = {"set_active_template": active.name if active else None}
+    config = {"set_active_rule": active.name if active else None}
     filepath = os.path.join(repo, "vfxnaming.conf")
-    logger.debug(f"Saving active template: {active.name} in {filepath}")
+    logger.debug(f"Saving active rule: {active.name} in {filepath}")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
     return True
