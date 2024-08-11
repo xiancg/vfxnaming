@@ -17,6 +17,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import re
 import json
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
@@ -24,7 +25,7 @@ from pathlib import Path
 from typing import AnyStr, Dict, Union
 
 from vfxnaming.logger import logger
-from vfxnaming.error import SolvingError
+from vfxnaming.error import SolvingError, RepoError
 
 
 NAMING_REPO_ENV = "NAMING_REPO"
@@ -110,7 +111,7 @@ def solve(*args, **kwargs) -> AnyStr:
                 fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                raise SolvingError("Token {} is required.")
+                raise SolvingError("Token {} is required but was not passed.")
             # Not required and not passed as keyword argument
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
@@ -128,26 +129,113 @@ def solve(*args, **kwargs) -> AnyStr:
     return rule.solve(**values)
 
 
-def get_repo() -> Path:
-    """Get repository location from either global environment variable or local user,
-    giving priority to environment variable.
+def validate_repo(repo: Path) -> bool:
+    """Valides repo by checking if it contains a naming.conf file.
 
-    Environment varialble name: NAMING_REPO
+    Args:
+        repo (Path): Repo dir
 
     Returns:
-        Path: Naming repository location
+        bool: True if valid, False otherwise.
     """
-    env_repo = os.environ.get(NAMING_REPO_ENV)
-    user_path = Path.expanduser("~")
-    module_dir = Path(__file__).parent
-    config_location = module_dir / "cfg/config.json"
-    config = dict()
-    with open(config_location) as fp:
-        config = json.load(fp)
-    local_repo = user_path / f".{config['local_repo_name']}/naming_repo"
-    result = env_repo or local_repo
-    logger.debug(f"Repo found: {result}")
-    return Path(result)
+    config_file = repo / "naming.conf"
+    if not config_file.exists():
+        return False
+    return True
+
+
+def validate_tokens_and_referenced_rules(pattern: str) -> bool:
+    """Validate if the pattern uses tokens and rules that are defined in the current session.
+
+    Args:
+        pattern (str): Naming pattern to validate.
+
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    valid = True
+
+    regex = re.compile(r"{(?P<placeholder>.+?)(:(?P<expression>(\\}|.)+?))?}")
+    matches = regex.finditer(pattern)
+
+    all_rules = list(rules.get_rules().keys())
+    all_tokens = list(tokens.get_tokens().keys())
+
+    rules_used = []
+    tokens_used = []
+    for match in matches:
+        match_text = match.group(1)
+        if match_text.startswith("@"):
+            rules_used.append(match_text.replace("@", ""))
+        else:
+            tokens_used.append(match_text)
+
+    for rule in rules_used:
+        if rule not in all_rules:
+            valid = False
+            break
+
+    for token in tokens_used:
+        if token not in all_tokens:
+            valid = False
+            break
+
+    return valid
+
+
+def get_repo(force_repo: Union[Path, str] = None) -> Path:
+    """Get the path to a folder structures repo.
+
+    Path is looked for in these places and with the given priority:
+
+        1- ``force_repo`` parameter
+
+        2- Environment variable: NAMING_REPO
+
+        3- User config file: C:/Users/xxxxx/.CGXTools/vfxnaming/config.json
+
+        4- Dev config file: __file__/cfg/config.json
+
+    In both config.json files the key it looks for is 'vfxnaming_repo'
+
+    If a root path is passed as ``force_repo`` parameter, then it'll
+    return the same path but first checks it actually exists.
+
+    Keyword Arguments:
+        ``force_repo`` {Path} -- Use this path instead of looking for
+        pre-configured ones (default: {None})
+
+    Raises:
+        RepoError: Given repo directory does not exist.
+
+        RepoError: Config file for vfxnmaing library couldn't be found.
+
+    Returns:
+        [Path] -- Root path
+    """
+    # Env level
+    env_root = Path(os.environ.get(NAMING_REPO_ENV))
+
+    # User level
+    user_cfg_path = Path.expanduser("~") / ".CGXTools/vfxnaming/config.json"
+    user_config = {}
+    if user_cfg_path.exists():
+        with open(user_cfg_path) as fp:
+            user_config = json.load(fp)
+    user_root = user_config.get("vfxnaming_repo")
+
+    root = env_root or user_root
+    if force_repo:
+        root = force_repo
+
+    if not validate_repo(root):
+        raise RepoError(f"VFXNaming repo {root} is not valid, missing naming.conf file.")
+
+    if root.exists():
+        logger.debug(f"VFXNaming repo: {root}")
+        return root
+
+    raise RepoError(f"VFXNaming repo directory doesn't exist: {root}")
 
 
 def save_session(repo: Union[Path, None] = None) -> bool:
