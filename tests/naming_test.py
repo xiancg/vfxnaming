@@ -513,7 +513,7 @@ class Test_Serialization:
         rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
-    def test_validation(self):
+    def test_from_data_validation(self):
         token = tokens.add_token(
             "function",
             key="key",

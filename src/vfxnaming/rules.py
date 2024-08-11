@@ -1,6 +1,6 @@
 import re
 import json
-import sys
+import traceback
 import functools
 from copy import deepcopy
 from pathlib import Path
@@ -37,6 +37,8 @@ class Rule(Serializable):
         r"(}[_\-\.:\|/\\]{|[_\-\.:\|/\\]{|}[_\-\.:\|/\\])"
     )
     __SEPARATORS_REGEX = re.compile(r"[_\-\.:\|/\\]")
+    __RULE_REFERENCE_REGEX = re.compile(r'{@(?P<reference>.+?)}')
+    __AT_CODE = "_FXW_"
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
     def __init__(self, name, pattern, anchor=ANCHOR_START):
@@ -123,15 +125,16 @@ class Rule(Serializable):
             return None
         name_separators = self.__SEPARATORS_REGEX.findall(name)
         if len(expected_separators) <= len(name_separators):
-            retval = dict()
-            match = self._regex.search(name)
+            parsed = {}
+            regex = self.__build_regex()
+            match = regex.search(name)
             if match:
                 name_parts = sorted(match.groupdict().items())
                 name_parts_str = ", ".join(
                     [f"('{k[:-3]}': '{v}')" for k, v in name_parts]
                 )
                 logger.debug(f"Name parts: {name_parts_str}")
-                repeated_fields = dict()
+                repeated_fields = {}
                 for each in self.fields:
                     if each not in repeated_fields.keys():
                         if self.fields.count(each) > 1:
@@ -149,8 +152,8 @@ class Rule(Serializable):
                         counter = repeated_fields.get(token_name)
                         repeated_fields[token_name] = counter + 1
                         token_name = f"{token_name}{counter}"
-                    retval[token_name] = token.parse(value)
-            return retval
+                    parsed[token_name] = token.parse(value)
+            return parsed
         else:
             raise ParsingError(
                 f"Separators count mismatch between given name '{name}':'{len(name_separators)}' "
@@ -163,7 +166,7 @@ class Rule(Serializable):
         expression = re.sub(
             r"(?P<placeholder>{(.+?)(:(\\}|.)+?)?})|(?P<other>.+?)",
             self.__escape,
-            self._pattern,
+            self.expanded_pattern()
         )
         # Replace placeholders with regex pattern
         expression = re.sub(
@@ -190,9 +193,8 @@ class Rule(Serializable):
             ):
                 raise ValueError("Placeholder name contains invalid characters.")
             else:
-                _, value, traceback = sys.exc_info()
-                message = f"Invalid pattern: {value}"
-                raise ValueError(message).with_traceback(traceback)
+                message = f"Invalid pattern.\n{traceback.format_exc()}"
+                raise ValueError(message)
 
         return compiled
 
@@ -205,6 +207,12 @@ class Rule(Serializable):
         """
         # ? Taken from Lucidity by Martin Pengelly-Phillips
         placeholder_name = match.group("placeholder")
+
+        # Support at symbol (@) as referenced template indicator. Currently,
+        # this symbol not a valid character for a group name in the standard
+        # Python regex library. Rather than rewrite or monkey patch the library
+        # work around the restriction with a unique identifier.
+        placeholder_name = placeholder_name.replace('@', self.__AT_CODE)
 
         # The re module does not support duplicate group names. To support
         # duplicate placeholder names in templates add a unique count to the
@@ -221,6 +229,56 @@ class Rule(Serializable):
 
         return r"(?P<{0}>{1})".format(placeholder_name, expression)
 
+    def expanded_pattern(self):
+        """Return pattern with all referenced rules expanded recursively.
+
+        Returns:
+            [str]: Pattern with all referenced rules expanded recursively.
+        """
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        return self.__RULE_REFERENCE_REGEX.sub(
+            self.__expand_reference, self.pattern
+        )
+    
+    def expanded_pattern_validation(self, pattern):
+        """Return pattern with all referenced rules expanded recursively from a given pattern
+
+        Args:
+            ``pattern`` (str): Pattern string.
+            e.g.: "{@rule_base}/{token_1}/{token_2}/inmutable_folder/"
+
+        Returns:
+            [str]: Pattern with all referenced rules expanded recursively.
+        """
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        return self.__RULE_REFERENCE_REGEX.sub(
+            self.__expand_reference, pattern
+        )
+
+    def __expand_reference(self, match):
+        """Expand reference represented by *match*.
+
+        Args:
+            match (str): Template name to look for in repo.
+
+        Raises:
+            TemplateError: If pattern contains a reference that cannot be
+            resolved.
+
+        Returns:
+            [str]: Expanded reference pattern
+        """
+        # ? Taken from Lucidity by Martin Pengelly-Phillips
+        reference = match.group('reference')
+
+        rule = get_rule(reference)
+        if rule is None:
+            raise RuleError(
+                'Failed to find reference {} in current repo.'.format(reference)
+            )
+
+        return rule.expanded_pattern()
+
     def __escape(self, match: re.Match) -> AnyStr:
         """Escape matched 'other' group value."""
         # ? Taken from Lucidity by Martin Pengelly-Phillips
@@ -229,23 +287,39 @@ class Rule(Serializable):
             return re.escape(groups.get("other"))
         return groups.get("placeholder")
 
-    def __digits_pattern(self) -> AnyStr:
+    def __digits_pattern(self):
         # * This accounts for those cases where a token is used more than once in a rule
-        digits_pattern = self._pattern
+        digits_pattern = deepcopy(self.expanded_pattern())
         for each in list(set(self.fields)):
-            regex_pattern = re.compile(each)
+            # ? This is going to be a bit more difficult to handle when nesting templates
+            # ? due to the . character not being contemplated by the pattern
+            regex_pattern = re.compile("{{{0}}}".format(each))
             indexes = [match.end() for match in regex_pattern.finditer(digits_pattern)]
-            repetetions = len(indexes)
-            if repetetions > 1:
+            repetitions = len(indexes)
+            if repetitions > 1:
                 i = 0
                 for match in sorted(indexes, reverse=True):
-                    digits_pattern = f"{digits_pattern[:match]}{str(repetetions - i)}{digits_pattern[match:]}"
-                    i += 1
+                    digits_pattern = f"{digits_pattern[:match-1]}{str(repetitions-i)}{digits_pattern[match-1:]}"                    i += 1
+        logger.debug(f"Digits pattern to account for repeated fields: {digits_pattern}")
         return digits_pattern
 
     @property
     def pattern(self) -> AnyStr:
+        """
+        Returns:
+            [str]: Pattern that this Rule was initialized with.
+        """
         return self._pattern
+
+    @pattern.setter
+    def pattern(self, pattern):
+        """
+        Some times we need to change the pattern dinamically, at runtime.
+        """
+        if pattern == "":
+            logger.error(f"Pattern cannot be empty for rule: {self.name}")
+            return
+        self._pattern = pattern
 
     @property
     def fields(self) -> Tuple:
@@ -253,15 +327,15 @@ class Rule(Serializable):
         Returns:
             [tuple]: Tuple of all Tokens found in this Rule's pattern
         """
-        return tuple(self.__FIELDS_REGEX.findall(self._pattern))
+        return tuple(self.__FIELDS_REGEX.findall(self.expanded_pattern()))
 
     @property
-    def regex(self) -> re.Pattern:
+    def anchor(self):
         """
         Returns:
-            [str]: Regular expression used to parse from this Rule
+            [int]: Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH = (1, 2, 3)
         """
-        return self._regex
+        return self._anchor
 
     @property
     def name(self) -> AnyStr:
@@ -269,6 +343,8 @@ class Rule(Serializable):
 
     @name.setter
     def name(self, n: str):
+        if n == "":
+            logger.error(f"Name cannot be empty for rule: {self._pattern}")
         self._name = n
 
 
@@ -335,6 +411,28 @@ def has_rule(name: AnyStr) -> bool:
     return name in _rules.keys()
 
 
+def update_rule_name(old_name, new_name):
+    """Update rule name.
+
+    Args:
+        old_name (str): The current name of the rule to update.
+
+        new_name (str): The new name of the rule to be updated.
+
+    Returns:
+        True if Rule name was updated, False if another rule
+        has that name already or no current rule with old_name was found.
+    """
+    if has_rule(old_name) and not has_rule(new_name):
+        rule_obj = _rules.pop(old_name)
+        rule_obj.name = new_name
+        _rules[new_name] = rule_obj
+        if _rules.get("_active") == old_name:
+            _rules["_active"] == new_name
+        return True
+    return False
+
+
 def reset_rules() -> bool:
     """Clears all rules created for current session.
 
@@ -391,7 +489,7 @@ def validate_rule_pattern(name):
 
 def validate_rules():
     not_valid = []
-    for name, template in get_rules().items():
+    for name, rule in get_rules().items():
         if not validate_rule_pattern(name):
             not_valid.append(name)
     if len(not_valid) >= 1:
