@@ -160,7 +160,7 @@ class Rule(Serializable):
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
 
-    def validate(self, name: AnyStr) -> bool:
+    def validate(self, name: AnyStr) -> bool:  # noqa: C901
         """Validate if given name matches the rule pattern.
 
         Args:
@@ -239,9 +239,9 @@ class Rule(Serializable):
                             f"Token {token_name}: {value} must end with {token.prefix}"
                         )
                         matching_options = False
-                digits = value[len(token.prefix) : len(token.suffix) * -1]
+                digits = value[len(token.prefix) : len(token.suffix) * -1]  # noqa: E203
                 if not len(token.suffix):
-                    digits = value[len(token.prefix) :]
+                    digits = value[len(token.prefix) :]  # noqa: E203
                 if not digits.isdigit():
                     logger.warning(
                         f"Token {token_name}: {value} must be digits with "
@@ -399,7 +399,11 @@ class Rule(Serializable):
             if repetitions > 1:
                 i = 0
                 for match in sorted(indexes, reverse=True):
-                    digits_pattern = f"{digits_pattern[:match-1]}{str(repetitions-i)}{digits_pattern[match-1:]}"
+                    digits_pattern = (
+                        f"{digits_pattern[:match-1]}"
+                        f"{str(repetitions-i)}"
+                        f"{digits_pattern[match-1:]}"
+                    )
                     i += 1
         logger.debug(f"Digits pattern to account for repeated fields: {digits_pattern}")
         return digits_pattern
