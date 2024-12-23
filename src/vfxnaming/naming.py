@@ -17,14 +17,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import re
 import json
+import traceback
+import shutil
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from pathlib import Path
 from typing import AnyStr, Dict, Union
 
 from vfxnaming.logger import logger
-from vfxnaming.error import SolvingError
+from vfxnaming.error import SolvingError, RepoError
 
 
 NAMING_REPO_ENV = "NAMING_REPO"
@@ -110,7 +113,7 @@ def solve(*args, **kwargs) -> AnyStr:
                 fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                raise SolvingError("Token {} is required.")
+                raise SolvingError("Token {} is required but was not passed.")
             # Not required and not passed as keyword argument
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
@@ -128,60 +131,176 @@ def solve(*args, **kwargs) -> AnyStr:
     return rule.solve(**values)
 
 
-def get_repo() -> Path:
-    """Get repository location from either global environment variable or local user,
-    giving priority to environment variable.
+def validate(name: AnyStr) -> bool:
+    """Validates a name string against the currently active rule.
 
-    Environment varialble name: NAMING_REPO
+    Args:
+        name (str): Name string e.g.: C_helmet_001_MSH
 
     Returns:
-        Path: Naming repository location
+        bool: True if the name is valid, False otherwise.
     """
-    env_repo = os.environ.get(NAMING_REPO_ENV)
-    user_path = Path.expanduser("~")
-    module_dir = Path(__file__).parent
-    config_location = module_dir / "cfg/config.json"
-    config = dict()
-    with open(config_location) as fp:
-        config = json.load(fp)
-    local_repo = user_path / f".{config['local_repo_name']}/naming_repo"
-    result = env_repo or local_repo
-    logger.debug(f"Repo found: {result}")
-    return Path(result)
+    rule = rules.get_active_rule()
+    return rule.validate(name)
 
 
-def save_session(repo: Union[Path, None] = None) -> bool:
+def validate_repo(repo: Path) -> bool:
+    """Valides repo by checking if it contains a naming.conf file.
+
+    Args:
+        repo (Path): Repo dir
+
+    Returns:
+        bool: True if valid, False otherwise.
+    """
+    config_file = repo / "vfxnaming.conf"
+    if not config_file.exists():
+        return False
+    return True
+
+
+def validate_tokens_and_referenced_rules(pattern: str) -> bool:
+    """Validate if the pattern uses tokens and rules that are defined in the current session.
+
+    Args:
+        pattern (str): Naming pattern to validate.
+
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    valid = True
+
+    regex = re.compile(r"{(?P<placeholder>.+?)(:(?P<expression>(\\}|.)+?))?}")
+    matches = regex.finditer(pattern)
+
+    all_rules = list(rules.get_rules().keys())
+    all_tokens = list(tokens.get_tokens().keys())
+
+    rules_used = []
+    tokens_used = []
+    for match in matches:
+        match_text = match.group(1)
+        if match_text.startswith("@"):
+            rules_used.append(match_text.replace("@", ""))
+        else:
+            tokens_used.append(match_text)
+
+    for rule in rules_used:
+        if rule not in all_rules:
+            valid = False
+            break
+
+    for token in tokens_used:
+        if token not in all_tokens:
+            valid = False
+            break
+
+    return valid
+
+
+def get_repo(force_repo: Union[Path, str] = None) -> Path:
+    """Get the path to a folder structures repo.
+
+    Path is looked for in these places and with the given priority:
+
+        1- ``force_repo`` parameter
+
+        2- Environment variable: NAMING_REPO
+
+        3- User config file: C:/Users/xxxxx/.CGXTools/vfxnaming/config.json
+
+        4- Dev config file: __file__/cfg/config.json
+
+    In both config.json files the key it looks for is 'vfxnaming_repo'
+
+    If a root path is passed as ``force_repo`` parameter, then it'll
+    return the same path but first checks it actually exists.
+
+    Keyword Arguments:
+        ``force_repo`` {Path} -- Use this path instead of looking for
+        pre-configured ones (default: {None})
+
+    Raises:
+        RepoError: Given repo directory does not exist.
+
+        RepoError: Config file for vfxnmaing library couldn't be found.
+
+    Returns:
+        [Path] -- Root path
+    """
+    # Env level
+    env_root = Path(os.environ.get(NAMING_REPO_ENV))
+
+    # User level
+    user_cfg_path = Path.expanduser("~") / ".CGXTools/vfxnaming/config.json"
+    user_config = {}
+    if user_cfg_path.exists():
+        with open(user_cfg_path) as fp:
+            user_config = json.load(fp)
+    user_root = user_config.get("vfxnaming_repo")
+
+    root = env_root or user_root
+    if force_repo:
+        root = force_repo
+
+    if not validate_repo(root):
+        raise RepoError(f"VFXNaming repo {root} is not valid, missing naming.conf file.")
+
+    if root.exists():
+        logger.debug(f"VFXNaming repo: {root}")
+        return root
+
+    raise RepoError(f"VFXNaming repo directory doesn't exist: {root}")
+
+
+def save_session(repo: Union[Path, None] = None, override=True):
     """Save rules, tokens and config files to the repository.
 
     Raises:
-        IOError, OSError: Repository directory could not be created.
+        RepoError: Repository directory could not be created or is not valid.
+
+        TokenError: Not required tokens must have at least one option (fullname=abbreviation).
+
+        TemplateError: Template patterns are not valid.
 
     Args:
-        repo (Path, optional): Absolue path to a repository. Defaults to None.
+        ``repo`` (str, optional): Path to a repository. Defaults to None.
+
+        ``override`` (bool, optional): If True, it'll remove given directory and recreate it.
 
     Returns:
-        bool: True if saving session operation was successful.
+        [bool]: True if saving session operation was successful.
     """
-    repo: Path = repo or get_repo()
+    # Validations
+    rules.validate_rules()
+    tokens.validate_tokens()
+
+    repo = repo or get_repo()
+    if override:
+        try:
+            shutil.rmtree(repo)
+        except (IOError, OSError) as why:
+            raise RepoError(why, traceback.format_exc())
     if not repo.exists():
         try:
-            repo.mkdir(parents=True)
+            os.mkdir(repo)
         except (IOError, OSError) as why:
-            raise why
-    # save tokens
+            raise RepoError(why, traceback.format_exc())
+
+    # Save tokens
     for name, token in tokens.get_tokens().items():
-        logger.debug(f"Saving token: '{name}' in {repo}")
+        logger.debug(f"Saving token: {name} in {repo}")
         tokens.save_token(name, repo)
-    # save rules
-    for name, rule in rules.get_rules().items():
-        if not isinstance(rule, rules.Rule):
+    # Save rules
+    for name, template in rules.get_rules().items():
+        if not isinstance(template, rules.Rule):
             continue
-        logger.debug(f"Saving rule: '{name}' in {repo}")
+        logger.debug(f"Saving template: {name} in {repo}")
         rules.save_rule(name, repo)
     # extra configuration
     active = rules.get_active_rule()
     config = {"set_active_rule": active.name if active else None}
-    filepath = repo / "naming.conf"
+    filepath = os.path.join(repo, "vfxnaming.conf")
     logger.debug(f"Saving active rule: {active.name} in {filepath}")
     with open(filepath, "w") as fp:
         json.dump(config, fp, indent=4)
@@ -202,9 +321,9 @@ def load_session(repo: Union[Path, None] = None) -> bool:
     if not repo.exists():
         logger.warning(f"Given repo directory does not exist: {repo}")
         return False
-    namingconf = repo / "naming.conf"
+    namingconf = repo / "vfxnaming.conf"
     if not namingconf.exists():
-        logger.warning(f"Repo is not valid. naming.conf not found {namingconf}")
+        logger.warning(f"Repo is not valid. vfxnaming.conf not found {namingconf}")
         return False
     rules.reset_rules()
     tokens.reset_tokens()

@@ -1,4 +1,4 @@
-from vfxnaming.naming import parse, solve, get_repo, save_session, load_session  # noqa: F401
+from vfxnaming.naming import parse, solve, validate, get_repo, save_session, load_session  # noqa: F401
 from vfxnaming.rules import (  # noqa: F401
     add_rule,
     remove_rule,

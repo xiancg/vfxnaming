@@ -73,6 +73,7 @@ For more information please check :doc:`credits`
    usage/repositories
    usage/solving
    usage/parsing
+   usage/validating
 
 .. toctree::
    :maxdepth: 3

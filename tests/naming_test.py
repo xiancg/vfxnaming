@@ -203,6 +203,67 @@ class Test_Parse:
         assert parsed is None
 
 
+class Test_Validate:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        tokens.add_token("whatAffects")
+        tokens.add_token_number("digits")
+        tokens.add_token(
+            "category",
+            natural="natural",
+            practical="practical",
+            dramatic="dramatic",
+            volumetric="volumetric",
+            default="natural",
+        )
+        tokens.add_token(
+            "function",
+            key="key",
+            fill="fill",
+            ambient="ambient",
+            bounce="bounce",
+            rim="rim",
+            custom="custom",
+            kick="kick",
+            default="custom",
+        )
+        tokens.add_token("type", lighting="LGT", animation="ANI", default="lighting")
+        rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
+
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            (
+                "dramatic_bounce_chars_001_LGT",
+                True,
+            ),
+            (
+                "dramatic_bounce_chars_001",
+                False,
+            ),
+            (
+                "whatEver_bounce_chars_001_LGT",
+                False,
+            ),
+            (
+                "dramatic_bounce_chars_01_LGT",
+                False,
+            ),
+            (
+                "dramatic_bounce_chars_v001_LGT",
+                False,
+            ),
+            (
+                "dramatic_bounce_chars_1000_LGT",
+                True,
+            ),
+        ],
+    )
+    def test_valid(self, name: str, expected: bool):
+        assert n.validate(name) is expected
+
+
 class Test_RuleWithRepetitions:
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -318,7 +379,7 @@ class Test_RuleWithRepetitions:
         "name,data",
         [
             (
-                "C-FRONT_C-PAROT_R-RETMAND",
+                "C-ORBI_C-PAROT_R-RETMAND",
                 {
                     "side3": "right",
                     "region2": "parotidmasseter",
@@ -326,7 +387,7 @@ class Test_RuleWithRepetitions:
                 },
             ),
             (
-                "L-FRONT_C-RETMAND_R-FRONT",
+                "L-ORBI_C-RETMAND_R-ORBI",
                 {
                     "side1": "left",
                     "side3": "right",
@@ -513,7 +574,7 @@ class Test_Serialization:
         rule2 = rules.Rule.from_data(rule1.data())
         assert rule1.data() == rule2.data()
 
-    def test_validation(self):
+    def test_from_data_validation(self):
         token = tokens.add_token(
             "function",
             key="key",
