@@ -8,7 +8,7 @@ from collections import defaultdict
 from typing import Dict, AnyStr, Union, Tuple
 
 from vfxnaming.serialize import Serializable
-from vfxnaming.tokens import get_token
+from vfxnaming.tokens import get_token, TokenNumber
 from vfxnaming.logger import logger
 from vfxnaming.error import ParsingError, SolvingError, RuleError
 
@@ -213,6 +213,7 @@ class Rule(Serializable):
                     repeated_fields[each] = 1
         if repeated_fields:
             logger.debug(f"Repeated tokens: {', '.join(repeated_fields.keys())}")
+
         matching_options = True
         for key, value in name_parts:
             # Strip number that was added to make group name unique
@@ -225,6 +226,32 @@ class Rule(Serializable):
                 ):
                     logger.debug(f"Token {token_name} has no option {value}")
                     matching_options = False
+            if isinstance(token, TokenNumber):
+                if len(token.suffix):
+                    if not value.endswith(token.suffix):
+                        logger.debug(
+                            f"Token {token_name}: {value} must end with {token.suffix}"
+                        )
+                        matching_options = False
+                if len(token.prefix):
+                    if not value.startswith(token.prefix):
+                        logger.debug(
+                            f"Token {token_name}: {value} must end with {token.prefix}"
+                        )
+                        matching_options = False
+                digits = value[len(token.prefix) : len(token.suffix) * -1]
+                if not digits.isdigit():
+                    logger.debug(
+                        f"Token {token_name}: {value} must be digits with "
+                        f"prefix '{token.prefix}' and suffix '{token.suffix}'"
+                    )
+                    matching_options = False
+                if len(digits) != token.padding:
+                    logger.debug(
+                        f"Token {token_name}: {value} must have {token.padding} digits"
+                    )
+                    matching_options = False
+
         return matching_options
 
     def __build_regex(self) -> re.Pattern:
