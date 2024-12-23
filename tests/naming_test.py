@@ -367,7 +367,7 @@ class Test_RuleWithRepetitions:
         "name,data",
         [
             (
-                "C-FRONT_C-PAROT_R-RETMAND",
+                "C-ORBI_C-PAROT_R-RETMAND",
                 {
                     "side3": "right",
                     "region2": "parotidmasseter",
@@ -375,7 +375,7 @@ class Test_RuleWithRepetitions:
                 },
             ),
             (
-                "L-FRONT_C-RETMAND_R-FRONT",
+                "L-ORBI_C-RETMAND_R-ORBI",
                 {
                     "side1": "left",
                     "side3": "right",
