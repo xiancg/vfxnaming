@@ -203,6 +203,55 @@ class Test_Parse:
         assert parsed is None
 
 
+class Test_Validate:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        tokens.add_token("whatAffects")
+        tokens.add_token_number("digits")
+        tokens.add_token(
+            "category",
+            natural="natural",
+            practical="practical",
+            dramatic="dramatic",
+            volumetric="volumetric",
+            default="natural",
+        )
+        tokens.add_token(
+            "function",
+            key="key",
+            fill="fill",
+            ambient="ambient",
+            bounce="bounce",
+            rim="rim",
+            custom="custom",
+            kick="kick",
+            default="custom",
+        )
+        tokens.add_token("type", lighting="LGT", animation="ANI", default="lighting")
+        rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
+
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            (
+                "dramatic_bounce_chars_001_LGT",
+                True,
+            ),
+            (
+                "dramatic_bounce_chars_001",
+                False,
+            ),
+            (
+                "whatEver_bounce_chars_001_LGT",
+                False,
+            ),
+        ],
+    )
+    def test_valid(self, name: str, expected: bool):
+        assert n.validate(name) is expected
+
+
 class Test_RuleWithRepetitions:
     @pytest.fixture(autouse=True)
     def setup(self):

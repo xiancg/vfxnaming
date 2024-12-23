@@ -131,6 +131,19 @@ def solve(*args, **kwargs) -> AnyStr:
     return rule.solve(**values)
 
 
+def validate(name: AnyStr) -> bool:
+    """Validates a name string against the currently active rule.
+
+    Args:
+        name (str): Name string e.g.: C_helmet_001_MSH
+
+    Returns:
+        bool: True if the name is valid, False otherwise.
+    """
+    rule = rules.get_active_rule()
+    return rule.validate(name)
+
+
 def validate_repo(repo: Path) -> bool:
     """Valides repo by checking if it contains a naming.conf file.
 

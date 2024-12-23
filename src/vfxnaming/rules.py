@@ -160,6 +160,73 @@ class Rule(Serializable):
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
 
+    def validate(self, name: AnyStr) -> bool:
+        """Validate if given name matches the rule pattern.
+
+        Args:
+            name (str): Name string e.g.: C_helmet_001_MSH
+
+        Returns:
+            bool: True if name matches the rule pattern, False otherwise.
+        """
+        expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
+        if len(expected_separators) <= 0:
+            logger.warning(
+                f"No separators used for rule '{self.name}', parsing is not possible."
+            )
+            return False
+
+        name_separators = self.__SEPARATORS_REGEX.findall(name)
+        if len(expected_separators) > len(name_separators):
+            logger.warning(
+                f"Separators count mismatch between given name '{name}':'{len(name_separators)}' "
+                f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
+            )
+            return False
+
+        regex = self.__build_regex()
+        match = regex.search(name)
+        if not match:
+            logger.warning(f"Name {name} does not match rule pattern '{self._pattern}'")
+            return False
+
+        name_parts = sorted(match.groupdict().items())
+        name_parts_str = ", ".join([f"('{k[:-3]}': '{v}')" for k, v in name_parts])
+        logger.debug(f"Name parts: {name_parts_str}")
+
+        has_tokens_with_options = False
+        for key, value in name_parts:
+            # Strip number that was added to make group name unique
+            token_name = key[:-3]
+            token = get_token(token_name)
+            if not token.required:
+                has_tokens_with_options = True
+                break
+        # If we don't have tokens with options this match is already valid
+        if not has_tokens_with_options:
+            return True
+
+        repeated_fields = {}
+        for each in self.fields:
+            if each not in repeated_fields.keys():
+                if self.fields.count(each) > 1:
+                    repeated_fields[each] = 1
+        if repeated_fields:
+            logger.debug(f"Repeated tokens: {', '.join(repeated_fields.keys())}")
+        matching_options = True
+        for key, value in name_parts:
+            # Strip number that was added to make group name unique
+            token_name = key[:-3]
+            token = get_token(token_name)
+            if not token.required:
+                if not (
+                    token.has_option_fullname(value)
+                    or token.has_option_abbreviation(value)
+                ):
+                    logger.debug(f"Token {token_name} has no option {value}")
+                    matching_options = False
+        return matching_options
+
     def __build_regex(self) -> re.Pattern:
         # ? Taken from Lucidity by Martin Pengelly-Phillips
         # Escape non-placeholder components
