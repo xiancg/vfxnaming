@@ -246,6 +246,18 @@ class Test_Validate:
                 "whatEver_bounce_chars_001_LGT",
                 False,
             ),
+            (
+                "dramatic_bounce_chars_01_LGT",
+                False,
+            ),
+            (
+                "dramatic_bounce_chars_v001_LGT",
+                False,
+            ),
+            (
+                "dramatic_bounce_chars_1000_LGT",
+                True,
+            ),
         ],
     )
     def test_valid(self, name: str, expected: bool):

@@ -224,32 +224,42 @@ class Rule(Serializable):
                     token.has_option_fullname(value)
                     or token.has_option_abbreviation(value)
                 ):
-                    logger.debug(f"Token {token_name} has no option {value}")
+                    logger.warning(f"Token {token_name} has no option {value}")
                     matching_options = False
             if isinstance(token, TokenNumber):
                 if len(token.suffix):
                     if not value.endswith(token.suffix):
-                        logger.debug(
+                        logger.warning(
                             f"Token {token_name}: {value} must end with {token.suffix}"
                         )
                         matching_options = False
                 if len(token.prefix):
                     if not value.startswith(token.prefix):
-                        logger.debug(
+                        logger.warning(
                             f"Token {token_name}: {value} must end with {token.prefix}"
                         )
                         matching_options = False
                 digits = value[len(token.prefix) : len(token.suffix) * -1]
+                if not len(token.suffix):
+                    digits = value[len(token.prefix) :]
                 if not digits.isdigit():
-                    logger.debug(
+                    logger.warning(
                         f"Token {token_name}: {value} must be digits with "
                         f"prefix '{token.prefix}' and suffix '{token.suffix}'"
                     )
                     matching_options = False
-                if len(digits) != token.padding:
-                    logger.debug(
+                    continue
+                hash_str = "#" * token.padding
+                limit = int(hash_str.replace("#", "9"))
+                if len(digits) != token.padding and int(digits) <= limit:
+                    logger.warning(
                         f"Token {token_name}: {value} must have {token.padding} digits"
                     )
+                    if int(digits) > limit:
+                        logger.debug(
+                            f"Token {token_name}: {value} is higher than {limit}. "
+                            "Consider increasing padding."
+                        )
                     matching_options = False
 
         return matching_options
