@@ -145,7 +145,7 @@ def validate(name: AnyStr) -> bool:
 
 
 def validate_repo(repo: Path) -> bool:
-    """Valides repo by checking if it contains a naming.conf file.
+    """Valides repo by checking if it contains a vfxnaming.conf file.
 
     Args:
         repo (Path): Repo dir
@@ -244,7 +244,9 @@ def get_repo(force_repo: Union[Path, str] = None) -> Path:
         root = force_repo
 
     if not validate_repo(root):
-        raise RepoError(f"VFXNaming repo {root} is not valid, missing naming.conf file.")
+        raise RepoError(
+            f"VFXNaming repo {root} is not valid, missing vfxnaming.conf file."
+        )
 
     if root.exists():
         logger.debug(f"VFXNaming repo: {root}")
