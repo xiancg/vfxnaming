@@ -188,6 +188,10 @@ class Rule(Serializable):
         match = regex.search(name)
         if not match:
             logger.warning(f"Name {name} does not match rule pattern '{self._pattern}'")
+            if regex.search(name.lower()):
+                logger.warning(
+                    f"Name {name} has casing mismatches with '{self._pattern}'"
+                )
             return False
 
         name_parts = sorted(match.groupdict().items())
