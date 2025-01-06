@@ -113,7 +113,7 @@ def solve(*args, **kwargs) -> AnyStr:
                 fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                raise SolvingError("Token {} is required but was not passed.")
+                raise SolvingError(f"Token {token.name} is required but was not passed.")
             # Not required and not passed as keyword argument
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
