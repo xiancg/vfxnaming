@@ -160,7 +160,7 @@ class Rule(Serializable):
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
 
-    def validate(self, name: AnyStr) -> bool:  # noqa: C901
+    def validate(self, name: AnyStr, **validate_values) -> bool:  # noqa: C901
         """Validate if given name matches the rule pattern.
 
         Args:
@@ -194,7 +194,42 @@ class Rule(Serializable):
                 )
             return False
 
-        name_parts = sorted(match.groupdict().items())
+        match_dict = match.groupdict()
+        name_parts = sorted(match_dict.items())
+        repeated_fields = {}
+        for each in self.fields:
+            if each not in repeated_fields.keys():
+                if self.fields.count(each) > 1:
+                    repeated_fields[each] = 1
+        if repeated_fields:
+            logger.debug(f"Repeated tokens: {', '.join(repeated_fields.keys())}")
+        if len(validate_values):
+            for key, value in name_parts:
+                # Strip number that was added to make group name unique
+                token_name = key[:-3]
+                token = get_token(token_name)
+                if not token:
+                    continue
+                if token_name in repeated_fields.keys():
+                    counter = repeated_fields.get(token_name)
+                    repeated_fields[token_name] = counter + 1
+                    token_name = f"{token_name}{counter}"
+
+                if token_name not in validate_values.keys():
+                    continue
+
+                given_value = validate_values.get(token_name)
+                if value != given_value:
+                    logger.warning(
+                        f"Token '{token_name}' value '{value}' does not match '{given_value}'"
+                    )
+                    if value.lower() == given_value.lower():
+                        logger.warning(
+                            f"Token '{token_name}' value '{value}' has "
+                            f"casing mismatches with '{given_value}'"
+                        )
+                    return False
+
         name_parts_str = ", ".join([f"('{k[:-3]}': '{v}')" for k, v in name_parts])
         logger.debug(f"Name parts: {name_parts_str}")
 
@@ -209,14 +244,6 @@ class Rule(Serializable):
         # If we don't have tokens with options this match is already valid
         if not has_tokens_with_options:
             return True
-
-        repeated_fields = {}
-        for each in self.fields:
-            if each not in repeated_fields.keys():
-                if self.fields.count(each) > 1:
-                    repeated_fields[each] = 1
-        if repeated_fields:
-            logger.debug(f"Repeated tokens: {', '.join(repeated_fields.keys())}")
 
         matching_options = True
         for key, value in name_parts:
