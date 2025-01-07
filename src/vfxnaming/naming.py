@@ -131,17 +131,69 @@ def solve(*args, **kwargs) -> AnyStr:
     return rule.solve(**values)
 
 
-def validate(name: AnyStr) -> bool:
-    """Validates a name string against the currently active rule.
+def validate(name: AnyStr, **kwargs) -> bool:
+    """Validates a name string against the currently active rule and its
+    tokens if passed as keyword arguments.
+
+    -For rules with repeated tokens:
+
+    If your rule uses the same token more than once, pass arguments with the token
+    name and add an incremental digit
+
+    i.e.: side1='C', side2='R'
+
+    If your rule uses the same token more than once, you can also pass a single
+    instance of the argument and it'll be applied to all repetitions.
+
+    i.e.: side='C'
+
+    If your rule uses the same token more than once, you can ignore one of the repetitions,
+    and the solver will use the default value for that token.
+
+    i.e.: side1='C', side4='L'
 
     Args:
         name (str): Name string e.g.: C_helmet_001_MSH
+
+        kwargs (dict): Keyword arguments with token names and values.
 
     Returns:
         bool: True if the name is valid, False otherwise.
     """
     rule = rules.get_active_rule()
-    return rule.validate(name)
+    # * This accounts for those cases where a token is used more than once in a rule
+    repeated_fields = dict()
+    for each in rule.fields:
+        if each not in repeated_fields.keys():
+            if rule.fields.count(each) > 1:
+                repeated_fields[each] = 1
+    fields_with_digits = list()
+    for each in rule.fields:
+        if each in repeated_fields.keys():
+            counter = repeated_fields.get(each)
+            repeated_fields[each] = counter + 1
+            fields_with_digits.append(f"{each}{counter}")
+        else:
+            fields_with_digits.append(each)
+    values = {}
+    fields_inc = 0
+    for f in fields_with_digits:
+        token = tokens.get_token(rule.fields[fields_inc])
+        if token:
+            # Explicitly passed as keyword argument
+            if kwargs.get(f) is not None:
+                values[f] = token.solve(kwargs.get(f))
+                fields_inc += 1
+                continue
+            # Explicitly passed as keyword argument without repetitive digits
+            # Use passed argument for all field repetitions
+            elif kwargs.get(rule.fields[fields_inc]) is not None:
+                values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
+                fields_inc += 1
+                continue
+            fields_inc += 1
+    logger.debug(f"Validating rule '{rule.name}' with values {values}")
+    return rule.validate(name, **values)
 
 
 def validate_repo(repo: Path) -> bool:

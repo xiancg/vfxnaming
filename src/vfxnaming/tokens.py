@@ -144,10 +144,17 @@ class Token(Serializable):
             )
         elif not self.required and name:
             if name not in self._options.keys():
-                raise TokenError(
-                    f"name '{name}' not found in Token '{self.name}'. "
+                lower_match = [k.lower() for k in self._options.keys()]
+                error_msg = (
+                    f"Name '{name}' not found in Token '{self.name}'. "
                     f"Options: {', '.join(self._options.keys())}"
                 )
+                if name.lower() in lower_match:
+                    error_msg = (
+                        f"Check casing of '{name}' against token '{self.name}' "
+                        f"options: {', '.join(self._options.keys())}"
+                    )
+                raise TokenError(error_msg)
             return self._options.get(name)
         elif not self.required and not name:
             return self._options.get(self.default)

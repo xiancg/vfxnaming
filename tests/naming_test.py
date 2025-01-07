@@ -263,6 +263,88 @@ class Test_Validate:
     def test_valid(self, name: str, expected: bool):
         assert n.validate(name) is expected
 
+    @pytest.mark.parametrize(
+        "name,validate_values,expected",
+        [
+            (
+                "dramatic_bounce_chars_001_LGT",
+                {"category": "dramatic"},
+                True,
+            ),
+            (
+                "dramatic_bounce_chars_001_LGT",
+                {"whatAffects": "chars"},
+                True,
+            ),
+            (
+                "dramatic_bounce_chars_001_LGT",
+                {"category": "practical"},
+                False,
+            ),
+            (
+                "dramatic_bounce_chars_001_LGT",
+                {"whatAffects": "anything"},
+                False,
+            ),
+        ],
+    )
+    def test_valid_with_tokens(self, name: str, validate_values: dict, expected: bool):
+        assert n.validate(name, **validate_values) is expected
+
+
+class Test_ValidateWithRepetitions:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        rules.reset_rules()
+        tokens.add_token("side", center="C", left="L", right="R", default="center")
+        tokens.add_token(
+            "region",
+            orbital="ORBI",
+            parotidmasseter="PAROT",
+            mental="MENT",
+            frontal="FRONT",
+            zygomatic="ZYGO",
+            retromandibularfossa="RETMAND",
+        )
+        rules.add_rule("filename", "{side}-{region}_{side}-{region}_{side}-{region}")
+
+    @pytest.mark.parametrize(
+        "name,validate_values,expected",
+        [
+            (
+                "C-FRONT_L-ORBI_R-ZYGO",
+                {
+                    "side1": "center",
+                    "region1": "frontal",
+                    "side2": "left",
+                    "region2": "orbital",
+                    "side3": "right",
+                    "region3": "zygomatic",
+                },
+                True,
+            ),
+            (
+                "R-MENT_C-PAROT_L-RETMAND",
+                {
+                    "side2": "center",
+                },
+                True,
+            ),
+            (
+                "R-MENT_C-PAROT_L-RETMAND",
+                {
+                    "side": "center",
+                },
+                False,
+            ),
+        ],
+    )
+    def test_valid_with_repetitions(
+        self, name: str, validate_values: dict, expected: bool
+    ):
+        assert n.validate(name, **validate_values) is expected
+
 
 class Test_RuleWithRepetitions:
     @pytest.fixture(autouse=True)
