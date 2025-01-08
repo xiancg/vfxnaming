@@ -14,6 +14,7 @@ Let's set these Tokens and Rules.
 
     # CREATE TOKENS
     n.add_token('whatAffects')
+    n.add_token('shadowType', fallback='soft')
     n.add_token_number('digits')
     n.add_token(
         'category',
@@ -33,7 +34,7 @@ Let's set these Tokens and Rules.
     # CREATE RULES
     n.add_rule(
         'lights',
-        '{category}_{function}_{whatAffects}_{digits}_{type}'
+        '{category}_{function}_{whatAffects}_{shadowType}_{digits}_{type}'
     )
 
     n.set_active_rule("lights")
@@ -44,6 +45,8 @@ Explicit Vs. Implicit
 It would not make any sense to make the user pass each and every Token all the time to be able to solve for a name. That'd be the equivalent, almost, to typing the name by hand. Also, it'd be good if the user doesn't have to know all token names by heart (though Rule.fields can help you with that).
 
 That's why vfxnaming.solve() accepts both args and kwargs. Not only that, but if given Token is optional and you want to use it's default value, you don't need to pass it at all.
+
+Even if you make a required tokken, you can still define a fallback value for it.
 
 .. code-block:: python
 
@@ -57,9 +60,9 @@ That's why vfxnaming.solve() accepts both args and kwargs. Not only that, but if
 Each of these calls to vfxnaming.solve() will produce the exact same result:
 
 .. note::
-    natural_custom_chars_001_LGT
+    natural_custom_chars_soft_001_LGT
 
-If you don't pass a required Token (either as an argument or keyword argument), such as 'whatAffects' in this example, you'll get a **TokenError**. You'll also get a **TokenError** if you try to parse a value that doesn't match any of the options in the Token.
+If you don't pass a required Token (either as an argument or keyword argument), such as 'whatAffects' in this example, you'll get a **TokenError**, unless it has a fallback value defined. You'll also get a **TokenError** if you try to parse a value that doesn't match any of the options in the Token.
 
 Solving rules with repeated tokens
 -----------------------------------------

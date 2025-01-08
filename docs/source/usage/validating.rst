@@ -23,7 +23,7 @@ Let's set these Tokens and Rule.
 
     # CREATE TOKENS
     n.reset_tokens()
-    n.add_token("whatAffects")
+    n.add_token("whatAffects", fallback="nothing")
     n.add_token_number("digits")
     n.add_token(
         "category",
@@ -56,6 +56,9 @@ And then let's validate these names:
 .. code-block:: python
 
     n.validate("dramatic_bounce_chars_001_LGT")
+    # Result: True
+
+    n.validate("dramatic_bounce_nothing_001_LGT")
     # Result: True
 
     n.validate("dramatic_bounce_chars_001")
