@@ -113,7 +113,14 @@ def solve(*args, **kwargs) -> AnyStr:
                 fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                raise SolvingError(f"Token {token.name} is required but was not passed.")
+                if len(token.fallback):
+                    values[f] = token.fallback
+                    fields_inc += 1
+                    continue
+                else:
+                    raise SolvingError(
+                        f"Token {token.name} is required but was not passed."
+                    )
             # Not required and not passed as keyword argument
             elif not token.required and kwargs.get(f) is None:
                 values[f] = token.solve()
@@ -191,6 +198,11 @@ def validate(name: AnyStr, **kwargs) -> bool:
                 values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
                 fields_inc += 1
                 continue
+            elif token.required and isinstance(token, tokens.Token):
+                if len(token.fallback):
+                    values[f] = token.fallback
+                    fields_inc += 1
+                    continue
             fields_inc += 1
     logger.debug(f"Validating rule '{rule.name}' with values {values}")
     return rule.validate(name, **values)

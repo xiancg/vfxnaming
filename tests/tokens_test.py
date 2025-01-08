@@ -13,11 +13,12 @@ class Test_Token:
         tokens.reset_tokens()
 
     @pytest.mark.parametrize(
-        "name,kwargs",
+        "name,fallback,kwargs",
         [
-            ("test", {}),
+            ("test", "", {}),
             (
                 "category",
+                "",
                 {
                     "natural": "natural",
                     "practical": "practical",
@@ -26,10 +27,11 @@ class Test_Token:
                     "default": "natural",
                 },
             ),
+            ("fallbacktest", "imfallback", {}),
         ],
     )
-    def test_add(self, name: str, kwargs):
-        result = tokens.add_token(name, **kwargs)
+    def test_add(self, name: str, fallback: str, kwargs):
+        result = tokens.add_token(name, fallback, **kwargs)
         assert isinstance(result, tokens.Token) is True
 
     def test_reset_tokens(self):
@@ -116,6 +118,69 @@ class Test_Token_Options:
     def test_has_option_abbreviation(self, abbreviation: str, expected: bool):
         result = self.light_category.has_option_abbreviation(abbreviation)
         assert result is expected
+
+
+class Test_TokenFallback:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        rules.reset_rules()
+        tokens.reset_tokens()
+        tokens.add_token("whatAffects", fallback="nothing")
+        tokens.add_token_number("number")
+        tokens.add_token(
+            "category",
+            natural="natural",
+            practical="practical",
+            dramatic="dramatic",
+            volumetric="volumetric",
+            default="natural",
+        )
+        tokens.add_token(
+            "function",
+            key="key",
+            fill="fill",
+            ambient="ambient",
+            bounce="bounce",
+            rim="rim",
+            kick="kick",
+            custom="custom",
+            default="custom",
+        )
+        tokens.add_token("type", lighting="LGT", default="LGT")
+        rules.add_rule("lights", "{category}_{function}_{whatAffects}_{number}_{type}")
+
+    def test_token_has_fallback(self):
+        assert tokens.get_token("whatAffects").fallback == "nothing"
+
+    @pytest.mark.parametrize(
+        "name,data,expected",
+        [
+            (
+                "natural_ambient_chars_024_LGT",
+                {
+                    "category": "natural",
+                    "function": "ambient",
+                    "whatAffects": "chars",
+                    "number": 24,
+                    "type": "lighting",
+                },
+                True,
+            ),
+            (
+                "natural_ambient_nothing_003_LGT",
+                {
+                    "category": "natural",
+                    "function": "ambient",
+                    "number": 3,
+                    "type": "lighting",
+                },
+                True,
+            ),
+        ],
+    )
+    def test_fallback_solve(self, name: str, data: dict, expected: bool):
+        solved = n.solve(**data)
+        assert (name == solved) is expected
 
 
 class Test_TokenNumber:

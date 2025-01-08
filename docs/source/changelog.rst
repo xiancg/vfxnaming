@@ -1,6 +1,13 @@
 Changelog
 ================================
 
+1.4.5-beta
+---------------------------------------
+
+**Improvements:**
+    - Adds user values to validate function so names can be validated against expected data.
+    - Adds fallback to required Tokens, useful for when a Token is required but a default value is needed in case the user doesn't provide one.
+
 1.3.1-beta
 ---------------------------------------
 
