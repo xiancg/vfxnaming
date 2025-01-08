@@ -24,7 +24,7 @@ import shutil
 import vfxnaming.rules as rules
 import vfxnaming.tokens as tokens
 from pathlib import Path
-from typing import AnyStr, Dict, Union
+from typing import AnyStr, Dict, Union, Iterable
 
 from vfxnaming.logger import logger
 from vfxnaming.error import SolvingError, RepoError
@@ -206,6 +206,50 @@ def validate(name: AnyStr, **kwargs) -> bool:
             fields_inc += 1
     logger.debug(f"Validating rule '{rule.name}' with values {values}")
     return rule.validate(name, **values)
+
+
+def pick_rule(name: str, strict: bool = False, **kwargs) -> Union[rules.Rule, None]:
+    """Given a name and a set of tokens or conditions passed as keyword arguments,
+    activate the rule that best matches the conditions.
+
+    Args:
+        name (str): Name to match against the conditions.
+        strict (bool, optional): _description_. Defaults to False.
+        conditions (Iterable, optional): _description_. Defaults to [].
+        kwards: _description_
+
+    Returns:
+        _type_: _description_
+    """
+    # Validations
+    if not len(kwargs):
+        # TODO: We can implement conditions based on each rule pattern
+        logger.warning(
+            "No conditions passed to pick a rule. All rules will be evaluated."
+        )
+        return None
+
+    # Check user conditions
+    for key, value in kwargs.items():
+        if key not in rules.get_rules().keys():
+            logger.warning(f"Rule {key} not found in current session.")
+            return None
+        if not isinstance(value, (list, tuple)):
+            logger.warning(f"Decision values for rule {key} must be a list or tuple.")
+            return None
+    # Decision making
+    check_function = (
+        (lambda value: all(token in name for token in value))
+        if strict
+        else (lambda value: all(token.lower() in name.lower() for token in value))
+    )
+    for key, value in kwargs.items():
+        if check_function(value):
+            logger.debug(f"Picked and actived rule: {key}")
+            rules.set_active_rule(key)
+            return rules.get_rule(key)
+    logger.debug("Couldn't pick any rule from given conditions.")
+    return None
 
 
 def validate_repo(repo: Path) -> bool:

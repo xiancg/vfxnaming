@@ -39,6 +39,7 @@ class Rule(Serializable):
     __SEPARATORS_REGEX = re.compile(r"[_\-\.:\|/\\]")
     __RULE_REFERENCE_REGEX = re.compile(r"{@(?P<reference>.+?)}")
     __AT_CODE = "_FXW_"
+    __NON_HARDCODED_REGEX = re.compile(r"[^{}]+(?=\{)|(?<=\})[^{}]+|^[^{]+|[^}]+$")
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
     def __init__(self, name, pattern, anchor=ANCHOR_START):
@@ -296,6 +297,54 @@ class Rule(Serializable):
                     matching_options = False
 
         return matching_options
+
+    def is_solvable(self, name: str, strict: bool = False) -> bool:
+        """Finds a out if a rule can be solved with a given name using:
+        1. Hardcoded values in the rule pattern. e.g.: thishardcode_{myrule} -> thishardcode_
+        2. Token options
+        3. Token fallback
+
+        Returns:
+            bool: True if name is solvable with rule, False otherwise.
+        """
+        # TODO: Update to expanded_pattern() when implementing nested rules
+        # Check hardcoded values first. If these don't match, there's no point in cheking tokens
+        harcoded = self.__NON_HARDCODED_REGEX.findall(self._pattern)
+        check_function = (
+            (lambda harcoded: all(token in name for token in harcoded))
+            if strict
+            else (
+                lambda harcoded: all(token.lower() in name.lower() for token in harcoded)
+            )
+        )
+        if check_function(harcoded):
+            return True
+
+        # Check token options and fallback where applicable
+        conditions = {}
+        for each in self.fields:
+            token = get_token(each)
+            if token is None:
+                continue
+            conditions[each] = {}
+            if isinstance(token, TokenNumber):
+                conditions[each]["_options"] = [token.prefix, token.suffix]
+            else:
+                if token.required and len(token.fallback):
+                    conditions[each]["_fallback"] = [token.fallback]
+                else:
+                    conditions[each]["_options"] = token.options.values()
+
+        for token, condition in conditions.items():
+            # If a token with options doesn't find a match, there is no point in checking the rest
+            if "_options" in condition:
+                if not any(option in name for option in condition["_options"]):
+                    return False
+            elif "_fallback" in condition:
+                if condition["_fallback"] in name:
+                    return True
+
+        return False
 
     def __build_regex(self) -> re.Pattern:
         # ? Taken from Lucidity by Martin Pengelly-Phillips
