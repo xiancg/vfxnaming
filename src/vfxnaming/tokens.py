@@ -27,6 +27,7 @@ class Token(Serializable):
         self._name: AnyStr = name
         self._default = None
         self._options: Dict = {}
+        self._fallback = ""
 
     def add_option(self, fullname: AnyStr, abbreviation: AnyStr) -> bool:
         """Add an option pair to this Token.
@@ -138,7 +139,9 @@ class Token(Serializable):
         """
         if self.required and name:
             return name
-        elif self.required and name is None:
+        elif self.required and len(self._fallback):
+            return self._fallback
+        elif self.required and not name:
             raise TokenError(
                 f"Token {self.name} is required. name parameter must be passed."
             )
@@ -227,6 +230,19 @@ class Token(Serializable):
         """
         return copy.deepcopy(self._options)
 
+    @property
+    def fallback(self) -> AnyStr:
+        return self._fallback
+
+    @fallback.setter
+    def fallback(self, f: AnyStr):
+        if self.required:
+            self._fallback = f
+        else:
+            logger.warning(
+                f"Token '{self.name}' has options, use {self.name}.default instead."
+            )
+
 
 class TokenNumber(Serializable):
     def __init__(self, name: AnyStr):
@@ -288,7 +304,7 @@ class TokenNumber(Serializable):
                 suffix_index += 1
 
             if prefix_index != -1 and self.prefix != "":
-                if value[prefix_index : len(self.prefix)] != self.prefix:
+                if value[prefix_index : len(self.prefix)] != self.prefix:  # noqa: E203
                     logger.warning(f"Prefix '{self.prefix}' not found in '{value}'")
             if suffix_index != -1 and self.suffix != "":
                 if value[-suffix_index:] != self.suffix:
@@ -358,7 +374,7 @@ class TokenNumber(Serializable):
         return copy.deepcopy(self._options)
 
 
-def add_token(name: AnyStr, **kwargs) -> Token:
+def add_token(name: AnyStr, fallback: AnyStr = "", **kwargs) -> Token:
     """Add token to current naming session. If 'default' keyword argument is found,
     set it as default for the token instance.
 
@@ -366,7 +382,10 @@ def add_token(name: AnyStr, **kwargs) -> Token:
         name (str): Name that best describes the token, this will be used as a way
         to invoke the Token object.
 
-        kwargs: Each argument following the name is treated as an option for the
+        fallback (str, optional): Fallback value to use if token is required. Default is ""
+        and will raise and error, making the token mandatory.
+
+        kwargs: Each argument following fallback is treated as an option for the
         new Token.
 
     Raises:
@@ -392,6 +411,12 @@ def add_token(name: AnyStr, **kwargs) -> Token:
                     break
         else:
             raise TokenError("Default value must match one of the options passed.")
+    if len(fallback):
+        if isinstance(fallback, str):
+            token.fallback = fallback
+        else:
+            raise TokenError(f"Fallback must be a string. Got {type(fallback)}")
+
     _tokens[name] = token
     return token
 
