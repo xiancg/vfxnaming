@@ -203,6 +203,8 @@ class Rule(Serializable):
                     repeated_fields[each] = 1
         if repeated_fields:
             logger.debug(f"Repeated tokens: {', '.join(repeated_fields.keys())}")
+
+        # Validate values passed by the user
         if len(validate_values):
             for key, value in name_parts:
                 # Strip number that was added to make group name unique

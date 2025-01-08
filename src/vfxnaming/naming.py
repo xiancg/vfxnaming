@@ -198,6 +198,11 @@ def validate(name: AnyStr, **kwargs) -> bool:
                 values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
                 fields_inc += 1
                 continue
+            elif token.required and isinstance(token, tokens.Token):
+                if len(token.fallback):
+                    values[f] = token.fallback
+                    fields_inc += 1
+                    continue
             fields_inc += 1
     logger.debug(f"Validating rule '{rule.name}' with values {values}")
     return rule.validate(name, **values)
