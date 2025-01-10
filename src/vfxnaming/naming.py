@@ -138,7 +138,7 @@ def solve(*args, **kwargs) -> AnyStr:
     return rule.solve(**values)
 
 
-def validate(name: AnyStr, **kwargs) -> bool:
+def validate(name: AnyStr, with_rules: Iterable = [], **kwargs) -> bool:
     """Validates a name string against the currently active rule and its
     tokens if passed as keyword arguments.
 
@@ -167,89 +167,50 @@ def validate(name: AnyStr, **kwargs) -> bool:
     Returns:
         bool: True if the name is valid, False otherwise.
     """
-    rule = rules.get_active_rule()
-    # * This accounts for those cases where a token is used more than once in a rule
-    repeated_fields = dict()
-    for each in rule.fields:
-        if each not in repeated_fields.keys():
-            if rule.fields.count(each) > 1:
-                repeated_fields[each] = 1
-    fields_with_digits = list()
-    for each in rule.fields:
-        if each in repeated_fields.keys():
-            counter = repeated_fields.get(each)
-            repeated_fields[each] = counter + 1
-            fields_with_digits.append(f"{each}{counter}")
-        else:
-            fields_with_digits.append(each)
-    values = {}
-    fields_inc = 0
-    for f in fields_with_digits:
-        token = tokens.get_token(rule.fields[fields_inc])
-        if token:
-            # Explicitly passed as keyword argument
-            if kwargs.get(f) is not None:
-                values[f] = token.solve(kwargs.get(f))
-                fields_inc += 1
-                continue
-            # Explicitly passed as keyword argument without repetitive digits
-            # Use passed argument for all field repetitions
-            elif kwargs.get(rule.fields[fields_inc]) is not None:
-                values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
-                fields_inc += 1
-                continue
-            elif token.required and isinstance(token, tokens.Token):
-                if len(token.fallback):
-                    values[f] = token.fallback
+    previously_active_rule = rules.get_active_rule()
+    for rule in with_rules:
+        if not rules.get_rule(rule):
+            raise SolvingError(f"Rule {rule} not found in current session.")
+
+        rules.set_active_rule(rule)
+        # * This accounts for those cases where a token is used more than once in a rule
+        repeated_fields = dict()
+        for each in rule.fields:
+            if each not in repeated_fields.keys():
+                if rule.fields.count(each) > 1:
+                    repeated_fields[each] = 1
+        fields_with_digits = list()
+        for each in rule.fields:
+            if each in repeated_fields.keys():
+                counter = repeated_fields.get(each)
+                repeated_fields[each] = counter + 1
+                fields_with_digits.append(f"{each}{counter}")
+            else:
+                fields_with_digits.append(each)
+        values = {}
+        fields_inc = 0
+        for f in fields_with_digits:
+            token = tokens.get_token(rule.fields[fields_inc])
+            if token:
+                # Explicitly passed as keyword argument
+                if kwargs.get(f) is not None:
+                    values[f] = token.solve(kwargs.get(f))
                     fields_inc += 1
                     continue
-            fields_inc += 1
-    logger.debug(f"Validating rule '{rule.name}' with values {values}")
-    return rule.validate(name, **values)
-
-
-def pick_rule(name: str, strict: bool = False, **kwargs) -> Union[rules.Rule, None]:
-    """Given a name and a set of tokens or conditions passed as keyword arguments,
-    activate the rule that best matches the conditions.
-
-    Args:
-        name (str): Name to match against the conditions.
-        strict (bool, optional): _description_. Defaults to False.
-        conditions (Iterable, optional): _description_. Defaults to [].
-        kwards: _description_
-
-    Returns:
-        _type_: _description_
-    """
-    # Validations
-    if not len(kwargs):
-        # TODO: We can implement conditions based on each rule pattern
-        logger.warning(
-            "No conditions passed to pick a rule. All rules will be evaluated."
-        )
-        return None
-
-    # Check user conditions
-    for key, value in kwargs.items():
-        if key not in rules.get_rules().keys():
-            logger.warning(f"Rule {key} not found in current session.")
-            return None
-        if not isinstance(value, (list, tuple)):
-            logger.warning(f"Decision values for rule {key} must be a list or tuple.")
-            return None
-    # Decision making
-    check_function = (
-        (lambda value: all(token in name for token in value))
-        if strict
-        else (lambda value: all(token.lower() in name.lower() for token in value))
-    )
-    for key, value in kwargs.items():
-        if check_function(value):
-            logger.debug(f"Picked and actived rule: {key}")
-            rules.set_active_rule(key)
-            return rules.get_rule(key)
-    logger.debug("Couldn't pick any rule from given conditions.")
-    return None
+                # Explicitly passed as keyword argument without repetitive digits
+                # Use passed argument for all field repetitions
+                elif kwargs.get(rule.fields[fields_inc]) is not None:
+                    values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
+                    fields_inc += 1
+                    continue
+                elif token.required and isinstance(token, tokens.Token):
+                    if len(token.fallback):
+                        values[f] = token.fallback
+                        fields_inc += 1
+                        continue
+                fields_inc += 1
+        logger.debug(f"Validating rule '{rule.name}' with values {values}")
+        return rule.validate(name, **values)
 
 
 def validate_repo(repo: Path) -> bool:
