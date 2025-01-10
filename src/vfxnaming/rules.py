@@ -160,7 +160,7 @@ class Rule(Serializable):
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
 
-    def validate(self, name: AnyStr, **validate_values) -> bool:  # noqa: C901
+    def validate(self, name: AnyStr, strict: bool = False, **validate_values) -> bool:  # noqa: C901
         """Validate if given name matches the rule pattern.
 
         Args:
@@ -184,14 +184,10 @@ class Rule(Serializable):
             )
             return False
 
-        regex = self.__build_regex()
+        regex = self.__build_regex(strict)
         match = regex.search(name)
         if not match:
             logger.warning(f"Name {name} does not match rule pattern '{self._pattern}'")
-            if regex.search(name.lower()):
-                logger.warning(
-                    f"Name {name} has casing mismatches with '{self._pattern}'"
-                )
             return False
 
         match_dict = match.groupdict()
@@ -297,7 +293,7 @@ class Rule(Serializable):
 
         return matching_options
 
-    def __build_regex(self) -> re.Pattern:
+    def __build_regex(self, strict: bool = False) -> re.Pattern:
         # ? Taken from Lucidity by Martin Pengelly-Phillips
         # Escape non-placeholder components
         expression = re.sub(
@@ -320,7 +316,10 @@ class Rule(Serializable):
                 expression = f"{expression}$"
         # Compile expression
         try:
-            compiled = re.compile(expression)
+            if strict:
+                compiled = re.compile(expression)
+            else:
+                compiled = re.compile(expression, re.IGNORECASE)
         except re.error as error:
             if any(
                 [

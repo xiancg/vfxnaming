@@ -1,6 +1,13 @@
 Changelog
 ================================
 
+1.5.1-beta
+---------------------------------------
+
+**Improvements:**
+    - Adds strict validation option. If strict is True, the name must match exactly the casing the rule.
+    - If no rule names are passed to with_rules, only the active rule is validated.
+
 1.4.5-beta
 ---------------------------------------
 

@@ -1,7 +1,8 @@
 from pathlib import Path
 import pytest
 import tempfile
-from typing import Dict, List
+import types
+from typing import Dict, List, Union
 
 from vfxnaming import naming as n
 import vfxnaming.rules as rules
@@ -236,32 +237,33 @@ class Test_Validate:
         [
             (
                 "dramatic_bounce_chars_001_LGT",
-                True,
+                1,
             ),
             (
                 "dramatic_bounce_chars_001",
-                False,
+                0,
             ),
             (
                 "whatEver_bounce_chars_001_LGT",
-                False,
+                0,
             ),
             (
                 "dramatic_bounce_chars_01_LGT",
-                False,
+                0,
             ),
             (
                 "dramatic_bounce_chars_v001_LGT",
-                False,
+                0,
             ),
             (
                 "dramatic_bounce_chars_1000_LGT",
-                True,
+                1,
             ),
         ],
     )
-    def test_valid(self, name: str, expected: bool):
-        assert n.validate(name) is expected
+    def test_valid(self, name: str, expected: int):
+        validated = n.validate(name)
+        assert len(validated) == expected
 
     @pytest.mark.parametrize(
         "name,validate_values,expected",
@@ -269,27 +271,58 @@ class Test_Validate:
             (
                 "dramatic_bounce_chars_001_LGT",
                 {"category": "dramatic"},
-                True,
+                1,
             ),
             (
                 "dramatic_bounce_chars_001_LGT",
                 {"whatAffects": "chars"},
-                True,
+                1,
             ),
             (
                 "dramatic_bounce_chars_001_LGT",
                 {"category": "practical"},
-                False,
+                0,
             ),
             (
                 "dramatic_bounce_chars_001_LGT",
                 {"whatAffects": "anything"},
-                False,
+                0,
             ),
         ],
     )
-    def test_valid_with_tokens(self, name: str, validate_values: dict, expected: bool):
-        assert n.validate(name, **validate_values) is expected
+    def test_valid_with_tokens(self, name: str, validate_values: dict, expected: int):
+        validated = n.validate(name, **validate_values)
+        assert len(validated) == expected
+
+
+class Test_ValidateHarcodedValues:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        tokens.reset_tokens()
+        rules.reset_rules()
+        tokens.add_token("side", center="C", left="L", right="R", default="center")
+        tokens.add_token(
+            "region",
+            orbital="ORBI",
+            parotidmasseter="PAROT",
+            mental="MENT",
+            frontal="FRONT",
+            zygomatic="ZYGO",
+            retromandibularfossa="RETMAND",
+        )
+        rules.add_rule("filename", "{side}-ALWAYS_{side}-This_{side}-{region}")
+
+    @pytest.mark.parametrize(
+        "name,strict,expected",
+        [
+            ("C-ALWAYS_C-This_C-ORBI", False, 1),
+            ("C-always_C-This_C-ORBI", False, 1),
+            ("C-always_C-this_C-ORBI", True, 0),
+        ],
+    )
+    def test_valid_harcoded(self, name: str, strict: bool, expected: int):
+        validated = n.validate(name, strict=strict)
+        assert len(validated) == expected
 
 
 class Test_ValidateWithRepetitions:
@@ -322,28 +355,29 @@ class Test_ValidateWithRepetitions:
                     "side3": "right",
                     "region3": "zygomatic",
                 },
-                True,
+                1,
             ),
             (
                 "R-MENT_C-PAROT_L-RETMAND",
                 {
                     "side2": "center",
                 },
-                True,
+                1,
             ),
             (
                 "R-MENT_C-PAROT_L-RETMAND",
                 {
                     "side": "center",
                 },
-                False,
+                0,
             ),
         ],
     )
     def test_valid_with_repetitions(
-        self, name: str, validate_values: dict, expected: bool
+        self, name: str, validate_values: dict, expected: int
     ):
-        assert n.validate(name, **validate_values) is expected
+        validated = n.validate(name, **validate_values)
+        assert len(validated) == expected
 
 
 class Test_RuleWithRepetitions:
