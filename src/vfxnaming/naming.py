@@ -138,9 +138,12 @@ def solve(*args, **kwargs) -> AnyStr:
     return rule.solve(**values)
 
 
-def validate(name: AnyStr, with_rules: Iterable = [], **kwargs) -> bool:
-    """Validates a name string against the currently active rule and its
-    tokens if passed as keyword arguments.
+def validate(  # noqa: C901
+    name: AnyStr, with_rules: Iterable[str] = [], strict: bool = False, **kwargs
+) -> Iterable[rules.Rule]:
+    """Validates a name string against the currently active rule if no rules are passed or
+    against the list of specific rules passed in with_rules.
+    It also validates its tokens if passed as keyword arguments.
 
     -For rules with repeated tokens:
 
@@ -162,15 +165,23 @@ def validate(name: AnyStr, with_rules: Iterable = [], **kwargs) -> bool:
     Args:
         name (str): Name string e.g.: C_helmet_001_MSH
 
+        with_rules (list, optional): List of rule names to validate against. Defaults to [].
+
+        strict (bool, optional): If False, it'll try to accept casing mismatches.
+
         kwargs (dict): Keyword arguments with token names and values.
 
     Returns:
-        bool: True if the name is valid, False otherwise.
+        list: List of validated rules. Empty list if no rule could be validated.
     """
     previously_active_rule = rules.get_active_rule()
-    for rule in with_rules:
-        if not rules.get_rule(rule):
-            raise SolvingError(f"Rule {rule} not found in current session.")
+    if not len(with_rules):
+        with_rules = [previously_active_rule.name]
+    validated: Iterable[rules.Rule] = []
+    for with_rule in with_rules:
+        rule = rules.get_rule(with_rule)
+        if not rule:
+            logger.warning(f"Rule {with_rule} not found.")
 
         rules.set_active_rule(rule)
         # * This accounts for those cases where a token is used more than once in a rule
@@ -210,7 +221,21 @@ def validate(name: AnyStr, with_rules: Iterable = [], **kwargs) -> bool:
                         continue
                 fields_inc += 1
         logger.debug(f"Validating rule '{rule.name}' with values {values}")
-        return rule.validate(name, **values)
+        validation = rule.validate(name, strict, **values)
+        if validation:
+            rules.set_active_rule(previously_active_rule)
+            validated.append(rule)
+    rules.set_active_rule(previously_active_rule)
+    if not len(validated):
+        logger.warning(
+            f"Could not validate {name} with any of the given "
+            f"rules {', '.join([rule for rule in with_rules])}."
+        )
+    else:
+        logger.info(
+            f"Name {name} validated with rules: {', '.join([rule.name for rule in validated])}."
+        )
+    return validated
 
 
 def validate_repo(repo: Path) -> bool:

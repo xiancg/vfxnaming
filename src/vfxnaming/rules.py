@@ -39,7 +39,6 @@ class Rule(Serializable):
     __SEPARATORS_REGEX = re.compile(r"[_\-\.:\|/\\]")
     __RULE_REFERENCE_REGEX = re.compile(r"{@(?P<reference>.+?)}")
     __AT_CODE = "_FXW_"
-    __NON_HARDCODED_REGEX = re.compile(r"[^{}]+(?=\{)|(?<=\})[^{}]+|^[^{]+|[^}]+$")
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
     def __init__(self, name, pattern, anchor=ANCHOR_START):
@@ -170,21 +169,6 @@ class Rule(Serializable):
         Returns:
             bool: True if name matches the rule pattern, False otherwise.
         """
-        # Check hardcoded values first. If these don't match, there's no point in cheking tokens
-        harcoded = self.__NON_HARDCODED_REGEX.findall(self._pattern)
-        check_function = (
-            (lambda harcoded: all(token in name for token in harcoded))
-            if strict
-            else (
-                lambda harcoded: all(token.lower() in name.lower() for token in harcoded)
-            )
-        )
-        if not check_function(harcoded):
-            logger.warning(
-                f"Name {name} does not match rule pattern constant values '{self._pattern}'"
-            )
-            return False
-
         expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
         if len(expected_separators) <= 0:
             logger.warning(
@@ -200,14 +184,10 @@ class Rule(Serializable):
             )
             return False
 
-        regex = self.__build_regex()
+        regex = self.__build_regex(strict)
         match = regex.search(name)
         if not match:
             logger.warning(f"Name {name} does not match rule pattern '{self._pattern}'")
-            if regex.search(name.lower()):
-                logger.warning(
-                    f"Name {name} has casing mismatches with '{self._pattern}'"
-                )
             return False
 
         match_dict = match.groupdict()
@@ -313,7 +293,7 @@ class Rule(Serializable):
 
         return matching_options
 
-    def __build_regex(self) -> re.Pattern:
+    def __build_regex(self, strict: bool = False) -> re.Pattern:
         # ? Taken from Lucidity by Martin Pengelly-Phillips
         # Escape non-placeholder components
         expression = re.sub(
@@ -336,7 +316,10 @@ class Rule(Serializable):
                 expression = f"{expression}$"
         # Compile expression
         try:
-            compiled = re.compile(expression)
+            if strict:
+                compiled = re.compile(expression)
+            else:
+                compiled = re.compile(expression, re.IGNORECASE)
         except re.error as error:
             if any(
                 [
