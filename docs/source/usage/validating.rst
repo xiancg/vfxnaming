@@ -14,6 +14,8 @@ Many times the only thing we need is to know if a name is valid or not for a giv
 - The number of expected separators must match with the rule.
 - If tokens have options, the given name must use one of those options.
 - If token is a number, validates suffix, prefix and padding.
+- If strict is passed as True to the validate function, the name must match exactly the casing the rule.
+- If no rule names are passed to with_rules, only the active rule is validated.
 
 Let's set these Tokens and Rule.
 
