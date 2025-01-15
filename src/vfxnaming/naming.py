@@ -113,10 +113,11 @@ def solve(*args, **kwargs) -> AnyStr:
                 fields_inc += 1
                 continue
             elif token.required and kwargs.get(f) is None and len(args) == 0:
-                if len(token.fallback):
-                    values[f] = token.fallback
-                    fields_inc += 1
-                    continue
+                if isinstance(token, tokens.Token):
+                    if len(token.fallback):
+                        values[f] = token.fallback
+                        fields_inc += 1
+                        continue
                 else:
                     raise SolvingError(
                         f"Token {token.name} is required but was not passed."
@@ -182,8 +183,9 @@ def validate(  # noqa: C901
         rule = rules.get_rule(with_rule)
         if not rule:
             logger.warning(f"Rule {with_rule} not found.")
+            continue
 
-        rules.set_active_rule(rule)
+        rules.set_active_rule(with_rule)
         # * This accounts for those cases where a token is used more than once in a rule
         repeated_fields = dict()
         for each in rule.fields:
