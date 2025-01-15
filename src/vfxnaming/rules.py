@@ -432,9 +432,9 @@ class Rule(Serializable):
                 i = 0
                 for match in sorted(indexes, reverse=True):
                     digits_pattern = (
-                        f"{digits_pattern[:match-1]}"
-                        f"{str(repetitions-i)}"
-                        f"{digits_pattern[match-1:]}"
+                        f"{digits_pattern[: match - 1]}"
+                        f"{str(repetitions - i)}"
+                        f"{digits_pattern[match - 1 :]}"
                     )
                     i += 1
         logger.debug(f"Digits pattern to account for repeated fields: {digits_pattern}")
