@@ -216,11 +216,6 @@ def validate(  # noqa: C901
                     values[f] = token.solve(kwargs.get(rule.fields[fields_inc]))
                     fields_inc += 1
                     continue
-                elif token.required and isinstance(token, tokens.Token):
-                    if len(token.fallback):
-                        values[f] = token.fallback
-                        fields_inc += 1
-                        continue
                 fields_inc += 1
         logger.debug(f"Validating rule '{rule.name}' with values {values}")
         validation = rule.validate(name, strict, **values)
