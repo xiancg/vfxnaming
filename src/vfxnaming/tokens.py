@@ -12,7 +12,7 @@ _tokens = dict()
 
 
 class Token(Serializable):
-    def __init__(self, name: AnyStr):
+    def __init__(self, name: AnyStr, nice_name: AnyStr = ""):
         """Tokens are the meaningful parts of a naming rule. A token can be required,
         meaning fully typed by the user, or can have a set of default options preconfigured.
         If options are present, then one of them is the default one.
@@ -22,9 +22,14 @@ class Token(Serializable):
         Args:
             name (str): Name that best describes the Token, this will be used as a way
             to invoke the Token object.
+
+            nice_name(str, optional): A more human readable name for the Token if needed for UI.
         """
         super(Token, self).__init__()
         self._name: AnyStr = name
+        self._nice_name = name
+        if len(nice_name):
+            self._nice_name = nice_name
         self._default = None
         self._options: Dict = {}
         self._fallback = ""
@@ -243,9 +248,21 @@ class Token(Serializable):
                 f"Token '{self.name}' has options, use {self.name}.default instead."
             )
 
+    @property
+    def nice_name(self) -> AnyStr:
+        """
+        Returns:
+            [str]: Nice name of this Token
+        """
+        return self._nice_name
+
+    @nice_name.setter
+    def nice_name(self, n: AnyStr):
+        self._nice_name = n
+
 
 class TokenNumber(Serializable):
-    def __init__(self, name: AnyStr):
+    def __init__(self, name: AnyStr, nice_name: AnyStr = ""):
         """Token for numbers with the ability to handle pure digits and version like strings
         (e.g.: v0025) with padding settings.
 
@@ -254,9 +271,14 @@ class TokenNumber(Serializable):
         Args:
             name (str): Name that best describes the TokenNumber, this will be used as a way
             to invoke the Token object.
+
+            nice_name(str, optional): A more human readable name for the Token if needed for UI.
         """
         super(TokenNumber, self).__init__()
         self._name: AnyStr = name
+        self._nice_name = name
+        if len(nice_name):
+            self._nice_name = nice_name
         self._default: int = 1
         self._options: Dict = {"prefix": "", "suffix": "", "padding": 3}
 
@@ -330,6 +352,18 @@ class TokenNumber(Serializable):
         self._name = n
 
     @property
+    def nice_name(self) -> AnyStr:
+        """
+        Returns:
+            [str]: Nice name of this Token
+        """
+        return self._nice_name
+
+    @nice_name.setter
+    def nice_name(self, n: AnyStr):
+        self._nice_name = n
+
+    @property
     def default(self) -> AnyStr:
         return self._default
 
@@ -374,7 +408,9 @@ class TokenNumber(Serializable):
         return copy.deepcopy(self._options)
 
 
-def add_token(name: AnyStr, fallback: AnyStr = "", **kwargs) -> Token:
+def add_token(
+    name: AnyStr, fallback: AnyStr = "", nice_name: AnyStr = "", **kwargs
+) -> Token:
     """Add token to current naming session. If 'default' keyword argument is found,
     set it as default for the token instance.
 
@@ -384,6 +420,8 @@ def add_token(name: AnyStr, fallback: AnyStr = "", **kwargs) -> Token:
 
         fallback (str, optional): Fallback value to use if token is required. Default is ""
         and will raise and error, making the token mandatory.
+
+        nice_name(str, optional): A more human readable name for the Token if needed for UI.
 
         kwargs: Each argument following fallback is treated as an option for the
         new Token.
@@ -395,6 +433,8 @@ def add_token(name: AnyStr, fallback: AnyStr = "", **kwargs) -> Token:
         Token: The Token object instance created for given name and fields.
     """
     token = Token(name)
+    if len(nice_name):
+        token.nice_name = nice_name
     for k, v in kwargs.items():
         if k == "default":
             continue
@@ -422,13 +462,19 @@ def add_token(name: AnyStr, fallback: AnyStr = "", **kwargs) -> Token:
 
 
 def add_token_number(
-    name, prefix: AnyStr = "", suffix: AnyStr = "", padding: int = 3
+    name,
+    prefix: AnyStr = "",
+    suffix: AnyStr = "",
+    padding: int = 3,
+    nice_name: AnyStr = "",
 ) -> TokenNumber:
     """Add token number to current naming session.
 
     Args:
         name (str): Name that best describes the token, this will be used as a way
         to invoke the TokenNumber object.
+
+        nice_name(str, optional): A more human readable name for the TokenNumber if needed for UI.
 
         prefix (str, optional): Prefix for token number. Useful if you have to use 'v' as prefix
         for versioning for example.
@@ -442,6 +488,8 @@ def add_token_number(
         TokenNumber: The TokenNumber object instance created for given name and fields.
     """
     token = TokenNumber(name)
+    if len(nice_name):
+        token.nice_name = nice_name
     token.prefix = prefix
     token.suffix = suffix
     token.padding = padding

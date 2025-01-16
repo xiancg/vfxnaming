@@ -26,6 +26,8 @@ class Rule(Serializable):
         ``pattern`` (str): The template pattern to use, which uses existing Tokens.
         e.g.: '{side}_{region}_{side}_{region}.png'
 
+        ``nice_name`` (str, optional): A more human readable name for the Token if needed for UI.
+
         ``anchor``: ([Rule.ANCHOR_START, Rule.ANCHOR_END, Rule.ANCHOR_BOTH], optional):
         For parsing, regex matching will look for a match from this Anchor. If a
         pattern is anchored to the start, it requires the start of a passed path to
@@ -41,9 +43,12 @@ class Rule(Serializable):
     __AT_CODE = "_FXW_"
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
-    def __init__(self, name, pattern, anchor=ANCHOR_START):
+    def __init__(self, name, pattern, anchor=ANCHOR_START, nice_name: AnyStr = ""):
         super(Rule, self).__init__()
         self._name: str = name
+        self._nice_name: str = name
+        if len(nice_name):
+            self._nice_name = nice_name
         self._pattern: str = pattern
         self._anchor: int = anchor
         self._regex: re.Pattern = self.__build_regex()
@@ -56,6 +61,7 @@ class Rule(Serializable):
         """
         retval = dict()
         retval["_name"] = self._name
+        retval["_nice_name"] = self._nice_name
         retval["_pattern"] = self._pattern
         retval["_anchor"] = self._anchor
         retval["_Serializable_classname"] = type(self).__name__
@@ -484,14 +490,30 @@ class Rule(Serializable):
             logger.error(f"Name cannot be empty for rule: {self._pattern}")
         self._name = n
 
+    @property
+    def nice_name(self) -> AnyStr:
+        """
+        Returns:
+            [str]: Nice name of this Rule
+        """
+        return self._nice_name
 
-def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Union[Rule, None]:
+    @nice_name.setter
+    def nice_name(self, n: AnyStr):
+        self._nice_name = n
+
+
+def add_rule(
+    name: str, pattern: str, anchor=Rule.ANCHOR_START, nice_name: str = ""
+) -> Union[Rule, None]:
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
 
     Args:
         ``name`` (str): Name that best describes the rule, this will be used as a way
         to invoke the Rule object.
+
+        ``nice_name`` (str, optional): A more human readable name for the Rule if needed for UI.
 
         ``pattern`` (str): The template pattern to use, which uses existing Tokens.
         e.g.: '{side}_{region}_{side}_{region}.png'
@@ -514,6 +536,8 @@ def add_rule(name: str, pattern: str, anchor=Rule.ANCHOR_START) -> Union[Rule, N
         logger.error(f"Invalid anchor value for rule: {name}")
         return
     rule = Rule(name, pattern, anchor)
+    if len(nice_name):
+        rule.nice_name = nice_name
     _rules[name] = rule
     if get_active_rule() is None:
         set_active_rule(name)
