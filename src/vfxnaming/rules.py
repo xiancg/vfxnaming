@@ -86,11 +86,17 @@ class Rule(Serializable):
         if data.get("_Serializable_version") is not None:
             del data["_Serializable_version"]
 
+        if not data.get("_name"):
+            raise RuleError(f"Rule name is required but was not found in {data}")
+
+        if not data.get("_pattern"):
+            raise RuleError(f"Rule pattern is required but was not found in {data}")
+
         this = cls(
             data.get("_name"),
             data.get("_pattern"),
-            data.get("_anchor"),
-            data.get("_nice_name"),
+            data.get("_anchor", cls.ANCHOR_START),
+            data.get("_nice_name", ""),
         )
         return this
 
