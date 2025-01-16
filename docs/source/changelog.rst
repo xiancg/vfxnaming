@@ -1,6 +1,14 @@
 Changelog
 ================================
 
+
+1.5.4-beta
+---------------------------------------
+
+**Improvements:**
+    - Adds nice_name to both rules and token for user-friendly names.
+
+
 1.5.1-beta
 ---------------------------------------
 
