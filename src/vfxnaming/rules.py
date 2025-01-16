@@ -86,7 +86,12 @@ class Rule(Serializable):
         if data.get("_Serializable_version") is not None:
             del data["_Serializable_version"]
 
-        this = cls(data.get("_name"), data.get("_pattern"), data.get("_anchor"))
+        this = cls(
+            data.get("_name"),
+            data.get("_pattern"),
+            data.get("_anchor"),
+            data.get("_nice_name"),
+        )
         return this
 
     def solve(self, **values) -> AnyStr:
