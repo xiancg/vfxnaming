@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vfxnaming"
-version = "1.5.5-beta"
+version = "1.5.6-beta"
 authors = [
   { name="Chris Granados", email="info@chrisgranados.com" },
 ]
