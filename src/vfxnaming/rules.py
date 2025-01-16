@@ -43,7 +43,7 @@ class Rule(Serializable):
     __AT_CODE = "_FXW_"
     ANCHOR_START, ANCHOR_END, ANCHOR_BOTH = (1, 2, 3)
 
-    def __init__(self, name, pattern, nice_name: AnyStr = "", anchor=ANCHOR_START):
+    def __init__(self, name, pattern, anchor=ANCHOR_START, nice_name: AnyStr = ""):
         super(Rule, self).__init__()
         self._name: str = name
         self._nice_name: str = name
@@ -504,7 +504,7 @@ class Rule(Serializable):
 
 
 def add_rule(
-    name: str, pattern: str, nice_name: str = "", anchor=Rule.ANCHOR_START
+    name: str, pattern: str, anchor=Rule.ANCHOR_START, nice_name: str = ""
 ) -> Union[Rule, None]:
     """Add rule to current naming session. If no active rule is found, it adds
     the created one as active by default.
