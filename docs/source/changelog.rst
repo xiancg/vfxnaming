@@ -2,6 +2,13 @@ Changelog
 ================================
 
 
+1.5.7-beta
+---------------------------------------
+
+**Improvements:**
+    - Strict mode validation now checks for separators count
+
+
 1.5.4-beta
 ---------------------------------------
 
