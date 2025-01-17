@@ -1,8 +1,7 @@
 from pathlib import Path
 import pytest
 import tempfile
-import types
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from vfxnaming import naming as n
 import vfxnaming.rules as rules
