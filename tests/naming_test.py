@@ -230,6 +230,10 @@ class Test_Validate:
         )
         tokens.add_token("type", lighting="LGT", animation="ANI", default="lighting")
         rules.add_rule("lights", "{category}_{function}_{whatAffects}_{digits}_{type}")
+        rules.add_rule(
+            "lights_extra",
+            "With_extra_{category}_{function}_{whatAffects}_{digits}_{type}",
+        )
 
     @pytest.mark.parametrize(
         "name,expected",
@@ -261,6 +265,7 @@ class Test_Validate:
         ],
     )
     def test_valid(self, name: str, expected: int):
+        rules.set_active_rule("lights")
         validated = n.validate(name)
         assert len(validated) == expected
 
@@ -290,7 +295,26 @@ class Test_Validate:
         ],
     )
     def test_valid_with_tokens(self, name: str, validate_values: dict, expected: int):
+        rules.set_active_rule("lights")
         validated = n.validate(name, **validate_values)
+        assert len(validated) == expected
+
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            (
+                "With_extra_dramatic_bounce_chars_001_LGT",
+                1,
+            ),
+            (
+                "Withextra_dramatic_bounce_chars_001_LGT",
+                0,
+            ),
+        ],
+    )
+    def test_valid_with_hardcoded(self, name: str, expected: int):
+        rules.set_active_rule("lights_extra")
+        validated = n.validate(name)
         assert len(validated) == expected
 
 

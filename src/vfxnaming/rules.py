@@ -35,6 +35,7 @@ class Rule(Serializable):
     """
 
     __FIELDS_REGEX = re.compile(r"{(.+?)}")
+    __EXTRACT_FIELDS_REGEX = re.compile(r"(\{.+?(?::.+?)?\})")
     __PATTERN_SEPARATORS_REGEX = re.compile(
         r"(}[_\-\.:\|/\\]{|[_\-\.:\|/\\]{|}[_\-\.:\|/\\])"
     )
@@ -134,7 +135,11 @@ class Rule(Serializable):
             dict: A dictionary with keys as tokens and values as given name parts.
             e.g.: {'side':'C', 'part':'helmet', 'number': 1, 'type':'MSH'}
         """
-        expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
+        extract_tokens = self.__EXTRACT_FIELDS_REGEX.findall(self._pattern)
+        pattern_wout_tokens = self._pattern
+        for each in extract_tokens:
+            pattern_wout_tokens = pattern_wout_tokens.replace(each, "XYZ")
+        expected_separators = self.__SEPARATORS_REGEX.findall(pattern_wout_tokens)
         if len(expected_separators) <= 0:
             logger.warning(
                 f"No separators used for rule '{self.name}', parsing is not possible."
@@ -186,7 +191,11 @@ class Rule(Serializable):
         Returns:
             bool: True if name matches the rule pattern, False otherwise.
         """
-        expected_separators = self.__PATTERN_SEPARATORS_REGEX.findall(self._pattern)
+        extract_tokens = self.__EXTRACT_FIELDS_REGEX.findall(self._pattern)
+        pattern_wout_tokens = self._pattern
+        for each in extract_tokens:
+            pattern_wout_tokens = pattern_wout_tokens.replace(each, "XYZ")
+        expected_separators = self.__SEPARATORS_REGEX.findall(pattern_wout_tokens)
         if len(expected_separators) <= 0:
             logger.warning(
                 f"No separators used for rule '{self.name}', parsing is not possible."
