@@ -3,10 +3,9 @@ import json
 from pathlib import Path
 from typing import AnyStr, Dict, Union
 
-from vfxnaming.serialize import Serializable
-from vfxnaming.logger import logger
 from vfxnaming.error import TokenError
-
+from vfxnaming.logger import logger
+from vfxnaming.serialize import Serializable
 
 _tokens = dict()
 
@@ -326,7 +325,7 @@ class TokenNumber(Serializable):
                 suffix_index += 1
 
             if prefix_index != -1 and self.prefix != "":
-                if value[prefix_index : len(self.prefix)] != self.prefix:  # noqa: E203
+                if value[:prefix_index] != self.prefix:
                     logger.warning(f"Prefix '{self.prefix}' not found in '{value}'")
             if suffix_index != -1 and self.suffix != "":
                 if value[-suffix_index:] != self.suffix:
