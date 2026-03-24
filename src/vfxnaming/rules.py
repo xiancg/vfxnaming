@@ -1,16 +1,16 @@
-import re
-import json
-import traceback
 import functools
+import json
+import re
+import traceback
+from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
-from collections import defaultdict
-from typing import Dict, AnyStr, Union, Tuple
+from typing import AnyStr, Dict, Tuple, Union
 
-from vfxnaming.serialize import Serializable
-from vfxnaming.tokens import get_token, TokenNumber
+from vfxnaming.error import ParsingError, RuleError, SolvingError
 from vfxnaming.logger import logger
-from vfxnaming.error import ParsingError, SolvingError, RuleError
+from vfxnaming.serialize import Serializable
+from vfxnaming.tokens import TokenNumber, get_token
 
 _rules = {"_active": None}
 
@@ -297,7 +297,7 @@ class Rule(Serializable):
                 if len(token.prefix):
                     if not value.startswith(token.prefix):
                         logger.warning(
-                            f"Token {token_name}: {value} must end with {token.prefix}"
+                            f"Token {token_name}: {value} must start with {token.prefix}"
                         )
                         matching_options = False
                 digits = value[len(token.prefix) : len(token.suffix) * -1]  # noqa: E203
