@@ -29,7 +29,7 @@ where = ["src"]
 include = ["*"]
 
 [project.optional-dependencies]
-tests = ["pytest", "pytest-cov", "pytest-datafiles", "python-coveralls", "flake8"]
+tests = ["pytest<9", "pytest-cov", "pytest-datafiles", "python-coveralls", "flake8"]
 lint = ["ruff"]
 docs = ["sphinx", "sphinx_rtd_theme"]
 build = ["setuptools", "twine", "wheel", "build"]
