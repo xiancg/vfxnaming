@@ -204,13 +204,13 @@ class Rule(Serializable):
 
         name_separators = self.__SEPARATORS_REGEX.findall(name)
         if not strict and len(expected_separators) > len(name_separators):
-            logger.warning(
+            logger.debug(
                 f"Separators count mismatch between given name '{name}':'{len(name_separators)}' "
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
             return False
         elif strict and len(expected_separators) != len(name_separators):
-            logger.warning(
+            logger.debug(
                 f"Separators count mismatch between given name '{name}':'{len(name_separators)}' "
                 f"and rule's pattern '{self._pattern}':'{len(expected_separators)}'."
             )
@@ -219,7 +219,7 @@ class Rule(Serializable):
         regex = self.__build_regex(strict)
         match = regex.search(name)
         if not match:
-            logger.warning(f"Name {name} does not match rule pattern '{self._pattern}'")
+            logger.debug(f"Name {name} does not match rule pattern '{self._pattern}'")
             return False
 
         match_dict = match.groupdict()
